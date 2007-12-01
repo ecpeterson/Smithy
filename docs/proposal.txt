@@ -1,0 +1,50 @@
+Name: Smithy
+Authors: Eric Peterson (epeters3)
+Languages: OCaml
+Libraries, Frameworks, Platform: GTK, LablGTK, LablGL, OpenGL
+Description: An open-source, cross-platform  map editor for the Marathon data
+format, ideally as close to a clone of the original Forge editor as possible.
+Motivation: Forge, the original editor, was written for OS <= 9.22, which
+means that the newer crowd of Marathon players can't use it (whether it's
+because they own an Intel Mac or because they don't own a Mac at all).
+Several partially-completed map editors have been released, but none have been
+brought into mainstream usage or really have even been considered candidate
+material for such because none have mimicked Forge, which has definitely set
+the standard for the genre of applications.  Surprisingly enough, few
+programmers have caught onto this underlying motivation (or lack thereof) when
+it comes to users of their application, and so the intended goal for Smithy is
+certainly filling a gap.
+Risks / Challenges: Poorly documented map format, really a lot of work for one
+person, will involve a lot of GUI work -- specifically writing new widgets
+that well-resemble the old ones.
+Schedule:
+Week 1:
+ + Read what documentation exists on the map format, write the basics of a
+ reader and writer
+ + Work on basic object-level design decisions, get things like a map object
+ into a final, workable form
+ + Get basic GUI bits working, write the object (or pseudo-object, if that's
+ what ends up happening) that will do the overhead map display
+ + Level settings dialogs
+ + Write zoom, pan tools
+Week 2:
+ + Finish the map reader / writer
+ + Write the line, fill, polygon tools
+Week 3:
+ + Finish whatever didn't get done with the line, fill, polygon tools
+ + Write polygon type, line, point, object, sound, scenery editors
+ + Get alternate draw modes working for the overhead map view in anticipation
+ of the next week
+Week 4:
+ + Write elevation editor mode, light editor mode
+ + Write Shapes reader, get floor/ceiling texture modes implemented
+ + General clean up, whatever documentation might be missing, get /extra/
+ documentation together so that this project can be continued outside of class
+ and newcomers can be quickly prepped on the program structure, to-do list,
+ etc.
+Future:
+ + Visual mode (viewing, texturing, visually setting elevations, then
+ engine-like things such as moving platforms, switches, tags, etc.)
+ + Terminal editor
+ + Merge / unmerge
+ + Obed-style texture editing

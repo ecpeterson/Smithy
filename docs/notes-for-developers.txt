@@ -1,0 +1,13 @@
+http://juiceforge.svn.sourceforge.net/viewvc/*checkout*/juiceforge/trunk/docs/Marathon%20Infinity%20File%20Specs.txt
+contains another team's guess at the map format.  It's typically much easier
+to implement whatever they have there, try it out, and then rebuild it from
+scratch if necessary than it is to sift through the AlephOne source code each
+time.  A local copy was saved as docs/juice.txt on Nov 5th, 2007, but probably
+keep checking the sourceforge version just in case they update it with more
+information, and use the local copy if the site vanishes or something.
+http://sourceforge.net/docman/display_doc.php?docid=863&group_id=1997 may also
+be useful.
+http://local.wasp.uwa.edu.au/~pbourke/geometry/insidepoly/ used this to write
+the polygon clicking code
+The Forge Tutorials are available (compressed with Stuffit) on
+trilogyrelease.bungie.org and contain useful behavioral information.
