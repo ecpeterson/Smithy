@@ -139,8 +139,8 @@ class polygon = object
     val mutable ceiling_texture = empty_sd
     val mutable floor_height = 0.0
     val mutable ceiling_height = 1.0
-    val mutable floor_lightsource = 0
-    val mutable ceiling_lightsource = 0
+    val mutable floor_lightsource = -1
+    val mutable ceiling_lightsource = -1
     val mutable area = 0
     val mutable first_object = -1
     val mutable first_exclusion_zone_index = 0
@@ -156,7 +156,7 @@ class polygon = object
     val mutable floor_origin = (0, 0)
     val mutable ceiling_origin = (0, 0)
     val mutable media_index = -1
-    val mutable media_lightsource = 0
+    val mutable media_lightsource = -1
     val mutable sound_source_indices = 0
     val mutable ambient_sound_image_index = -1
     val mutable random_sound_image_index = -1
@@ -242,8 +242,8 @@ class polygon = object
         ceiling_texture <- sd_of_int (input_word fh);
         floor_height <- float (input_signed_word fh) /. 1024.0;
         ceiling_height <- float (input_signed_word fh) /. 1024.0;
-        floor_lightsource <- input_word fh;
-        ceiling_lightsource <- input_word fh;
+        floor_lightsource <- input_signed_word fh;
+        ceiling_lightsource <- input_signed_word fh;
         area <- input_dword fh;
         first_object <- input_signed_word fh;
         first_exclusion_zone_index <- input_word fh;
@@ -271,7 +271,7 @@ class polygon = object
         let ceiling_originy = input_word fh in
         ceiling_origin <- (ceiling_originx, ceiling_originy);
         media_index <- input_signed_word fh;
-        media_lightsource <- input_word fh;
+        media_lightsource <- input_signed_word fh;
         sound_source_indices <- input_word fh;
         ambient_sound_image_index <- input_word fh;
         random_sound_image_index <- input_word fh;
@@ -288,8 +288,8 @@ class polygon = object
         output_word fh (int_of_sd ceiling_texture);
         output_signed_word fh (int_of_float (floor_height *. 1024.0));
         output_signed_word fh (int_of_float (ceiling_height *. 1024.0));
-        output_word fh floor_lightsource;
-        output_word fh ceiling_lightsource;
+        output_signed_word fh floor_lightsource;
+        output_signed_word fh ceiling_lightsource;
         output_dword fh area;
         output_signed_word fh first_object;
         output_word fh first_exclusion_zone_index;
@@ -311,7 +311,7 @@ class polygon = object
         output_word fh cox;
         output_word fh coy;
         output_signed_word fh media_index;
-        output_word fh media_lightsource;
+        output_signed_word fh media_lightsource;
         output_word fh sound_source_indices;
         output_word fh ambient_sound_image_index;
         output_word fh random_sound_image_index;

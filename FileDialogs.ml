@@ -13,7 +13,7 @@ let fail_dialog () =
     dialog#run ();
     dialog#destroy ()
 
-let open_file_dialog map_obj set_title () =
+let open_file_dialog map_obj set_title gl () =
     let dialog = GWindow.file_selection ~title:"Open Map" () in
     begin match dialog#run () with
         |`OK ->
@@ -22,7 +22,8 @@ let open_file_dialog map_obj set_title () =
             with _ -> fail_dialog () end;
         |_ -> ()
     end;
-    dialog#destroy ()
+    dialog#destroy ();
+    ignore (gl#draw ())
 
 let save_file_dialog map_obj set_title () =
     let dialog = GWindow.file_selection ~title:"Save Map" () in

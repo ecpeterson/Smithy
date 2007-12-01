@@ -85,8 +85,8 @@ let hbox = GPack.hbox ~packing:vbox#add ()
 let entry_label = GMisc.label ~text:"Height: " ~packing:hbox#add ()
 let numeric_entry = GEdit.entry ~packing:hbox#add ()
 let mediabox = GPack.hbox ~packing:vbox#add ()
-let edit_media = GButton.button ~label:"Edit Media..." ~packing:mediabox#add ()
-let new_media = GButton.button ~label:"New Media..." ~packing:mediabox#add ()
+let editbutton = GButton.button ~label:"Edit Media..." ~packing:mediabox#add ()
+let newbutton = GButton.button ~label:"New Media..." ~packing:mediabox#add ()
 
 (* and the map object we'll be recycling *)
 let map = new map
@@ -101,16 +101,29 @@ let entry_callback () =
         try Some (int_of_float (float_of_string t)) with _ -> None end end;
     begin numeric_float := try Some (float_of_string t) with _ -> begin
         try Some (float (int_of_string t)) with _ -> None end end
-let edit_current_media () =
-    match !numeric_int with
-    |None |Some (-1) -> ()
-    |Some index ->
+let edit_current_item () =
+    match (!numeric_int, gl#mode ()) with
+    |(None, _) |(Some (-1), _) -> ()
+    |(Some index, GlFlatDraw.Media) ->
         let media = map#get_media_array () in
         MapDialogs.edit_media (Array.get media index)
-let make_new_media () =
-    let n = MapDialogs.make_media map in
-    numeric_entry#set_text (string_of_int n);
-    gl#draw ()
+    |(Some index, GlFlatDraw.Floor_Light)
+    |(Some index, GlFlatDraw.Ceiling_Light) ->
+        let lights = map#get_lights_array () in
+        MapDialogs.edit_light (Array.get lights index)
+    |_ -> ()
+let make_new_item () =
+    match gl#mode () with
+        |GlFlatDraw.Media ->
+            let n = MapDialogs.make_media map in
+            numeric_entry#set_text (string_of_int n);
+            gl#draw ()
+        |GlFlatDraw.Floor_Light
+        |GlFlatDraw.Ceiling_Light ->
+            let l = MapDialogs.make_light map in
+            numeric_entry#set_text (string_of_int l);
+            gl#draw ()
+        |_ -> ()
 
 (* if we need to do any cleanup work when the window/app gets destroyed, this is
  * the place to do it *)
@@ -166,6 +179,42 @@ let tool_begin_event mouse_descriptor =
     y1 := y;
     let (x, y) = gl#to_map_coords x y in
     begin match gl#mode () with
+    |GlFlatDraw.Media_Light ->
+        let poly = map#get_enclosing_poly x y in
+        begin match (button, !numeric_int, poly) with
+            |(1, Some v, Some p) ->
+                let poly = Array.get (map#get_polygons_array ()) p in
+                poly#set_media_lightsource v;
+                gl#draw ()
+            |(3, _, Some p) ->
+                let poly = Array.get (map#get_polygons_array ()) p in
+                let v = poly#media_lightsource () in
+                numeric_entry#set_text (string_of_int v)
+            |_ -> () end
+    |GlFlatDraw.Ceiling_Light ->
+        let poly = map#get_enclosing_poly x y in
+        begin match (button, !numeric_int, poly) with
+            |(1, Some v, Some p) ->
+                let poly = Array.get (map#get_polygons_array ()) p in
+                poly#set_ceiling_lightsource v;
+                gl#draw ()
+            |(3, _, Some p) ->
+                let poly = Array.get (map#get_polygons_array ()) p in
+                let v = poly#ceiling_lightsource () in
+                numeric_entry#set_text (string_of_int v)
+            |_ -> () end
+    |GlFlatDraw.Floor_Light ->
+        let poly = map#get_enclosing_poly x y in
+        begin match (button, !numeric_int, poly) with
+            |(1, Some v, Some p) ->
+                let poly = Array.get (map#get_polygons_array ()) p in
+                poly#set_floor_lightsource v;
+                gl#draw ()
+            |(3, _, Some p) ->
+                let poly = Array.get (map#get_polygons_array ()) p in
+                let v = poly#floor_lightsource () in
+                numeric_entry#set_text (string_of_int v)
+            |_ -> () end
     |GlFlatDraw.Ceiling_Height ->
         let poly = map#get_enclosing_poly x y in
         begin match (button, !numeric_float, poly) with
@@ -371,10 +420,36 @@ let to_ceiling_height_mode () =
     entry_label#set_text "Height:";
     entry_toolbar#show ();
     gl#set_mode GlFlatDraw.Ceiling_Height
+let to_media_light_mode () =
+    toolbar#misc#hide ();
+    mediabox#misc#show ();
+    entry_label#set_text "Light:";
+    newbutton#set_label "New Light...";
+    editbutton#set_label "Edit Light...";
+    entry_toolbar#show ();
+    gl#set_mode GlFlatDraw.Media_Light
+let to_floor_light_mode () =
+    toolbar#misc#hide ();
+    mediabox#misc#show ();
+    entry_label#set_text "Light:";
+    newbutton#set_label "New Light...";
+    editbutton#set_label "Edit Light...";
+    entry_toolbar#show ();
+    gl#set_mode GlFlatDraw.Floor_Light
+let to_ceiling_light_mode () =
+    toolbar#misc#hide ();
+    mediabox#misc#show ();
+    entry_label#set_text "Light:";
+    newbutton#set_label "New Light...";
+    editbutton#set_label "Edit Light...";
+    entry_toolbar#show ();
+    gl#set_mode GlFlatDraw.Ceiling_Light
 let to_media_mode () =
     toolbar#misc#hide ();
     mediabox#misc#show ();
     entry_label#set_text "Media:";
+    newbutton#set_label "New Media...";
+    editbutton#set_label "Edit Media...";
     entry_toolbar#show ();
     gl#set_mode GlFlatDraw.Media
 
@@ -384,7 +459,7 @@ let to_media_mode () =
  * moment.  I'll figure it out eventually. *)
 let file_menu_toolkit =
     [`I ("_New Level...", new_map);
-     `I ("_Open...", FileDialogs.open_file_dialog map set_title);
+     `I ("_Open...", FileDialogs.open_file_dialog map set_title gl);
      `I ("_Save Level", FileDialogs.silent_save map set_title);
      `I ("Save Level _As...", FileDialogs.save_file_dialog map set_title);
      `S;
@@ -402,8 +477,9 @@ let view_menu_toolkit =
      `M ("_Textures",  [`I ("Floor", CamlExt.id); `I ("Ceiling", CamlExt.id);]);
      `I ("_Polygon Types", CamlExt.id);
      `S;
-     `M ("_Lights",    [`I ("Floor", CamlExt.id); `I ("Ceiling", CamlExt.id);
-                       `I ("Liquids", CamlExt.id)]);
+     `M ("_Lights",    [`I ("Floor", to_floor_light_mode);
+                        `I ("Ceiling", to_ceiling_light_mode);
+                        `I ("Liquids", to_media_light_mode)]);
      `I ("Li_quids", to_media_mode);
      `M ("_Sounds",    [`I ("Ambient Sounds", CamlExt.id);
                        `I ("Random Sounds", CamlExt.id)])]
@@ -435,8 +511,8 @@ let _ =
     eventbox#event#connect#button_release ~callback:tool_end_event;
     eventbox#event#connect#motion_notify ~callback:tool_in_event;
     numeric_entry#connect#changed entry_callback;
-    edit_media#connect#clicked edit_current_media;
-    new_media#connect#clicked make_new_media;
+    editbutton#connect#clicked edit_current_item;
+    newbutton#connect#clicked make_new_item;
     gl#set_map map;
     GToolbox.build_menu file_menu ~entries:file_menu_toolkit;
     GToolbox.build_menu view_menu ~entries:view_menu_toolkit;
