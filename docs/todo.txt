@@ -13,6 +13,8 @@ than one polygon and it's annoying to have to shuffle them each time we change
 a polygon type
 + replace the object blips with object icons (i.e. finish loading those TGAs)
 + make the light dialog do something
++ fix the gtk **CRITICAL thing on start-up
++ remember open/save paths rather than defaulting to the pwd
 + add Shapes reading support, at least for wall textures
 + add ceiling / floor texturing support
 + add Pfhorte- / Obed-style texturing
@@ -49,6 +51,10 @@ avoid multi-level matching (match over tuples instead)
 + make the filename string in the map header actually meaningful
 + push GTK events in handle_keys in Smithy.ml instead of calling choose_button
 directly
++ the OK buttons in dialogs aren't being added properly or something.  what's
+wrong is really obvious, and really should be fixed
 + closing the toolbar windows causes gross behavior, it would be sweet if we
 could somehow avoid that happening (hide instead of close or something)
 + put strings into Resources.ml or some similar thing for purposes of i18n
++ some kind of plugin interface would be pretty sweet
++ merging points would be sweet

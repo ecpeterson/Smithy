@@ -23,22 +23,12 @@ Tools
  + Text tool: the text tool adds a map annotation. (not currently implemented)
  + Object tool: the object tool adds an object to the map. (not currently implemented)
 
+View Modes
+==========
+    Separate from the Draw mode, there are several modes that visualize various attributes of polygons, including height, texture, lighting, media, and sound.  The particular attribute associated with a polygon can be entered manually in the secondary toolbox that appears when entering an alternative mode, or can be picked from preexisting polygons by right-clicking. Attributes can then be assigned to a polygon by left-clicking.
+
 Features
 ========
  + Load and save unmerged map files
  + Edit point / line / polygon geometry
  + Display and move objects
-
-Future Features
-===============
- + Display actual object icons
- + Polygon elevation editors
- + Polygon permutation and platform editors
- + Forge-style ceiling and floor texture editors
- + Obed-style side texture editors
- + Light libraries
- + Point merging
- + Read merged maps / Split merged maps
- + Merge map collections
- + VISUAL MODE
- + Plugin interface
