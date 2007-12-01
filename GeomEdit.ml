@@ -153,7 +153,6 @@ let fill_poly x y map =
     let (p2, p3) = (Array.get (map#get_lines_array ()) line2)#endpoints () in
     let first_point = if p0 = p2 || p0 = p3 then p1 else p0 in
     let point_loop = List.tl (List.rev (build_point_loop line_loop [first_point])) in
-    CamlExt.print_array point_loop;
     poly#set_endpoint_indices (Array.append (Array.of_list point_loop)
                                    (Array.make (8 - List.length point_loop) 0));
     (* push it onto the big poly array *)

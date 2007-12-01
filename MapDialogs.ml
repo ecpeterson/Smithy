@@ -32,7 +32,6 @@ let line_dialog line map =
     let empty = GButton.check_button ~label:"Empty"
         ~active:(cw = -1 && ccw = -1) ~packing:box#add () in
     w#add_button_stock `OK `OK;
-    print_endline ((string_of_int cw)^","^(string_of_int ccw));
     begin match w#run () with
     |`OK ->
         let flags = if solid#active then [SOLID] else [] in

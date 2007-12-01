@@ -126,7 +126,6 @@ let new_map () =
  * toggle_button gets its activity set.  we just make sure that state of all the
  * buttons is clear, but really more could be done here *)
 let toolbar_clicked which =
-    print_endline "clicked toolbar button";
     List.iter (fun x -> x#set_active false) buttons
 
 (* gets the active tool for our event handlers that have to figure out which
