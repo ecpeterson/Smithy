@@ -1,0 +1,815 @@
+This information has been collected from a few different sources in our creation of JUICE. The main source is, of course, Aleph One's source code. We hope this upated specification is useful to those who do not wish to root around in the A1 source; a lot of this stuff is scattered across various header and C++ files.
+--Darren Watts & Jon Irons
+
+
+Map Information
+
+The Map file is by far the most complex of all the Marathon files. It contains all information about the structure and layout of the levels. Most Marathon Map files contain multiple levels, which are stored as follows:
+
+header (128 bytes)
+level 1
+level 2
+level 3... ....
+level n
+trailer (n * 84 bytes)
+
+Each level contains a number of chunks. Not all chunks must be present, and they may be in any order, but levels will not function properly without certain chunks.
+
+The exact format for the header is as follows:
+
+struct map_header // 128 bytes
+{
+  	int16 version;									/* Used internally */
+	int16 data_version;								/* Used by the data.. */
+	char file_name[MAXIMUM_WADFILE_NAME_LENGTH];
+	uint32 checksum;
+	int32 directory_offset;
+	int16 wad_count;
+	int16 application_specific_directory_data_size;
+	int16 entry_header_size;
+	int16 directory_entry_base_size;
+	uint32 parent_checksum;	/* If non-zero, this is the checksum of our parent, and we are simply modifications! */
+	int16 unused[20];
+};
+
+Field Description
+
+version
+    usually 0x0002, as far as I can see. 
+data_version
+    usually 0x0001, as far as I can see. 
+name
+    ASCII string, zero terminated, up to 64 characters.
+checksum
+	I have no idea what this is used for.
+directory_offset
+	I have no idea what this is used for.
+wad_count
+	Number of maps.
+application_specific_directory_data_size
+	No idea.
+entry_header_size
+	No idea.
+directory_entry_base_size
+	No idea.
+parent_checksum
+	See comment.
+
+
+-----------------------
+
+Each chunk starts with a header, followed by a number of entries (exact size and number of entries depends on the type of chunk). The format for the chunk header is as follows:
+
+struct entry_header { /* 16 bytes */
+	uint32 tag;
+	int32 next_offset; /* From current file location-> ie directory_entry.offset_to_start+next_offset */
+	int32 length; /* Of entry */
+	int32 offset; /* Offset for inplace expansion of data */
+};
+
+struct entry_trailer {
+	int32 offset;
+	int32 length;
+	int16 level index (for easy level switching)
+	int16 unknown
+	int32 unknown
+	int16 flags;
+	char levelname[64];
+}
+
+Field Description
+
+tag
+    4 character ASCII string signifying chunk type.
+next_offset
+    offset from start of this level (not start of file) to next chunk 
+length
+    size of chunk 
+offset
+	See comment.
+
+Chunk Types
+
+iidx
+    exclusion zone chunk 
+EPNT
+    vertex chunk (with extra info) 
+PNTS
+    vertex chunk 
+LINS
+    line chunk 
+SIDS
+    side chunk 
+POLY
+    polygon chunk 
+NAME
+    name chunk (name of level) 
+LITE
+    light source chunk 
+NOTE
+    note chunk (text in automap) 
+OBJS
+    object chunk 
+påth
+    ? 
+Minf
+    map-info chunk (?) (physics and environment info) 
+plac
+    placement chunk 
+door
+    ? not used? 
+plat
+    platform chunk (elevators, doors..) 
+plyr
+    player chunk 
+dwol
+    ? 
+mobj
+    ? 
+alin
+    ? 
+apol
+    ? 
+mOns
+    monster chunk? 
+fx
+    effects chunk? 
+bang
+    ? 
+PLAT
+    ? 
+
+Map file resource limits:
+
+There are no longer any official limits.
+
+EPNT/PNTS Chunk
+
+Each 'PNTS' entry is of type world_point2d. Each 'EPNT' entry has the following structure:
+
+struct endpoint_data /* 16 bytes */
+{
+	uint16 flags;
+	world_distance highest_adjacent_floor_height, lowest_adjacent_ceiling_height;
+	
+	world_point2d vertex;
+	world_point2d transformed;
+	
+	int16 supporting_polygon_index;
+};
+
+Field Description
+
+flags
+    flag bits
+
+        enum
+        {
+          _endpointSolid = 0x0001,
+          _endpointMultipleHeights = 0x0002 // adjacent polygons have different heights
+          _endpointTransparent = 0x0004
+        };
+
+highest_adjacent_floor_height
+    highest adjacent floor height 
+lowest_adjacent_ceiling_height
+    lowest adjacent ceiling height 
+vertex
+    coordinates of vertex. world_distance x and y.
+transformed
+    ? 
+supporting_polygon_index
+    The polygon that owns the endpoint.
+
+LINS Chunk
+
+struct line_data /* 32 bytes */
+{
+	int16 endpoint_indexes[2];
+	uint16 flags; /* no permutation field */
+
+	world_distance length;
+	world_distance highest_adjacent_floor, lowest_adjacent_ceiling;
+	
+	/* the side definition facing the clockwise polygon which references this side, and the side
+		definition facing the counterclockwise polygon (can be NONE) */
+	int16 clockwise_polygon_side_index, counterclockwise_polygon_side_index;
+	
+	/* a line can be owned by a clockwise polygon, a counterclockwise polygon, or both (but never
+		two of the same) (can be NONE) */
+	int16 clockwise_polygon_owner, counterclockwise_polygon_owner;
+	
+	int16 unused[6];
+};
+
+Field Description
+
+endpoint_indexes
+    endpoints of line 
+flags
+    flag bits
+
+        enum
+        {
+          _lineSolid = 0x4000,
+          _lineTransparent = 0x2000,
+          _lineLandscaped = 0x1000,
+          _lineElevated = 0x0800,
+          _lineVariableElevation = 0x0400
+          _lineHasTransparentSide = 0x0200
+        };
+
+length
+    length of line (world_distance is an int16)
+highest_adjacent_floor
+    highest adjacent floor height 
+lowest_adjacent_ceiling
+    lowest adjacent ceiling height 
+clockwise_polygon_side_index
+    See comments.
+counterclockwise_polygon_side_index
+    See comments.
+clockwise_polygon_owner
+    See comments.
+counterclockwise_polygon_owner
+    See comments.
+
+SIDS Chunk
+
+struct side_data /* size platform-dependant */
+{
+	int16 type;
+	uint16 flags;
+	
+	struct side_texture_definition primary_texture;
+	struct side_texture_definition secondary_texture;
+	struct side_texture_definition transparent_texture; /* not drawn if .texture==NONE */
+
+	/* all sides have the potential of being impassable; the exclusion zone is the area near
+		the side which cannot be walked through */
+	struct side_exclusion_zone exclusion_zone;
+
+	int16 control_panel_type; /* Only valid if side->flags & _side_is_control_panel */
+	int16 control_panel_permutation; /* platform index, light source index, etc... */
+	
+	int16 primary_transfer_mode; /* These should be in the side_texture_definition.. */
+	int16 secondary_transfer_mode;
+	int16 transparent_transfer_mode;
+
+	int16 polygon_index, line_index;
+
+	int16 primary_lightsource_index;	
+	int16 secondary_lightsource_index;
+	int16 transparent_lightsource_index;
+
+	int32 ambient_delta;
+
+	int16 unused[1];
+};
+
+Field Description
+
+type
+    side type, one of
+
+        enum
+        {
+          	_full_side, /* primary texture is mapped floor-to-ceiling */
+			_high_side, /* primary texture is mapped on a panel coming down from the ceiling (implies 2 adjacent polygons) */
+			_low_side, /* primary texture is mapped on a panel coming up from the floor (implies 2 adjacent polygons) */
+			_composite_side, /* primary texture is mapped floor-to-ceiling, secondary texture is mapped into it (i.e., control panel) */
+			_split_side /* primary texture is mapped onto a panel coming down from the ceiling, secondary texture is mapped on a panel coming up from the floor */
+        };
+
+flags
+    flag bits
+
+        enum
+        {
+          	_control_panel_status= 0x0001,
+			_side_is_control_panel= 0x0002,
+			_side_is_repair_switch= 0x0004, // must be toggled to exit level
+			_side_is_destructive_switch= 0x0008, // uses an item
+			_side_is_lighted_switch= 0x0010, // switch must be lighted to use
+			_side_switch_can_be_destroyed= 0x0020, // projectile hits toggle and destroy this switch
+			_side_switch_can_only_be_hit_by_projectiles= 0x0040,
+
+			_editor_dirty_bit= 0x4000 // used by the editor...
+        };
+
+control_panel_type
+    type of control panel, one of
+(These strings ripped from the Aleph One MML doc and put directly into JUICE's source code)
+
+"00. Water: Oxygen Refuel",
+"01. Water: Energy Refuel (1x)",
+"02. Water: Energy Refuel (2x)",
+"03. Water: Tag Switch (Accepts Chip)",
+"04. Water: Light Switch",
+"05. Water: Platform Switch",
+"06. Water: Tag Switch",
+"07. Water: Pattern Buffer",
+"08. Water: Computer Terminal",
+"09. Water: Tag Switch (Destroyable)",
+"10. Lava: Energy Refuel (1x)",
+"11. Lava: Energy Refuel (2x)",
+"12. Lava: Energy Refuel (3x)",
+"13. Lava: Light Switch",
+"14. Lava: Platform Switch",
+"15. Lava: Tag Switch",
+"16. Lava: Pattern Buffer",
+"17. Lava: Computer Terminal",
+"18. Lava: Oxygen Refuel",
+"19. Lava: Tag Switch (Accepts Chip)",
+"20. Lava: Tag Switch (Destroyable)",
+"21. Sewage: Energy Refuel (1x)",
+"22. Sewage: Energy Refuel (2x)",
+"23. Sewage: Energy Refuel (3x)",
+"24. Sewage: Light Switch",
+"25. Sewage: Platform Switch",
+"26. Sewage: Tag Switch",
+"27. Sewage: Pattern Buffer",
+"28. Sewage: Computer Terminal",
+"29. Sewage: Oxygen Refuel",
+"30. Sewage: Tag Switch (Accepts Chip)",
+"31. Sewage: Tag Switch (Destroyable)",
+"32. Pfhor: Energy Refuel (1x)",
+"33. Pfhor: Energy Refuel (2x)",
+"34. Pfhor: Energy Refuel (3x)",
+"35. Pfhor: Light Switch",
+"36. Pfhor: Platform Switch",
+"37. Pfhor: Tag Switch",
+"38. Pfhor: Pattern Buffer",
+"39. Pfhor: Computer Terminal",
+"40. Pfhor: Oxygen Refuel",
+"41. Pfhor: Tag Switch (Accepts Chip)",
+"42. Pfhor: Tag Switch (Destroyable)",
+"43. Jjaro: Energy Refuel (1x)",
+"44. Jjaro: Energy Refuel (2x)",
+"45. Jjaro: Energy Refuel (3x)",
+"46. Jjaro: Light Switch",
+"47. Jjaro: Platform Switch",
+"48. Jjaro: Tag Switch",
+"49. Jjaro: Pattern Buffer",
+"50. Jjaro: Computer Terminal",
+"51. Jjaro: Oxygen Refuel",
+"52. Jjaro: Tag Switch (Accepts Chip)",
+"53. Jjaro: Tag Switch (Destroyable) "
+
+primary_transfer_mode, secondary_transfer_mode, transparent_transfer_mode
+    texture transfer modes, one of
+
+        enum
+        {
+          	_xfer_normal,
+			_xfer_fade_out_to_black, /* reduce ambient light until black, then tint-fade out */
+			_xfer_invisibility,
+			_xfer_subtle_invisibility,
+			_xfer_pulsate, /* only valid for polygons */
+			_xfer_wobble, /* only valid for polygons */
+			_xfer_fast_wobble, /* only valid for polygons */
+			_xfer_static,
+			_xfer_50percent_static,
+			_xfer_landscape,
+			_xfer_smear, /* repeat pixel(0,0) of texture everywhere */
+			_xfer_fade_out_static,
+			_xfer_pulsating_static,
+			_xfer_fold_in, /* appear */
+			_xfer_fold_out, /* disappear */
+			_xfer_horizontal_slide,
+			_xfer_fast_horizontal_slide,
+			_xfer_vertical_slide,
+			_xfer_fast_vertical_slide,
+			_xfer_wander,
+			_xfer_fast_wander,
+			_xfer_big_landscape,
+			NUMBER_OF_TRANSFER_MODES
+        };
+
+The side_texture_struct has the following layout:
+
+struct side_texture_struct // 6 bytes
+{
+  world_distance x0, y0;
+  shape_descriptor texture;
+};
+
+Field Description
+
+x0, y0
+    texture offsets 
+texture
+    specifies texture set (first byte) and texture (second byte) 
+
+The side_exclusion_zone has the following layout:
+
+struct side_exclusion_zone // 16 bytes
+{
+  world_point2d e0, e1, e2, e3;
+};
+
+Field Description
+
+e0,e1,e2,e3
+    ? 
+
+POLY Chunk
+
+struct polygon_data /* 128 bytes */
+{
+	int16 type;
+	uint16 flags;
+	int16 permutation;
+
+	uint16 vertex_count;
+	int16 endpoint_indexes[MAXIMUM_VERTICES_PER_POLYGON]; /* clockwise */
+	int16 line_indexes[MAXIMUM_VERTICES_PER_POLYGON];
+	
+	shape_descriptor floor_texture, ceiling_texture;
+	world_distance floor_height, ceiling_height;
+	int16 floor_lightsource_index, ceiling_lightsource_index;
+	
+	int32 area; /* in world_distance^2 units */
+	
+	int16 first_object;
+	
+	/* precalculated impassability information; each polygon has a list of lines and points
+		that anything big (i.e., monsters but not projectiles) inside it must check against when
+		ending a move inside it. */
+	int16 first_exclusion_zone_index;
+	int16 line_exclusion_zone_count;
+	int16 point_exclusion_zone_count;
+
+	int16 floor_transfer_mode;
+	int16 ceiling_transfer_mode;
+	
+	int16 adjacent_polygon_indexes[MAXIMUM_VERTICES_PER_POLYGON];
+	
+	/* a list of polygons within WORLD_ONE of us */
+	int16 first_neighbor_index;
+	int16 neighbor_count;
+	
+	world_point2d center;
+	
+	int16 side_indexes[MAXIMUM_VERTICES_PER_POLYGON];
+	
+	world_point2d floor_origin, ceiling_origin;
+	
+	int16 media_index;
+	int16 media_lightsource_index;
+	
+	/* NONE terminated list of _saved_sound_source indexes which must be checked while a
+		listener is inside this polygon (can be none) */
+	int16 sound_source_indexes;
+	
+	// either can be NONE
+	int16 ambient_sound_image_index;
+	int16 random_sound_image_index;
+	
+	int16 unused[1];
+};
+
+Field Description
+
+type
+    polygon type, one of
+
+        enum
+        {
+          	_polygon_is_normal,
+			_polygon_is_item_impassable,
+			_polygon_is_monster_impassable,
+			_polygon_is_hill, /* for king-of-the-hill */
+			_polygon_is_base, /* for capture the flag, rugby, etc. (team in .permutation) */
+			_polygon_is_platform, /* platform index in .permutation */
+			_polygon_is_light_on_trigger, /* lightsource index in .permutation */
+			_polygon_is_platform_on_trigger, /* polygon index in .permutation */
+			_polygon_is_light_off_trigger, /* lightsource index in .permutation */
+			_polygon_is_platform_off_trigger, /* polygon index in .permutation */
+			_polygon_is_teleporter, /* .permutation is polygon_index of destination */
+			_polygon_is_zone_border,
+			_polygon_is_goal,
+			_polygon_is_visible_monster_trigger,
+			_polygon_is_invisible_monster_trigger,
+			_polygon_is_dual_monster_trigger,
+			_polygon_is_item_trigger, /* activates all items in this zone */
+			_polygon_must_be_explored,
+			_polygon_is_automatic_exit, /* if success conditions are met, causes automatic transport too next level */
+			_polygon_is_minor_ouch,
+			_polygon_is_major_ouch,
+			_polygon_is_glue,
+			_polygon_is_glue_trigger,
+			_polygon_is_superglue
+        };
+
+flags
+    flag bits
+
+        enum
+        {
+          _polygonDetached = 0x4000,
+          // I can't find these next two in the aleph source.
+          _polygonPlatformInitiallyOff = 0x2000, // platform is initially off
+          _polygonPlatformInitiallyExtended = 0x1000 // platform is initially extended
+        };
+
+NAME Chunk
+
+LITE Chunk
+(Much of this is guesswork since lights seemed to have changed a lot since Marathon)
+
+struct static_light_data /* size platform-specific */
+{
+	int16 type;
+	uint16 flags;
+	int16 phase; // initializer, so lights may start out-of-phase with each other
+	
+	struct lighting_function_specification primary_active, secondary_active, becoming_active;
+	struct lighting_function_specification primary_inactive, secondary_inactive, becoming_inactive;
+	
+	int16 tag;
+	
+	int16 unused[4];
+};
+
+Field Description
+
+
+type
+    light type, one of
+
+        enum /* default light types */
+        {
+			_normal_light,
+			_strobe_light,
+			_media_light,
+			NUMBER_OF_LIGHT_TYPES
+		};
+
+flags
+    flag bits
+
+        enum /* static flags */
+		{
+			_light_is_initially_active,
+			_light_has_slaved_intensities,
+			_light_is_stateless,
+			NUMBER_OF_STATIC_LIGHT_FLAGS /* <=16 */
+		};
+
+phase
+	See comment
+primary_active, secondary_active, becoming_active
+	See the struct below to see this data type.
+primary_inactive, secondary_inactive, becoming_inactive
+	See the struct below to see this data type.
+tag
+	Probably the tag number associated with the light.
+
+struct lighting_function_specification /* 7*2 == 14 bytes */
+{
+	int16 function;
+	
+	int16 period, delta_period;
+	_fixed intensity, delta_intensity;
+};
+
+Field Description
+
+function
+	enum /* lighting functions */
+	{
+		_constant_lighting_function, // maintain final intensity for period
+		_linear_lighting_function, // linear transition between initial and final intensity over period
+		_smooth_lighting_function, // sine transition between initial and final intensity over period
+		_flicker_lighting_function, // intensity in [smooth_intensity(t),final_intensity]
+		NUMBER_OF_LIGHTING_FUNCTIONS
+	};
+	
+
+NOTE Chunk
+
+struct map_annotation // 72 bytes
+{
+	int16 type; /* turns into color, font, size, style, etc... */
+	
+	world_point2d location; /* where to draw this (lower left) */
+	int16 polygon_index; /* only displayed if this polygon is in the automap */
+	
+	char text[MAXIMUM_ANNOTATION_TEXT_LENGTH];
+};
+
+type
+	Can't find any info on this.
+text
+	MAXIMUM_ANNOTATION_TEXT_LENGTH = 64
+
+OBJS Chunk
+
+struct map_object /* 16 bytes */
+{
+	int16 type;
+	int16 index;
+	int16 facing;
+	int16 polygon_index;
+	world_point3d location; // .z is a delta
+	
+	uint16 flags;
+};
+
+Field Description
+
+type
+    map object type, one of
+
+        enum /* map object types */
+		{
+			_saved_monster,	/* .index is monster type */
+			_saved_object,	/* .index is scenery type */
+			_saved_item,	/* .index is item type */
+			_saved_player,	/* .index is team bitfield */
+			_saved_goal,	/* .index is goal number */
+			_saved_sound_source /* .index is source type, .facing is sound volume */
+		};
+
+flags
+	one of
+	
+		enum /* map object flags */
+		{
+			_map_object_is_invisible= 0x0001, /* initially invisible */
+			_map_object_is_platform_sound= 0x0001,
+			_map_object_hanging_from_ceiling= 0x0002, /* used for calculating absolute .z coordinate */
+			_map_object_is_blind= 0x0004, /* monster cannot activate by sight */
+			_map_object_is_deaf= 0x0008, /* monster cannot activate by sound */
+			_map_object_floats= 0x0010, /* used by sound sources caused by media */
+			_map_object_is_network_only= 0x0020 /* for items only */
+			
+			// top four bits is activation bias for monsters
+		};
+
+påth Chunk
+Minf Chunk
+
+struct static_data
+{
+	int16 environment_code;
+	
+	int16 physics_model;
+	int16 song_index;
+	int16 mission_flags;
+	int16 environment_flags;
+	
+	int16 unused[4];
+
+	char level_name[LEVEL_NAME_LENGTH];
+	uint32 entry_point_flags;
+};
+
+Field Description
+
+environment_code
+	which texture set to use
+
+mission_flags
+    mission type flags
+
+        enum /* mission flags */
+		{
+			_mission_none= 0x0000,
+			_mission_extermination= 0x0001,
+			_mission_exploration= 0x0002,
+			_mission_retrieval= 0x0004,
+			_mission_repair= 0x0008,
+			_mission_rescue= 0x0010
+		};
+
+environment_flags
+    environment flags
+
+        enum /* environment flags */
+		{
+			_environment_normal= 0x0000,
+			_environment_vacuum= 0x0001, // prevents certain weapons from working, player uses oxygen
+			_environment_magnetic= 0x0002, // motion sensor works poorly
+			_environment_rebellion= 0x0004, // makes clients fight pfhor
+			_environment_low_gravity= 0x0008, // low gravity
+		
+			_environment_network= 0x2000,	// these two pseudo-environments are used to prevent items 
+			_environment_single_player= 0x4000 // from arriving in the items.c code.
+		};
+
+plac Chunk
+
+struct object_frequency_definition
+{
+	uint16 flags;
+	
+	int16 initial_count;   // number that initially appear. can be greater than maximum_count
+	int16 minimum_count;   // this number of objects will be maintained.
+	int16 maximum_count;   // canÕt exceed this, except at the beginning of the level.
+	
+	int16 random_count;    // maximum random occurences of the object
+	uint16 random_chance;    // in (0, 65535]
+};
+
+flags
+	
+	enum // flags for object_frequency_definition
+	{
+		_reappears_in_random_location= 0x0001
+	};
+
+plat Chunk
+
+struct static_platform_data /* size platform-dependant */
+{
+	int16 type;
+	int16 speed, delay;
+	world_distance maximum_height, minimum_height; /* if NONE then calculated in some reasonable way */
+
+	uint32 static_flags;
+	
+	int16 polygon_index;
+	
+	int16 tag;
+	
+	int16 unused[7];
+};
+
+Field Description
+
+type
+
+		enum /* platform types */
+		{
+			_platform_is_spht_door,
+			_platform_is_spht_split_door,
+			_platform_is_locked_spht_door,
+			_platform_is_spht_platform,
+			_platform_is_noisy_spht_platform,
+			_platform_is_heavy_spht_door,
+			_platform_is_pfhor_door,
+			_platform_is_heavy_spht_platform,
+			_platform_is_pfhor_platform,
+			
+			NUMBER_OF_PLATFORM_TYPES
+		};
+
+speed
+		
+		enum /* platform speeds */
+		{
+			_very_slow_platform= WORLD_ONE/(4*TICKS_PER_SECOND),
+			_slow_platform= WORLD_ONE/(2*TICKS_PER_SECOND),
+			_fast_platform= 2*_slow_platform,
+			_very_fast_platform= 3*_slow_platform,
+			_blindingly_fast_platform= 4*_slow_platform
+		};
+
+delay
+
+		enum /* platform delays */
+		{
+			_no_delay_platform= 0, /* use carefully; difficult to reincarnate on */
+			_short_delay_platform= TICKS_PER_SECOND,
+			_long_delay_platform= 2*TICKS_PER_SECOND,
+			_very_long_delay_platform= 4*TICKS_PER_SECOND,
+			_extremely_long_delay_platform= 8*TICKS_PER_SECOND
+		};
+
+static_flags
+    flag bits
+
+        enum /* static platform flags */
+		{
+			_platform_is_initially_active, /* otherwise inactive */
+			_platform_is_initially_extended, /* high for floor platforms, low for ceiling platforms, closed for two-way platforms */
+			_platform_deactivates_at_each_level, /* this platform will deactivate each time it reaches a discrete level */
+			_platform_deactivates_at_initial_level, /* this platform will deactivate upon returning to its original position */
+			_platform_activates_adjacent_platforms_when_deactivating, /* when deactivating, this platform activates adjacent platforms */
+			_platform_extends_floor_to_ceiling, /* i.e., there is no empty space when the platform is fully extended */
+			_platform_comes_from_floor, /* platform rises from floor */
+			_platform_comes_from_ceiling, /* platform lowers from ceiling */
+			_platform_causes_damage, /* when obstructed by monsters, this platform causes damage */
+			_platform_does_not_activate_parent, /* does not reactive itÕs parent (i.e., that platform which activated it) */
+			_platform_activates_only_once, /* cannot be activated a second time */
+			_platform_activates_light, /* activates floor and ceiling lightsources while activating */
+			_platform_deactivates_light, /* deactivates floor and ceiling lightsources while deactivating */
+			_platform_is_player_controllable, /* i.e., door: players can use action key to change the state and/or direction of this platform */
+			_platform_is_monster_controllable, /* i.e., door: monsters can expect to be able to move this platform even if inactive */
+			_platform_reverses_direction_when_obstructed,
+			_platform_cannot_be_externally_deactivated, /* when active, can only be deactivated by itself */
+			_platform_uses_native_polygon_heights, /* complicated interpretation; uses native polygon heights during automatic min,max calculation */
+			_platform_delays_before_activation, /* whether or not the platform begins with the maximum delay before moving */
+			_platform_activates_adjacent_platforms_when_activating,
+			_platform_deactivates_adjacent_platforms_when_activating,
+			_platform_deactivates_adjacent_platforms_when_deactivating,
+			_platform_contracts_slower,
+			_platform_activates_adjacent_platforms_at_each_level,
+			_platform_is_locked,
+			_platform_is_secret,
+			_platform_is_door,
+			NUMBER_OF_STATIC_PLATFORM_FLAGS /* <=32 */
+		};
+
