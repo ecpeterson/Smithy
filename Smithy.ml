@@ -385,8 +385,6 @@ let to_media_mode () =
 let file_menu_toolkit =
     [`I ("_New Level...", new_map);
      `I ("_Open...", FileDialogs.open_file_dialog map set_title);
-     `S;
-     `I ("_Close", CamlExt.id);
      `I ("_Save Level", FileDialogs.silent_save map set_title);
      `I ("Save Level _As...", FileDialogs.save_file_dialog map set_title);
      `S;

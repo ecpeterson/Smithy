@@ -1,0 +1,51 @@
++ make the various dialogs actually do something
++ find / create a facing control for the various dialogs that require it
++ finish the object dialog, which is currently in a half-formed state
++ write the platform dialog
++ finish the polygon dialog, which currently needs to invoke the platform dlg
++ change the way platforms are handled and attach them to polygons, rather
+than storing them in a separate array.  this will allow really easy, smart
+internal handling of the platform data, since it's never referenced by more
+than one polygon and it's annoying to have to shuffle them each time we change
+a polygon type
++ replace the object blips with object icons (i.e. finish loading those TGAs)
++ add ceiling / floor lighting support
++ add Shapes reading support, at least for wall textures
++ add ceiling / floor texturing support
++ add Pfhorte- / Obed-style texturing
++ add a terminal editor
++ add light / media library importing / exporting
++ comment those ridiculous algorithms
++ read from merged maps
++ merge maps
++ VISUAL MODE
++ map manager window (grid size, etc.)
++ map height restriction
++ finish the enumerative / bitmask type conversion in MapTypes.ml
++ write polygon tool
++ write annotation tool
++ write object tool
++ write single level undo
++ write multiple level undo
++ add temporary object highlights until the object glyphs are done
++ add Goto... function (i.e. add recenter-on-point function)
++ add placement chunk dialog / functionality
++ add nuke, pave, nuke & pave
++ add polygon types view
++ add ambient / random sounds views
++ add New Level functionality
++ refactor files like Smithy.ml, the ones that just have loads of unrelated
+things thrown together
++ add .mli files!
++ throw together a sample map that can be used as the default make run argument
++ read in optimized chunks
++ write out optimized chunks
++ refactor some of the large match statements in the renderer to at least
+avoid multi-level matching (match over tuples instead)
++ make render coloring configurable
++ make the filename string in the map header actually meaningful
++ push GTK events in handle_keys in Smithy.ml instead of calling choose_button
+directly
++ closing the toolbar windows causes gross behavior, it would be sweet if we
+could somehow avoid that happening (hide instead of close or something)
++ put strings into Resources.ml or some similar thing for purposes of i18n

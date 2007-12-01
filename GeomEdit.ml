@@ -77,9 +77,7 @@ let select_line_loop x y map =
                 let (p0, p1) = line#endpoints () in
                 let p0_vtx = (Array.get points p0)#vertex () in
                 let p1_vtx = (Array.get points p1)#vertex () in
-                (* this next line just needs some big number :( *)
-                (* TODO: change to -inf *)
-                if p0 = prev || p1 = prev then -100000000000.0 else
+                if p0 = prev || p1 = prev then neg_infinity else
                 if p0 = working then CamlExt.dotf (diff prev_vtx working_vtx)
                                                   (diff p1_vtx working_vtx) /.
                                         (CamlExt.norm (diff p1_vtx working_vtx))
