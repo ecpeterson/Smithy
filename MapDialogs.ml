@@ -157,3 +157,42 @@ let info_dialog map () =
     begin match w#run () with
     |_ -> () end;
     w#destroy ()
+
+let edit_media media =
+    let w = GWindow.dialog ~title:"Liquid Parameters" () in
+    let vbox = GPack.vbox ~packing:w#action_area#add () in
+    let hbox1 = GPack.hbox ~packing:vbox#add () in
+    GMisc.label ~packing:hbox1#add ~text:"Type:" ();
+    let opt = GMenu.option_menu ~packing:hbox1#add () in
+    let menu = GMenu.menu ~packing:opt#set_menu () in
+    CamlExt.iter_indexed (fun label index ->
+        ignore (GMenu.menu_item ~label ~packing:menu#append ()))
+        ["Water"; "Lava"; "Alien Goo"; "Sewage"; "Jjaro Goo"];
+    let hbox2 = GPack.hbox ~packing:vbox#add () in
+    GMisc.label ~packing:hbox2#add ~text:"Based On:" ();
+    let based_on = GEdit.entry ~packing:hbox2#add () in
+    let hbox3 = GPack.hbox ~packing:vbox#add () in
+    GMisc.label ~packing:hbox3#add ~text:"Tide Parameter:" ();
+    let tide_parameter = GEdit.entry ~packing:hbox3#add () in
+    let hbox4 = GPack.hbox ~packing:vbox#add () in
+    (* facing (subcaptioned Flow Direction) belongs in hbox4 *)
+    let vbox2 = GPack.vbox ~packing:hbox4#add () in
+    let hbox5 = GPack.hbox ~packing:vbox2#add () in
+    GMisc.label ~packing:hbox5#add ~text:"Flow Strength:" ();
+    let flow_strength = GEdit.entry ~packing:hbox5#add () in
+    let hbox6 = GPack.hbox ~packing:vbox2#add () in
+    GMisc.label ~packing:hbox6#add ~text:"Low Tide:" ();
+    let low_tide = GEdit.entry ~packing:hbox6#add () in
+    let hbox7 = GPack.hbox ~packing:vbox2#add () in
+    GMisc.label ~packing:hbox7#add ~text:"High Tide:" ();
+    let low_tide = GEdit.entry ~packing:hbox7#add () in
+    let obstructed = GButton.check_button
+        ~label:"Liquid's sound obstructed by floor" ~packing:vbox#add () in
+    begin match w#run () with
+    |_ -> () end;
+    w#destroy ()
+
+let make_media map =
+    let m = new MapTypes.media in
+    edit_media m;
+    map#add_media m

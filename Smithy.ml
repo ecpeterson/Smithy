@@ -80,10 +80,18 @@ let objglyph =
 (* and the alternative toolbar *)
 let entry_toolbar = GWindow.window ~type_hint:`TOOLBAR ~title:"Smithy"
                                    ~show:false ()
-let hbox = GPack.hbox ~packing:entry_toolbar#add ()
+let vbox = GPack.vbox ~packing:entry_toolbar#add ()
+let hbox = GPack.hbox ~packing:vbox#add ()
 let entry_label = GMisc.label ~text:"Height: " ~packing:hbox#add ()
 let numeric_entry = GEdit.entry ~packing:hbox#add ()
+let mediabox = GPack.hbox ~packing:vbox#add ()
+let edit_media = GButton.button ~label:"Edit Media..." ~packing:mediabox#add ()
+let new_media = GButton.button ~label:"New Media..." ~packing:mediabox#add ()
 
+(* and the map object we'll be recycling *)
+let map = new map
+
+(* routines that deal with the alternative toolbar *)
 let numeric_int = ref (None)
 let numeric_float = ref (None)
 
@@ -93,10 +101,16 @@ let entry_callback () =
         try Some (int_of_float (float_of_string t)) with _ -> None end end;
     begin numeric_float := try Some (float_of_string t) with _ -> begin
         try Some (float (int_of_string t)) with _ -> None end end
-let _ = numeric_entry#connect#changed entry_callback
-
-(* and the map object we'll be recycling *)
-let map = new map
+let edit_current_media () =
+    match !numeric_int with
+    |None |Some (-1) -> ()
+    |Some index ->
+        let media = map#get_media_array () in
+        MapDialogs.edit_media (Array.get media index)
+let make_new_media () =
+    let n = MapDialogs.make_media map in
+    numeric_entry#set_text (string_of_int n);
+    gl#draw ()
 
 (* if we need to do any cleanup work when the window/app gets destroyed, this is
  * the place to do it *)
@@ -176,6 +190,18 @@ let tool_begin_event mouse_descriptor =
                 let poly = Array.get (map#get_polygons_array ()) p in
                 let v = poly#floor_height () in
                 numeric_entry#set_text (string_of_float v)
+            |_ -> () end
+    |GlFlatDraw.Media ->
+        let poly = map#get_enclosing_poly x y in
+        begin match (button, !numeric_int, poly) with
+            |(1, Some v, Some p) ->
+                let poly = Array.get (map#get_polygons_array ()) p in
+                poly#set_media_index v;
+                gl#draw ()
+            |(3, _, Some p) ->
+                let poly = Array.get (map#get_polygons_array ()) p in
+                let v = poly#media_index () in
+                numeric_entry#set_text (string_of_int v)
             |_ -> () end
     |GlFlatDraw.Draw ->
         if tool = buttonarrow then begin
@@ -336,12 +362,22 @@ let to_draw_mode () =
     gl#set_mode GlFlatDraw.Draw
 let to_floor_height_mode () =
     toolbar#misc#hide ();
+    mediabox#misc#hide ();
+    entry_label#set_text "Height:";
     entry_toolbar#show ();
     gl#set_mode GlFlatDraw.Floor_Height
 let to_ceiling_height_mode () =
     toolbar#misc#hide ();
+    mediabox#misc#hide ();
+    entry_label#set_text "Height:";
     entry_toolbar#show ();
     gl#set_mode GlFlatDraw.Ceiling_Height
+let to_media_mode () =
+    toolbar#misc#hide ();
+    mediabox#misc#show ();
+    entry_label#set_text "Media:";
+    entry_toolbar#show ();
+    gl#set_mode GlFlatDraw.Media
 
 (* menus, to be passed to GToolkit.  not really stylistically proper to be
  * defined in this file at this location, but because the pairs have to refer to
@@ -371,7 +407,7 @@ let view_menu_toolkit =
      `S;
      `M ("_Lights",    [`I ("Floor", CamlExt.id); `I ("Ceiling", CamlExt.id);
                        `I ("Liquids", CamlExt.id)]);
-     `I ("Li_quids", CamlExt.id);
+     `I ("Li_quids", to_media_mode);
      `M ("_Sounds",    [`I ("Ambient Sounds", CamlExt.id);
                        `I ("Random Sounds", CamlExt.id)])]
 
@@ -401,6 +437,9 @@ let _ =
     eventbox#event#connect#button_press ~callback:tool_begin_event;
     eventbox#event#connect#button_release ~callback:tool_end_event;
     eventbox#event#connect#motion_notify ~callback:tool_in_event;
+    numeric_entry#connect#changed entry_callback;
+    edit_media#connect#clicked edit_current_media;
+    new_media#connect#clicked make_new_media;
     gl#set_map map;
     GToolbox.build_menu file_menu ~entries:file_menu_toolkit;
     GToolbox.build_menu view_menu ~entries:view_menu_toolkit;

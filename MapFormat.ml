@@ -231,6 +231,7 @@ class map = object(self)
     method get_lines_array () = lines
     method get_polygons_array () = polygons
     method get_objs_array () = objs
+    method get_media_array () = media
     method get_filename () = filename
 
     (* allow others to add objects *)
@@ -248,6 +249,11 @@ class map = object(self)
         let append_array = Array.make 1 poly in
         polygons <- Array.append polygons append_array;
         Array.length polygons - 1
+
+    method add_media m =
+        let append_array = Array.make 1 m in
+        media <- Array.append media append_array;
+        Array.length media - 1
 
     (* geometry selection functions *)
     method get_closest_object x0 y0 =

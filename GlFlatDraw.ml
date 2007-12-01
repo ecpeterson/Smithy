@@ -16,7 +16,7 @@ let invalid_polygon        = (1.0, 0.5, 0.5)
 type highlighted_component = No_Highlight | Point of int | Line of int |
                              Poly of int | Object of int
 
-type renderer_mode = Draw | Floor_Height | Ceiling_Height
+type renderer_mode = Draw | Floor_Height | Ceiling_Height | Media
 open MapFormat
 
 let rec draw_poly poly_ring n =
@@ -187,7 +187,19 @@ class gldrawer (ar:GlGtk.area)
 (* draws the map polys *)
     method private draw_polys () =
         let polygons = map#get_polygons_array () in
+        let poly_count = Array.length polygons in
         let points = map#get_points_array () in
+        let count =
+            match mode with
+                |Media ->
+                    let rec count_media i acci accl =
+                        if i = poly_count then acci else
+                        let m = (Array.get polygons i)#media_index () in
+                        if List.mem m accl
+                            then count_media (i+1) acci accl
+                            else count_media (i+1) (acci+1) (m :: accl) in
+                    count_media 0 0 []
+                |_ -> 0 in
         let render_fn =
             match mode with
                 |Draw -> (fun x ->
@@ -196,6 +208,14 @@ class gldrawer (ar:GlGtk.area)
                     let concave = vertex_array_is_concave vertex_array in
                     if concave then GlDraw.color invalid_polygon
                         else GlDraw.color polygon_color;
+                    draw_poly vertex_array 0)
+                |Media -> (fun x ->
+                    let vertex_array = List.map (fun x ->
+                        (Array.get (map#get_points_array ()) x)#vertex ()) (map#get_poly_ring x) in
+                    let color = match x#media_index () with
+                        (-1) -> (0.5, 0.5, 0.5)
+                          |m -> (float m /. (float count), 0.0, 0.0) in
+                    GlDraw.color color;
                     draw_poly vertex_array 0)
                 |Ceiling_Height -> (fun x ->
                     let vertex_array = List.map (fun x ->
@@ -210,7 +230,8 @@ class gldrawer (ar:GlGtk.area)
                     (* convert to an rgb-range value *)
                     let height = x#floor_height () /. 18. +. 0.5 in
                     GlDraw.color (height, height, height);
-                    draw_poly vertex_array 0) in
+                    draw_poly vertex_array 0)
+                |_ -> (fun x -> ()) in
         Array.iter render_fn polygons
 
     method private draw_objs () =
