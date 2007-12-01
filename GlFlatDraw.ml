@@ -16,7 +16,8 @@ let invalid_polygon        = (1.0, 0.5, 0.5)
 type highlighted_component = No_Highlight | Point of int | Line of int |
                              Poly of int | Object of int
 
-type renderer_mode = Draw | Floor_Height | Ceiling_Height | Media
+type renderer_mode = Draw | Floor_Height | Ceiling_Height | Media |
+                     Floor_Light | Ceiling_Light | Media_Light
 open MapFormat
 
 let rec draw_poly poly_ring n =
@@ -199,6 +200,8 @@ class gldrawer (ar:GlGtk.area)
                             then count_media (i+1) acci accl
                             else count_media (i+1) (acci+1) (m :: accl) in
                     count_media 0 0 []
+                |Floor_Light |Ceiling_Light |Media_Light ->
+                    Array.length (map#get_lights_array ())
                 |_ -> 0 in
         let render_fn =
             match mode with
@@ -208,6 +211,30 @@ class gldrawer (ar:GlGtk.area)
                     let concave = vertex_array_is_concave vertex_array in
                     if concave then GlDraw.color invalid_polygon
                         else GlDraw.color polygon_color;
+                    draw_poly vertex_array 0)
+                |Media_Light -> (fun x ->
+                    let vertex_array = List.map (fun x ->
+                        (Array.get (map#get_points_array ()) x)#vertex ()) (map#get_poly_ring x) in
+                    let color = match (x#media_index (), x#media_lightsource ()) with
+                        (_, -1) |(-1, _) -> (0.5, 0.5, 0.5)
+                        |         (_, l) -> (float l /. (float count), 0.0, 0.0) in
+                    GlDraw.color color;
+                    draw_poly vertex_array 0)
+                |Floor_Light -> (fun x ->
+                    let vertex_array = List.map (fun x ->
+                        (Array.get (map#get_points_array ()) x)#vertex ()) (map#get_poly_ring x) in
+                    let color = match x#floor_lightsource () with
+                        (-1) -> (0.5, 0.5, 0.5)
+                          |l -> (float l /. (float count), 0.0, 0.0) in
+                    GlDraw.color color;
+                    draw_poly vertex_array 0)
+                |Ceiling_Light -> (fun x ->
+                    let vertex_array = List.map (fun x ->
+                        (Array.get (map#get_points_array ()) x)#vertex ()) (map#get_poly_ring x) in
+                    let color = match x#ceiling_lightsource () with
+                        (-1) -> (0.5, 0.5, 0.5)
+                          |l -> (float l /. (float count), 0.0, 0.0) in
+                    GlDraw.color color;
                     draw_poly vertex_array 0)
                 |Media -> (fun x ->
                     let vertex_array = List.map (fun x ->

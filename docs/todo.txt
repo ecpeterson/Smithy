@@ -1,3 +1,6 @@
++ snap to grid
++ the dialog code is really ugly, think up a better way to organize them and
+look into packing tables
 + make the various dialogs actually do something
 + find / create a facing control for the various dialogs that require it
 + finish the object dialog, which is currently in a half-formed state
@@ -9,7 +12,7 @@ internal handling of the platform data, since it's never referenced by more
 than one polygon and it's annoying to have to shuffle them each time we change
 a polygon type
 + replace the object blips with object icons (i.e. finish loading those TGAs)
-+ add ceiling / floor lighting support
++ make the light dialog do something
 + add Shapes reading support, at least for wall textures
 + add ceiling / floor texturing support
 + add Pfhorte- / Obed-style texturing
