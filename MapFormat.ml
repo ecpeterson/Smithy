@@ -343,8 +343,7 @@ class map = object(self)
 
     method get_poly_ring (poly : polygon) =
         let endpoints = Array.map
-            (fun x -> if x >= Array.length lines then dprint (string_of_int x);
-                try (Array.get lines x)#endpoints () with _ -> (0, 0))
+            (fun x -> (Array.get lines x)#endpoints ())
             (poly#line_indices ()) in
         let rec loop n acc =
             if n = poly#vertex_count () then acc else
