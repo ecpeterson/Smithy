@@ -488,7 +488,7 @@ let special_menu_toolkit =
     [`I ("Zoom In", zoom_in);
      `I ("Zoom Out", zoom_out);
      `S;
-     `I ("Map M_anager", CamlExt.id);
+     `I ("Map M_anager", MapDialogs.map_manager gl);
      `I ("View _Height Window", CamlExt.id);
      `I ("_Goto...", CamlExt.id);
      `S;

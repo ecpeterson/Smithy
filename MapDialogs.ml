@@ -357,3 +357,35 @@ let make_light map =
     let l = new MapTypes.light in
     edit_light l;
     map#add_light l
+
+let map_manager gl () =
+    let w = GWindow.dialog ~title:"Map Manager" () in
+    let vbox = GPack.vbox ~packing:w#action_area#add () in
+    let hbox = GPack.hbox ~packing:vbox#add () in
+    GMisc.label ~text:"Grid Size:" ~packing:hbox#add ();
+    let entry = GEdit.entry ~packing:hbox#add
+        ~text:(string_of_int (gl#grid_factor ())) () in
+    let display_grid = GButton.check_button ~label:"Display Grid"
+                                            ~packing:vbox#add () in
+    let constrain_grid = GButton.check_button ~label:"Constrain Grid"
+                                              ~packing:vbox#add () in
+    let monsters = GButton.check_button ~label:"Show Monsters"
+                                        ~packing:vbox#add () in
+    let objects = GButton.check_button ~label:"Show Objects"
+                                       ~packing:vbox#add () in
+    let scenery = GButton.check_button ~label:"Show Scenery"
+                                       ~packing:vbox#add () in
+    let players = GButton.check_button ~label:"Show Players"
+                                       ~packing:vbox#add () in
+    let goals = GButton.check_button ~label:"Show Goals"
+                                     ~packing:vbox#add () in
+    let sounds = GButton.check_button ~label:"Show Sounds"
+                                      ~packing:vbox#add () in
+    let annotations = GButton.check_button ~label:"Show Annotations"
+                                        ~packing:vbox#add () in
+    let crosshairs = GButton.check_button ~label:"Visual Mode Crosshairs"
+                                          ~packing:vbox#add () in
+    w#add_button_stock `OK `OK;
+    begin match w#run () with
+    |_ -> try gl#set_grid_factor (int_of_string entry#text) with _ -> () end;
+    w#destroy ()
