@@ -378,4 +378,9 @@ class gldrawer (ar:GlGtk.area)
         self#draw ()
     method highlighted () =
         highlighted_component
+
+    method set_grid_factor x =
+        grid_factor <- x
+    method grid_factor () =
+        grid_factor
 end
