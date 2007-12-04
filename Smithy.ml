@@ -361,54 +361,28 @@ let handle_keys key =
         |_   -> () end;
     false
 
+let change_mode box entry buttons button_text1 button_text2 label_text mode =
+    if box then toolbar#show () else toolbar#misc#hide ();
+    if entry then entry_toolbar#show () else entry_toolbar#misc#hide ();
+    if buttons then mediabox#misc#show () else mediabox#misc#hide ();
+    entry_label#set_text label_text;
+    newbutton#set_label button_text1;
+    editbutton#set_label button_text2;
+    gl#set_mode mode
 let to_draw_mode () =
-    entry_toolbar#misc#hide ();
-    toolbar#show ();
-    gl#set_mode GlFlatDraw.Draw
+    change_mode true false false "" "" "" GlFlatDraw.Draw
 let to_floor_height_mode () =
-    toolbar#misc#hide ();
-    mediabox#misc#hide ();
-    entry_label#set_text "Height:";
-    entry_toolbar#show ();
-    gl#set_mode GlFlatDraw.Floor_Height
+    change_mode false true false "" "" "Height:" GlFlatDraw.Floor_Height
 let to_ceiling_height_mode () =
-    toolbar#misc#hide ();
-    mediabox#misc#hide ();
-    entry_label#set_text "Height:";
-    entry_toolbar#show ();
-    gl#set_mode GlFlatDraw.Ceiling_Height
+    change_mode false true false "" "" "Height:" GlFlatDraw.Ceiling_Height
 let to_media_light_mode () =
-    toolbar#misc#hide ();
-    mediabox#misc#show ();
-    entry_label#set_text "Light:";
-    newbutton#set_label "New Light...";
-    editbutton#set_label "Edit Light...";
-    entry_toolbar#show ();
-    gl#set_mode GlFlatDraw.Media_Light
+    change_mode false true true "New Light..." "Edit Light..." "Light:" GlFlatDraw.Media_Light
 let to_floor_light_mode () =
-    toolbar#misc#hide ();
-    mediabox#misc#show ();
-    entry_label#set_text "Light:";
-    newbutton#set_label "New Light...";
-    editbutton#set_label "Edit Light...";
-    entry_toolbar#show ();
-    gl#set_mode GlFlatDraw.Floor_Light
+    change_mode false true true "New Light..." "Edit Light..." "Light:" GlFlatDraw.Floor_Light
 let to_ceiling_light_mode () =
-    toolbar#misc#hide ();
-    mediabox#misc#show ();
-    entry_label#set_text "Light:";
-    newbutton#set_label "New Light...";
-    editbutton#set_label "Edit Light...";
-    entry_toolbar#show ();
-    gl#set_mode GlFlatDraw.Ceiling_Light
+    change_mode false true true "New Light..." "Edit Light..." "Light:" GlFlatDraw.Ceiling_Light
 let to_media_mode () =
-    toolbar#misc#hide ();
-    mediabox#misc#show ();
-    entry_label#set_text "Media:";
-    newbutton#set_label "New Media...";
-    editbutton#set_label "Edit Media...";
-    entry_toolbar#show ();
-    gl#set_mode GlFlatDraw.Media
+    change_mode false true true "New Media..." "Edit Media..." "Media:" GlFlatDraw.Media
 
 (* menus, to be passed to GToolkit.  not really stylistically proper to be
  * defined in this file at this location, but because the pairs have to refer to
