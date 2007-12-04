@@ -263,56 +263,34 @@ class map = object(self)
 
     (* geometry selection functions *)
     method get_closest_object x0 y0 =
-        let distance (x0, y0) (x1, y1) =
-            ((x0 -. x1)**2.0 +. (y0 -. y1)**2.0)**0.5 in
-        let rec g_c_o_aux x0 y0 i accd acci =
-            if i = Array.length objs then (accd, acci) else
-            let this_obj = Array.get objs i in
+        array_fold_left_indexed (fun (accd, acci) this_obj i ->
             let (xi, yi, _) = this_obj#point () in
             let this_distance = distance (float xi, float yi) (x0, y0) in
-            if this_distance < accd then
-                g_c_o_aux x0 y0 (i+1) this_distance i
-            else
-                g_c_o_aux x0 y0 (i+1) accd acci in
-        g_c_o_aux x0 y0 0 65536.0 (-1)
+            if this_distance < accd then (this_distance, i) else (accd, acci))
+                (infinity, 0) objs
 
     method get_closest_point x0 y0 =
-        let distance (x0, y0) (x1, y1) =
-            ((x0 -. x1)**2.0 +. (y0 -. y1)**2.0)**0.5 in
-        let rec g_c_p_aux x0 y0 i accd acci =
-            if i = Array.length points then (accd, acci) else
-            let this_point = Array.get points i in
+        array_fold_left_indexed (fun (accd, acci) this_point i ->
             match this_point#vertex () with (xi, yi) ->
             let this_distance = distance (float xi, float yi) (x0, y0) in
-            if this_distance < accd then
-                g_c_p_aux x0 y0 (i+1) this_distance i
-            else
-                g_c_p_aux x0 y0 (i+1) accd acci in
-        g_c_p_aux x0 y0 0 65536.0 (-1)
+            if this_distance < accd then (this_distance, i) else (accd, acci))
+                (infinity, 0) points
 
     method get_closest_line x0 y0 =
-        let point_distance (x0, y0) (x1, y1) =
-            ((x0 -. x1)**2.0 +. (y0 -. y1)**2.0)**0.5 in
-        let distance (e0x, e0y) (e1x, e1y) (x, y) =
+        let line_distance (e0x, e0y) (e1x, e1y) (x, y) =
             let u = (((x -. e0x) *. (e1x -. e0x)) +. ((y -. e0y) *. (e1y -. e0y)))
                     /. ((e1x -. e0x)**2.0 +. (e1y -. e0y)**2.0) in
-            if u > 1.0 then point_distance (x, y) (e1x, e1y) else
-            if u < 0.0 then point_distance (x, y) (e0x, e0y) else
+            if u > 1.0 then distance (x, y) (e1x, e1y) else
+            if u < 0.0 then distance (x, y) (e0x, e0y) else
             let ix = e0x +. u *. (e1x -. e0x) in
             let iy = e0y +. u *. (e1y -. e0y) in
-            point_distance (x, y) (ix, iy) in
-        let rec g_c_l_aux x0 y0 i accd acci =
-            if i = Array.length lines then (accd, acci) else
-            let this_line = Array.get lines i in
+            distance (x, y) (ix, iy) in
+        array_fold_left_indexed (fun (accd, acci) this_line i ->
             let (p0i, p1i) = this_line#endpoints () in
             let (p0x, p0y) = (Array.get points p0i)#vertex () in
             let (p1x, p1y) = (Array.get points p1i)#vertex () in
-            let d = distance (float p0x, float p0y) (float p1x, float p1y) (x0, y0) in
-            if d < accd then
-                g_c_l_aux x0 y0 (i+1) d i
-            else
-                g_c_l_aux x0 y0 (i+1) accd acci in
-        g_c_l_aux x0 y0 0 65536.0 (-1)
+            let d = line_distance (float p0x, float p0y) (float p1x, float p1y) (x0, y0) in
+            if d < accd then (d, i) else (accd, acci)) (infinity, 0) lines
 
     method get_enclosing_poly x0 y0 =
         let pi = asin 1.0 *. 2.0 in
