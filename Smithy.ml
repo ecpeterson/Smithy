@@ -173,128 +173,85 @@ let tool_begin_event mouse_descriptor =
     let y = GdkEvent.Button.y mouse_descriptor in
     let button = GdkEvent.Button.button mouse_descriptor in
     let tool = active_tool () in
-    x0 := x;
-    y0 := y;
-    x1 := x;
-    y1 := y;
+    x0 := x; y0 := y; x1 := x; y1 := y;
     let (x, y) = gl#to_map_coords x y in
-    begin match gl#mode () with
-    |GlFlatDraw.Media_Light ->
-        let poly = map#get_enclosing_poly x y in
-        begin match (button, !numeric_int, poly) with
-            |(1, Some v, Some p) ->
-                let poly = Array.get (map#get_polygons_array ()) p in
-                poly#set_media_lightsource v;
-                gl#draw ()
-            |(3, _, Some p) ->
-                let poly = Array.get (map#get_polygons_array ()) p in
-                let v = poly#media_lightsource () in
-                numeric_entry#set_text (string_of_int v)
-            |_ -> () end
-    |GlFlatDraw.Ceiling_Light ->
-        let poly = map#get_enclosing_poly x y in
-        begin match (button, !numeric_int, poly) with
-            |(1, Some v, Some p) ->
-                let poly = Array.get (map#get_polygons_array ()) p in
-                poly#set_ceiling_lightsource v;
-                gl#draw ()
-            |(3, _, Some p) ->
-                let poly = Array.get (map#get_polygons_array ()) p in
-                let v = poly#ceiling_lightsource () in
-                numeric_entry#set_text (string_of_int v)
-            |_ -> () end
-    |GlFlatDraw.Floor_Light ->
-        let poly = map#get_enclosing_poly x y in
-        begin match (button, !numeric_int, poly) with
-            |(1, Some v, Some p) ->
-                let poly = Array.get (map#get_polygons_array ()) p in
-                poly#set_floor_lightsource v;
-                gl#draw ()
-            |(3, _, Some p) ->
-                let poly = Array.get (map#get_polygons_array ()) p in
-                let v = poly#floor_lightsource () in
-                numeric_entry#set_text (string_of_int v)
-            |_ -> () end
-    |GlFlatDraw.Ceiling_Height ->
-        let poly = map#get_enclosing_poly x y in
-        begin match (button, !numeric_float, poly) with
-            |(1, Some v, Some p) ->
-                let poly = Array.get (map#get_polygons_array ()) p in
-                poly#set_ceiling_height v;
-                gl#draw ()
-            |(3, _, Some p) ->
-                let poly = Array.get (map#get_polygons_array ()) p in
-                let v = poly#ceiling_height () in
-                numeric_entry#set_text (string_of_float v)
-            |_ -> () end
-    |GlFlatDraw.Floor_Height ->
-        let poly = map#get_enclosing_poly x y in
-        begin match (button, !numeric_float, poly) with
-            |(1, Some v, Some p) ->
-                let poly = Array.get (map#get_polygons_array ()) p in
-                poly#set_floor_height v;
-                gl#draw ()
-            |(3, _, Some p) ->
-                let poly = Array.get (map#get_polygons_array ()) p in
-                let v = poly#floor_height () in
-                numeric_entry#set_text (string_of_float v)
-            |_ -> () end
-    |GlFlatDraw.Media ->
-        let poly = map#get_enclosing_poly x y in
-        begin match (button, !numeric_int, poly) with
-            |(1, Some v, Some p) ->
-                let poly = Array.get (map#get_polygons_array ()) p in
-                poly#set_media_index v;
-                gl#draw ()
-            |(3, _, Some p) ->
-                let poly = Array.get (map#get_polygons_array ()) p in
-                let v = poly#media_index () in
-                numeric_entry#set_text (string_of_int v)
-            |_ -> () end
-    |GlFlatDraw.Draw ->
-        if tool = buttonarrow then begin
-            let (point_d, point_i) = map#get_closest_point x y in
-            let (line_d, line_i) = map#get_closest_line x y in
-            let poly = map#get_enclosing_poly x y in
-            let (obj_d, obj_i) = map#get_closest_object x y in
-            begin match button with
-            |1 ->
-                if point_d < highlight_distance () then
-                    gl#set_highlighted (GlFlatDraw.Point point_i)
-                else if obj_d < highlight_distance () then
-                    gl#set_highlighted (GlFlatDraw.Object obj_i)
-                else if line_d < highlight_distance () then
-                    gl#set_highlighted (GlFlatDraw.Line line_i)
-                else if poly != None then
-                    match poly with None -> () | Some n ->
-                    gl#set_highlighted (GlFlatDraw.Poly n)
-                else
-                    gl#set_highlighted GlFlatDraw.No_Highlight
-            |3 ->
-                if point_d < highlight_distance () then
-                    MapDialogs.point_dialog
-                        (Array.get (map#get_points_array ()) point_i)
-                else if obj_d < highlight_distance () then
-                    MapDialogs.obj_dialog
-                        (Array.get (map#get_objs_array ()) obj_i)
-                else if line_d < highlight_distance () then
-                    MapDialogs.line_dialog
-                        (Array.get (map#get_lines_array ()) line_i) map
-                else if poly != None then
-                    match poly with None -> () | Some n ->
-                    MapDialogs.poly_dialog
-                        (Array.get (map#get_polygons_array ()) n)
-                else ()
-            |_ -> () end;
-            gl#draw ()
-        end else if tool = buttonline then begin
-            GeomEdit.start_line x y map (highlight_distance ());
-            gl#draw ()
-        end else if tool = buttonfill then begin
-            GeomEdit.fill_poly (int_of_float x) (int_of_float y) map;
-            gl#draw ()
-        end else ()
+    let (point_d, point_i) = map#get_closest_point x y in
+    let (line_d, line_i) = map#get_closest_line x y in
+    let poly = map#get_enclosing_poly x y in
+    let (obj_d, obj_i) = map#get_closest_object x y in
+    begin match (gl#mode (), button, !numeric_int, !numeric_float, poly) with
+    |GlFlatDraw.Media_Light, 1, Some v, _, Some p ->
+        let poly = Array.get (map#get_polygons_array ()) p in
+        poly#set_media_lightsource v
+    |GlFlatDraw.Media_Light, 3, _, _, Some p ->
+        let poly = Array.get (map#get_polygons_array ()) p in
+        let v = poly#media_lightsource () in
+        numeric_entry#set_text (string_of_int v)
+    |GlFlatDraw.Ceiling_Light, 1, Some v, _, Some p ->
+        let poly = Array.get (map#get_polygons_array ()) p in
+        poly#set_ceiling_lightsource v
+    |GlFlatDraw.Ceiling_Light, 3, _, _, Some p ->
+        let poly = Array.get (map#get_polygons_array ()) p in
+        let v = poly#ceiling_lightsource () in
+        numeric_entry#set_text (string_of_int v)
+    |GlFlatDraw.Floor_Light, 1, Some v, _, Some p ->
+        let poly = Array.get (map#get_polygons_array ()) p in
+        poly#set_floor_lightsource v
+    |GlFlatDraw.Floor_Light, 3, _, _, Some p ->
+        let poly = Array.get (map#get_polygons_array ()) p in
+        let v = poly#floor_lightsource () in
+        numeric_entry#set_text (string_of_int v)
+    |GlFlatDraw.Ceiling_Height, 1, _, Some v, Some p ->
+        let poly = Array.get (map#get_polygons_array ()) p in
+        poly#set_ceiling_height v
+    |GlFlatDraw.Ceiling_Height, 3, _, _, Some p ->
+        let poly = Array.get (map#get_polygons_array ()) p in
+        let v = poly#ceiling_height () in
+        numeric_entry#set_text (string_of_float v)
+    |GlFlatDraw.Floor_Height, 1, _, Some v, Some p ->
+        let poly = Array.get (map#get_polygons_array ()) p in
+        poly#set_floor_height v
+    |GlFlatDraw.Floor_Height, 3, _, _, Some p ->
+        let poly = Array.get (map#get_polygons_array ()) p in
+        let v = poly#floor_height () in
+        numeric_entry#set_text (string_of_float v)
+    |GlFlatDraw.Media, 1, Some v, _, Some p ->
+        let poly = Array.get (map#get_polygons_array ()) p in
+        poly#set_media_index v
+    |GlFlatDraw.Media, 3, _, _, Some p ->
+        let poly = Array.get (map#get_polygons_array ()) p in
+        let v = poly#media_index () in
+        numeric_entry#set_text (string_of_int v)
+    |GlFlatDraw.Draw, 1, _, _, _ ->
+        if tool = buttonarrow then
+            if point_d < highlight_distance () then
+                gl#set_highlighted (GlFlatDraw.Point point_i)
+            else if obj_d < highlight_distance () then
+                gl#set_highlighted (GlFlatDraw.Object obj_i)
+            else if line_d < highlight_distance () then
+                gl#set_highlighted (GlFlatDraw.Line line_i)
+            else if poly != None then
+                let Some n = poly in gl#set_highlighted (GlFlatDraw.Poly n)
+            else
+                gl#set_highlighted GlFlatDraw.No_Highlight
+        else if tool = buttonline then
+            GeomEdit.start_line x y map (highlight_distance ())
+        else if tool = buttonfill then
+            GeomEdit.fill_poly (int_of_float x) (int_of_float y) map
+        else ()
+    |GlFlatDraw.Draw, 3, _, _, _ ->
+        if tool = buttonarrow then
+            if point_d < highlight_distance () then
+                MapDialogs.point_dialog (Array.get (map#get_points_array ()) point_i)
+            else if obj_d < highlight_distance () then
+                MapDialogs.obj_dialog (Array.get (map#get_objs_array ()) obj_i)
+            else if line_d < highlight_distance () then
+                MapDialogs.line_dialog (Array.get (map#get_lines_array ()) line_i) map
+            else if poly != None then let Some n = poly in
+                MapDialogs.poly_dialog (Array.get (map#get_polygons_array ()) n)
+        else ()
     |_ -> () end;
+    gl#draw ();
     false
 
 (* this gets called when we're dragging a tool around *)
