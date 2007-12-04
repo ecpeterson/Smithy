@@ -156,6 +156,9 @@ let cross (x0, y0) (x1, y1) =
 let norm (x, y) =
     (x**2.0 +. y**2.0)**0.5
 
+let distance (x0, y0) (x1, y1) =
+    norm ((x1 -. x0), (y1 -. y0))
+
 let rec print_array arr =
     match arr with
         |[] -> print_endline ""; flush stdout
@@ -174,3 +177,6 @@ let iter_indexed f lst =
             |[] -> ()
             |x :: xs -> f x acc; i_i_aux f xs (acc+1) in
     i_i_aux f lst 0
+
+let array_fold_left_indexed f init arr =
+    let (x, y) = Array.fold_left (fun (x, i) y -> (f x y i, i+1)) (init, 0) arr in x
