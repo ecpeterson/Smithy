@@ -199,6 +199,29 @@ let make_media map =
 
 (* TODO: add an actual dialog here *)
 let edit_light light =
+    let generate_frame () =
+        let frame = GBin.frame ~label:"Becoming Active" () in
+        let vbox = GPack.vbox ~packing:frame#add () in
+        let hbox = GPack.hbox ~packing:vbox#add () in
+        GMisc.label ~text:"Function:" ~packing:hbox#add ();
+        let func = GMenu.option_menu ~packing:hbox#add () in
+        let menu = GMenu.menu ~packing:func#set_menu () in
+        CamlExt.iter_indexed (fun label index ->
+            ignore (GMenu.menu_item ~label ~packing:menu#append ()))
+        ["Constant"; "Linear"; "Smooth"; "Flicker"];
+        let hbox = GPack.hbox ~packing:vbox#add () in
+        GMisc.label ~text:"Period:" ~packing:hbox#add ();
+        let period = GEdit.entry ~packing:hbox#add () in
+        let hbox = GPack.hbox ~packing:vbox#add () in
+        GMisc.label ~text:"D Period:" ~packing:hbox#add ();
+        let dperiod = GEdit.entry ~packing:hbox#add () in
+        let hbox = GPack.hbox ~packing:vbox#add () in
+        GMisc.label ~text:"Intensity (%):" ~packing:hbox#add ();
+        let intensity = GEdit.entry ~packing:hbox#add () in
+        let hbox = GPack.hbox ~packing:vbox#add () in
+        GMisc.label ~text:"D Intensity (%):" ~packing:hbox#add ();
+        let dintensity = GEdit.entry ~packing:hbox#add () in
+        (frame, func, period, dperiod, intensity, dintensity) in
     let w = GWindow.dialog ~title:"Light Parameters" () in
     let table = GPack.table ~columns:3 ~rows:3 ~packing:w#action_area#add () in
     let vbox11 = GPack.vbox () in
@@ -216,137 +239,23 @@ let edit_light light =
     let hbox = GPack.hbox ~packing:vbox12#add () in
     GMisc.label ~text:"Tag:" ~packing:hbox#add ();
     table#attach ~left:1 ~top:0 (vbox12#coerce);
-    let f21 = GBin.frame ~label:"Becoming Active" () in
-    let vbox21 = GPack.vbox ~packing:f21#add () in
-    let hbox = GPack.hbox ~packing:vbox21#add () in
-    GMisc.label ~text:"Function:" ~packing:hbox#add ();
-    let ba_function = GMenu.option_menu ~packing:hbox#add () in
-    let ba_menu = GMenu.menu ~packing:ba_function#set_menu () in
-    CamlExt.iter_indexed (fun label index ->
-        ignore (GMenu.menu_item ~label ~packing:ba_menu#append ()))
-        ["Constant"; "Linear"; "Smooth"; "Flicker"];
-    let hbox = GPack.hbox ~packing:vbox21#add () in
-    GMisc.label ~text:"Period:" ~packing:hbox#add ();
-    let ba_period = GEdit.entry ~packing:hbox#add () in
-    let hbox = GPack.hbox ~packing:vbox21#add () in
-    GMisc.label ~text:"D Period:" ~packing:hbox#add ();
-    let ba_dperiod = GEdit.entry ~packing:hbox#add () in
-    let hbox = GPack.hbox ~packing:vbox21#add () in
-    GMisc.label ~text:"Intensity (%):" ~packing:hbox#add ();
-    let ba_intensity = GEdit.entry ~packing:hbox#add () in
-    let hbox = GPack.hbox ~packing:vbox21#add () in
-    GMisc.label ~text:"D Intensity (%):" ~packing:hbox#add ();
-    let ba_dintensity = GEdit.entry ~packing:hbox#add () in
+    let (f21, ba_func, ba_period, ba_dperiod, ba_intensity,
+         ba_dintensity) = generate_frame () in
     table#attach ~left:0 ~top:1 (f21#coerce);
-    let f22 = GBin.frame ~label:"Primary Active" () in
-    let vbox22 = GPack.vbox ~packing:f22#add () in
-    let hbox = GPack.hbox ~packing:vbox22#add () in
-    GMisc.label ~text:"Function:" ~packing:hbox#add ();
-    let pa_function = GMenu.option_menu ~packing:hbox#add () in
-    let pa_menu = GMenu.menu ~packing:pa_function#set_menu () in
-    CamlExt.iter_indexed (fun label index ->
-        ignore (GMenu.menu_item ~label ~packing:pa_menu#append ()))
-        ["Constant"; "Linear"; "Smooth"; "Flicker"];
-    let hbox = GPack.hbox ~packing:vbox22#add () in
-    GMisc.label ~text:"Period:" ~packing:hbox#add ();
-    let pa_period = GEdit.entry ~packing:hbox#add () in
-    let hbox = GPack.hbox ~packing:vbox22#add () in
-    GMisc.label ~text:"D Period:" ~packing:hbox#add ();
-    let pa_dperiod = GEdit.entry ~packing:hbox#add () in
-    let hbox = GPack.hbox ~packing:vbox22#add () in
-    GMisc.label ~text:"Intensity (%):" ~packing:hbox#add ();
-    let pa_intensity = GEdit.entry ~packing:hbox#add () in
-    let hbox = GPack.hbox ~packing:vbox22#add () in
-    GMisc.label ~text:"D Intensity (%):" ~packing:hbox#add ();
-    let pa_dintensity = GEdit.entry ~packing:hbox#add () in
+    let (f22, pa_func, pa_period, pa_dperiod, pa_intensity,
+         pa_dintensity) = generate_frame () in
     table#attach ~left:1 ~top:1 (f22#coerce);
-    let f23 = GBin.frame ~label:"Secondary Active" () in
-    let vbox23 = GPack.vbox ~packing:f23#add () in
-    let hbox = GPack.hbox ~packing:vbox23#add () in
-    GMisc.label ~text:"Function:" ~packing:hbox#add ();
-    let sa_function = GMenu.option_menu ~packing:hbox#add () in
-    let sa_menu = GMenu.menu ~packing:sa_function#set_menu () in
-    CamlExt.iter_indexed (fun label index ->
-        ignore (GMenu.menu_item ~label ~packing:sa_menu#append ()))
-        ["Constant"; "Linear"; "Smooth"; "Flicker"];
-    let hbox = GPack.hbox ~packing:vbox23#add () in
-    GMisc.label ~text:"Period:" ~packing:hbox#add ();
-    let sa_period = GEdit.entry ~packing:hbox#add () in
-    let hbox = GPack.hbox ~packing:vbox23#add () in
-    GMisc.label ~text:"D Period:" ~packing:hbox#add ();
-    let sa_dperiod = GEdit.entry ~packing:hbox#add () in
-    let hbox = GPack.hbox ~packing:vbox23#add () in
-    GMisc.label ~text:"Intensity (%):" ~packing:hbox#add ();
-    let sa_intensity = GEdit.entry ~packing:hbox#add () in
-    let hbox = GPack.hbox ~packing:vbox23#add () in
-    GMisc.label ~text:"D Intensity (%):" ~packing:hbox#add ();
-    let sa_dintensity = GEdit.entry ~packing:hbox#add () in
+    let (f23, sa_func, sa_period, sa_dperiod, sa_intensity,
+         sa_dintensity) = generate_frame () in
     table#attach ~left:2 ~top:1 (f23#coerce);
-    let f31 = GBin.frame ~label:"Becoming Inactive" () in
-    let vbox31 = GPack.vbox ~packing:f31#add () in
+    let (f31, bi_func, bi_period, bi_dperiod, bi_intensity,
+         bi_dintensity) = generate_frame () in
     table#attach ~left:0 ~top:2 (f31#coerce);
-    let hbox = GPack.hbox ~packing:vbox31#add () in
-    GMisc.label ~text:"Function:" ~packing:hbox#add ();
-    let bi_function = GMenu.option_menu ~packing:hbox#add () in
-    let bi_menu = GMenu.menu ~packing:bi_function#set_menu () in
-    CamlExt.iter_indexed (fun label index ->
-        ignore (GMenu.menu_item ~label ~packing:bi_menu#append ()))
-        ["Constant"; "Linear"; "Smooth"; "Flicker"];
-    let hbox = GPack.hbox ~packing:vbox31#add () in
-    GMisc.label ~text:"Period:" ~packing:hbox#add ();
-    let bi_period = GEdit.entry ~packing:hbox#add () in
-    let hbox = GPack.hbox ~packing:vbox31#add () in
-    GMisc.label ~text:"D Period:" ~packing:hbox#add ();
-    let bi_dperiod = GEdit.entry ~packing:hbox#add () in
-    let hbox = GPack.hbox ~packing:vbox31#add () in
-    GMisc.label ~text:"Intensity (%):" ~packing:hbox#add ();
-    let bi_intensity = GEdit.entry ~packing:hbox#add () in
-    let hbox = GPack.hbox ~packing:vbox31#add () in
-    GMisc.label ~text:"D Intensity (%):" ~packing:hbox#add ();
-    let bi_dintensity = GEdit.entry ~packing:hbox#add () in
-    let f32 = GBin.frame ~label:"Primary Inactive" () in
-    let vbox32 = GPack.vbox ~packing:f32#add () in
-    let hbox = GPack.hbox ~packing:vbox32#add () in
-    GMisc.label ~text:"Function:" ~packing:hbox#add ();
-    let pi_function = GMenu.option_menu ~packing:hbox#add () in
-    let pi_menu = GMenu.menu ~packing:pi_function#set_menu () in
-    CamlExt.iter_indexed (fun label index ->
-        ignore (GMenu.menu_item ~label ~packing:pi_menu#append ()))
-        ["Constant"; "Linear"; "Smooth"; "Flicker"];
-    let hbox = GPack.hbox ~packing:vbox32#add () in
-    GMisc.label ~text:"Period:" ~packing:hbox#add ();
-    let pi_period = GEdit.entry ~packing:hbox#add () in
-    let hbox = GPack.hbox ~packing:vbox32#add () in
-    GMisc.label ~text:"D Period:" ~packing:hbox#add ();
-    let pi_dperiod = GEdit.entry ~packing:hbox#add () in
-    let hbox = GPack.hbox ~packing:vbox32#add () in
-    GMisc.label ~text:"Intensity (%):" ~packing:hbox#add ();
-    let pi_intensity = GEdit.entry ~packing:hbox#add () in
-    let hbox = GPack.hbox ~packing:vbox32#add () in
-    GMisc.label ~text:"D Intensity (%):" ~packing:hbox#add ();
-    let pi_dintensity = GEdit.entry ~packing:hbox#add () in
+    let (f32, pi_func, pi_period, pi_dperiod, pi_intensity,
+         pi_dintensity) = generate_frame () in
     table#attach ~left:1 ~top:2 (f32#coerce);
-    let f33 = GBin.frame ~label:"Secondary Inactive" () in
-    let vbox33 = GPack.vbox ~packing:f33#add () in
-    let hbox = GPack.hbox ~packing:vbox33#add () in
-    GMisc.label ~text:"Function:" ~packing:hbox#add ();
-    let si_function = GMenu.option_menu ~packing:hbox#add () in
-    let si_menu = GMenu.menu ~packing:si_function#set_menu () in
-    CamlExt.iter_indexed (fun label index ->
-        ignore (GMenu.menu_item ~label ~packing:si_menu#append ()))
-        ["Constant"; "Linear"; "Smooth"; "Flicker"];
-    let hbox = GPack.hbox ~packing:vbox33#add () in
-    GMisc.label ~text:"Period:" ~packing:hbox#add ();
-    let si_period = GEdit.entry ~packing:hbox#add () in
-    let hbox = GPack.hbox ~packing:vbox33#add () in
-    GMisc.label ~text:"D Period:" ~packing:hbox#add ();
-    let si_dperiod = GEdit.entry ~packing:hbox#add () in
-    let hbox = GPack.hbox ~packing:vbox33#add () in
-    GMisc.label ~text:"Intensity (%):" ~packing:hbox#add ();
-    let si_intensity = GEdit.entry ~packing:hbox#add () in
-    let hbox = GPack.hbox ~packing:vbox33#add () in
-    GMisc.label ~text:"D Intensity (%):" ~packing:hbox#add ();
-    let si_dintensity = GEdit.entry ~packing:hbox#add () in
+    let (f33, si_func, si_period, si_dperiod, si_intensity,
+         si_dintensity) = generate_frame () in
     table#attach ~left:2 ~top:2 (f33#coerce);
     w#add_button_stock `OK `OK;
     begin match w#run () with
