@@ -108,6 +108,7 @@ let edit_current_item () =
         let media = map#get_media_array () in
         MapDialogs.edit_media (Array.get media index)
     |(Some index, GlFlatDraw.Floor_Light)
+    |(Some index, GlFlatDraw.Media_Light)
     |(Some index, GlFlatDraw.Ceiling_Light) ->
         let lights = map#get_lights_array () in
         MapDialogs.edit_light (Array.get lights index)
@@ -119,6 +120,7 @@ let make_new_item () =
             numeric_entry#set_text (string_of_int n);
             gl#draw ()
         |GlFlatDraw.Floor_Light
+        |GlFlatDraw.Media_Light
         |GlFlatDraw.Ceiling_Light ->
             let l = MapDialogs.make_light map in
             numeric_entry#set_text (string_of_int l);
