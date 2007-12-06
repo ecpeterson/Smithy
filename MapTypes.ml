@@ -114,6 +114,59 @@ class line = object
 end
 let empty_line = new line
 
+class platform = object
+    val mutable kind = 0
+    val mutable speed = 0
+    val mutable delay = 0
+    val mutable maximum_height = 0
+    val mutable minimum_height = 0
+    val mutable static_flags = 0
+    val mutable polygon_index = 0
+    val mutable tag = 0
+
+    method kind () = kind
+    method speed () = speed
+    method delay () = delay
+    method maximum_height () = maximum_height
+    method minimum_height () = minimum_height
+    method static_flags () = static_flags
+    method polygon_index () = polygon_index
+    method tag () = tag
+
+    method set_kind x = kind <- x
+    method set_speed x = speed <- x
+    method set_delay x = delay <- x
+    method set_maximum_height x = maximum_height <- x
+    method set_minimum_height x = minimum_height <- x
+    method set_static_flags x = static_flags <- x
+    method set_polygon_index x = polygon_index <- x
+    method set_tag x = tag <- x
+
+    method read fh =
+        kind <- input_word fh;
+        speed <- input_word fh;
+        delay <- input_word fh;
+        maximum_height <- input_signed_word fh;
+        minimum_height <- input_signed_word fh;
+        static_flags <- input_dword fh;
+        polygon_index <- input_word fh;
+        tag <- input_word fh;
+        ignore (input_dword fh); ignore (input_dword fh);
+        ignore (input_dword fh); ignore (input_word fh)
+
+    method write fh =
+        output_word fh kind;
+        output_word fh speed;
+        output_word fh delay;
+        output_signed_word fh maximum_height;
+        output_signed_word fh minimum_height;
+        output_dword fh static_flags;
+        output_word fh polygon_index;
+        output_word fh tag;
+        ignore (output_padding fh 14)
+end
+let empty_platform = new platform
+
 type poly_kind = Normal | Item_Impassable | Monster_and_Item_Impassable | Hill |
                  Platform | Light_On_Trigger | Platform_On_Trigger |
                  Light_Off_Trigger | Platform_Off_Trigger | Teleporter |
@@ -707,56 +760,3 @@ class placement = object
         output_word fh random_change
 end
 let empty_placement = new placement
-
-class platform = object
-    val mutable kind = 0
-    val mutable speed = 0
-    val mutable delay = 0
-    val mutable maximum_height = 0
-    val mutable minimum_height = 0
-    val mutable static_flags = 0
-    val mutable polygon_index = 0
-    val mutable tag = 0
-
-    method kind () = kind
-    method speed () = speed
-    method delay () = delay
-    method maximum_height () = maximum_height
-    method minimum_height () = minimum_height
-    method static_flags () = static_flags
-    method polygon_index () = polygon_index
-    method tag () = tag
-
-    method set_kind x = kind <- x
-    method set_speed x = speed <- x
-    method set_delay x = delay <- x
-    method set_maximum_height x = maximum_height <- x
-    method set_minimum_height x = minimum_height <- x
-    method set_static_flags x = static_flags <- x
-    method set_polygon_index x = polygon_index <- x
-    method set_tag x = tag <- x
-
-    method read fh =
-        kind <- input_word fh;
-        speed <- input_word fh;
-        delay <- input_word fh;
-        maximum_height <- input_signed_word fh;
-        minimum_height <- input_signed_word fh;
-        static_flags <- input_dword fh;
-        polygon_index <- input_word fh;
-        tag <- input_word fh;
-        ignore (input_dword fh); ignore (input_dword fh);
-        ignore (input_dword fh); ignore (input_word fh)
-
-    method write fh =
-        output_word fh kind;
-        output_word fh speed;
-        output_word fh delay;
-        output_signed_word fh maximum_height;
-        output_signed_word fh minimum_height;
-        output_dword fh static_flags;
-        output_word fh polygon_index;
-        output_word fh tag;
-        ignore (output_padding fh 14)
-end
-let empty_platform = new platform

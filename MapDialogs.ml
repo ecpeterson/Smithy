@@ -1,17 +1,18 @@
 open MapTypes
 
+let labeled_entry ~label ~text ~packing =
+    let hbox = GPack.hbox ~packing () in
+    GMisc.label ~packing:hbox#add ~text:label ();
+    GEdit.entry ~packing:hbox#add ~text ()
+
 let point_dialog point =
     let (px, py) = point#vertex () in
     let w = GWindow.dialog ~title:"Point Parameters" () in
     let box = GPack.vbox ~packing:w#action_area#add () in
-    let hb1 = GPack.hbox ~packing:box#add () in
-    GMisc.label ~packing:hb1#pack ~text:"X Coordinate: " ();
-    let ex = GEdit.entry ~packing:hb1#add ~width:100 ~height:20
-        ~text:(string_of_int px) () in
-    let hb2 = GPack.hbox ~packing:box#add () in
-    GMisc.label ~packing:hb2#pack ~text:"Y Coordinate: " ();
-    let ey = GEdit.entry ~packing:hb2#add ~width:100 ~height:20
-        ~text:(string_of_int py) () in
+    let ex = labeled_entry ~label:"X Coordinate:" ~text:(string_of_int px)
+            ~packing:box#add in
+    let ey = labeled_entry ~label:"Y Coordinate:" ~text:(string_of_int py)
+            ~packing:box#add in
     w#add_button_stock `OK `OK;
     begin match w#run () with
     |`OK ->
@@ -48,6 +49,18 @@ let line_dialog line map =
     w#destroy ()
 
 let poly_dialog poly =
+    let deal_with_type_change kind () =
+        begin match (poly#kind (), kind) with
+        (* do we just want to open the platform dialog again? *)
+        |(Platform, Platform) -> ()
+        (* do we want to trash an old platform? *)
+        |(Platform, _) -> ()
+        (* do we want to create a new platform? *)
+        |(_, Platform) -> ()
+        (* do we need to take no special action? *)
+        |_ -> () end;
+        (* finally set the kind of the polgon *)
+        poly#set_kind kind in
     let w = GWindow.dialog ~title:"Polygon Parameters" () in
     let box = GPack.vbox ~packing:w#action_area#add () in
     let hb1 = GPack.hbox ~packing:box#add () in
@@ -55,9 +68,9 @@ let poly_dialog poly =
     let opt = GMenu.option_menu ~packing:hb1#add () in
     let menu = GMenu.menu ~packing:opt#set_menu () in
     CamlExt.iter_indexed (fun label index ->
-        ignore (let item = GMenu.menu_item ~label ~packing:menu#append () in
-                ()))
-                (*item#connect#activate (fun _ -> poly#set_kind (index + 1))))*)
+            let item = GMenu.menu_item ~label ~packing:menu#append () in
+            item#connect#activate (deal_with_type_change
+                (CamlExt.of_enum MapTypes.poly_kind_descriptor (index + 1))))
         ["Normal"; "Item Impassable"; "Monster & Item Impassable"; "Hill";
          "Platform"; "Light On Trigger"; "Platform On Trigger";
          "Light Off Trigger"; "Platform Off Trigger"; "Teleporter";
@@ -65,10 +78,8 @@ let poly_dialog poly =
          "Invisible Monster Trigger"; "Dual Monster Trigger"; "Item Trigger";
          "Must be Explored"; "Automatic Exit"];
     opt#set_history (CamlExt.to_enum MapTypes.poly_kind_descriptor (poly#kind ()) - 1);
-    let hb2 = GPack.hbox ~packing:box#add () in
-    GMisc.label ~packing:hb2#pack ~text:"Liquid: " ();
-    let liquid = GEdit.entry ~packing:hb2#add ~width:100 ~height:20
-        ~text:(string_of_int (poly#media_index ())) () in
+    let liquid = labeled_entry ~label:"Liquid:" ~text:(string_of_int (poly#media_index ()))
+            ~packing:box#add in
     w#add_button_stock `OK `OK;
     ignore (w#run ());
     begin try
@@ -101,9 +112,8 @@ let obj_dialog obj =
 let info_dialog map () =
     let w = GWindow.dialog ~title:"Level Parameters" () in
     let vbox = GPack.vbox ~packing:w#action_area#add () in
-    let namebox = GPack.hbox ~packing:vbox#add () in
-    GMisc.label ~packing:namebox#pack ~text:"Level Name:" ();
-    let level_name = GEdit.entry ~packing:namebox#add () in
+    let level_name = labeled_entry ~label:"Level Name:" ~text:""
+            ~packing:vbox#add in
     let twobox = GPack.hbox ~packing:vbox#add () in
     let lbox = GPack.vbox ~packing:twobox#add () in
     let fourbox = GPack.hbox ~packing:lbox#add () in
@@ -167,24 +177,19 @@ let edit_media media =
     CamlExt.iter_indexed (fun label index ->
         ignore (GMenu.menu_item ~label ~packing:menu#append ()))
         ["Water"; "Lava"; "Alien Goo"; "Sewage"; "Jjaro Goo"];
-    let hbox2 = GPack.hbox ~packing:vbox#add () in
-    GMisc.label ~packing:hbox2#add ~text:"Based On:" ();
-    let based_on = GEdit.entry ~packing:hbox2#add () in
-    let hbox3 = GPack.hbox ~packing:vbox#add () in
-    GMisc.label ~packing:hbox3#add ~text:"Tide Parameter:" ();
-    let tide_parameter = GEdit.entry ~packing:hbox3#add () in
+    let based_on = labeled_entry ~label:"Based On:" ~text:""
+            ~packing:vbox#add in
+    let tide_parameter = labeled_entry ~label:"Tide Parameter:" ~text:""
+            ~packing:vbox#add in
     let hbox4 = GPack.hbox ~packing:vbox#add () in
     (* facing (subcaptioned Flow Direction) belongs in hbox4 *)
     let vbox2 = GPack.vbox ~packing:hbox4#add () in
-    let hbox5 = GPack.hbox ~packing:vbox2#add () in
-    GMisc.label ~packing:hbox5#add ~text:"Flow Strength:" ();
-    let flow_strength = GEdit.entry ~packing:hbox5#add () in
-    let hbox6 = GPack.hbox ~packing:vbox2#add () in
-    GMisc.label ~packing:hbox6#add ~text:"Low Tide:" ();
-    let low_tide = GEdit.entry ~packing:hbox6#add () in
-    let hbox7 = GPack.hbox ~packing:vbox2#add () in
-    GMisc.label ~packing:hbox7#add ~text:"High Tide:" ();
-    let low_tide = GEdit.entry ~packing:hbox7#add () in
+    let flow_strength = labeled_entry ~label:"Flow Strength:" ~text:""
+            ~packing:vbox2#add in
+    let low_tide = labeled_entry ~label:"Low Tide:" ~text:""
+            ~packing:vbox2#add in
+    let high_tide = labeled_entry ~label:"High Tide:" ~text:""
+            ~packing:vbox2#add in
     let obstructed = GButton.check_button
         ~label:"Liquid's sound obstructed by floor" ~packing:vbox#add () in
     w#add_button_stock `OK `OK;
@@ -209,18 +214,14 @@ let edit_light light =
         CamlExt.iter_indexed (fun label index ->
             ignore (GMenu.menu_item ~label ~packing:menu#append ()))
         ["Constant"; "Linear"; "Smooth"; "Flicker"];
-        let hbox = GPack.hbox ~packing:vbox#add () in
-        GMisc.label ~text:"Period:" ~packing:hbox#add ();
-        let period = GEdit.entry ~packing:hbox#add () in
-        let hbox = GPack.hbox ~packing:vbox#add () in
-        GMisc.label ~text:"D Period:" ~packing:hbox#add ();
-        let dperiod = GEdit.entry ~packing:hbox#add () in
-        let hbox = GPack.hbox ~packing:vbox#add () in
-        GMisc.label ~text:"Intensity (%):" ~packing:hbox#add ();
-        let intensity = GEdit.entry ~packing:hbox#add () in
-        let hbox = GPack.hbox ~packing:vbox#add () in
-        GMisc.label ~text:"D Intensity (%):" ~packing:hbox#add ();
-        let dintensity = GEdit.entry ~packing:hbox#add () in
+        let period = labeled_entry ~label:"Period:" ~text:""
+                ~packing:vbox#add in
+        let dperiod = labeled_entry ~label:"D Period:" ~text:""
+                ~packing:vbox#add in
+        let intensity = labeled_entry ~label:"Intensity (%):" ~text:""
+                ~packing:vbox#add in
+        let dintensity = labeled_entry ~label:"D Intensity (%):" ~text:""
+                ~packing:vbox#add in
         (frame, func, period, dperiod, intensity, dintensity) in
     let w = GWindow.dialog ~title:"Light Parameters" () in
     let table = GPack.table ~columns:3 ~rows:3 ~packing:w#action_area#add () in
@@ -228,10 +229,9 @@ let edit_light light =
     table#attach ~left:0 ~top:0 (vbox11#coerce);
     let hbox = GPack.hbox ~packing:vbox11#add () in
     GMisc.label ~text:"Preset:" ~packing:hbox#add ();
-    let hbox = GPack.hbox ~packing:vbox11#add () in
-    GMisc.label ~text:"Based On:" ~packing:hbox#add ();
-    let hbox = GPack.hbox ~packing:vbox11#add () in
-    GMisc.label ~text:"Phase:" ~packing:hbox#add ();
+    let based_on = labeled_entry ~label:"Based On:" ~text:""
+            ~packing:vbox11#add in
+    let phase = labeled_entry ~label:"Phase:" ~text:"" ~packing:vbox11#add in
     let vbox12 = GPack.vbox () in
     let stateless = GButton.check_button ~label:"Stateless" ~packing:vbox12#add () in
     let active = GButton.check_button ~label:"Initially Active"
