@@ -23,7 +23,7 @@ let placement_length = 12
 let platform_length = 32
 
 type environment_code = Water | Lava | Sewage | Jjaro | Pfhor
-let environment_descriptor = [Water; Lava; Sewage; Jjaro; Pfhor]
+let environment_descriptor = 0, [Water; Lava; Sewage; Jjaro; Pfhor]
 type environment_flag = Vacuum | Magnetic | Rebellion | Low_Grav
 let env_flags_descriptor = [1, Vacuum; 2, Magnetic; 4, Rebellion; 8, Low_Grav]
 type mission_type = Extermination | Exploration | Retrieval | Repair | Rescue
@@ -234,6 +234,7 @@ class map = object(self)
     method get_media_array () = media
     method get_filename () = filename
     method get_lights_array () = lights
+    method get_platforms_array () = platforms
 
     (* allow others to add objects *)
     method add_point point =
@@ -260,6 +261,11 @@ class map = object(self)
         let append_array = Array.make 1 light in
         lights <- Array.append lights append_array;
         Array.length lights - 1
+
+    method add_platform plat =
+        let append_array = Array.make 1 plat in
+        platforms <- Array.append platforms append_array;
+        Array.length platforms - 1
 
     (* geometry selection functions *)
     method get_closest_object x0 y0 =
@@ -306,7 +312,7 @@ class map = object(self)
             else
                 dtheta in
         let rec sum_angles points (x0, y0) i acc =
-            if i = List.length points then acc else
+            if i >= List.length points then acc else
             let next = (if i = (List.length points) - 1 then 0 else i + 1) in
             let (p0x, p0y) = List.nth points i in
             let (p1x, p1y) = List.nth points next in
@@ -486,4 +492,12 @@ class map = object(self)
             let y = x#first_object () in
             if y > n then x#set_first_object (y-1) else
             if y = n then x#set_first_object (-1)) polygons
+
+    method delete_platform n =
+        platforms <- delete_from_array_and_resize platforms n;
+        Array.iter (fun x ->
+            let y = x#permutation () in
+            if x#kind () != Platform then () else
+            if y > n then x#set_permutation (y - 1) else
+            if y = n then x#set_permutation (-1)) polygons
 end

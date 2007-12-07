@@ -168,23 +168,25 @@ end
 let empty_platform = new platform
 
 type poly_kind = Normal | Item_Impassable | Monster_and_Item_Impassable | Hill |
-                 Platform | Light_On_Trigger | Platform_On_Trigger |
+                 Base | Platform | Light_On_Trigger | Platform_On_Trigger |
                  Light_Off_Trigger | Platform_Off_Trigger | Teleporter |
                  Zone_Border | Goal | Visible_Monster_Trigger |
                  Invisible_Monster_Trigger | Dual_Monster_Trigger | Item_Trigger |
-                 Must_Be_Explored | Automatic_Exit
-let poly_kind_descriptor = [Normal; Item_Impassable; Monster_and_Item_Impassable;
-                            Hill; Platform; Light_On_Trigger;
+                 Must_Be_Explored | Automatic_Exit | Minor_Ouch | Major_Ouch |
+                 Glue | Glue_Trigger | Superglue
+let poly_kind_descriptor = 0, [Normal; Item_Impassable; Monster_and_Item_Impassable;
+                            Hill; Base; Platform; Light_On_Trigger;
                             Platform_On_Trigger; Light_Off_Trigger;
                             Platform_Off_Trigger; Teleporter; Zone_Border; Goal;
                             Visible_Monster_Trigger; Invisible_Monster_Trigger;
                             Dual_Monster_Trigger; Item_Trigger;
-                            Must_Be_Explored; Automatic_Exit]
+                            Must_Be_Explored; Automatic_Exit; Minor_Ouch;
+                            Major_Ouch; Glue; Glue_Trigger; Superglue]
 (* a polygon object *)
 class polygon = object
     val mutable kind = Normal
     val mutable flags = 0
-    val mutable permutation = 0
+    val mutable permutation = -1
     val mutable vertex_count = 0
     val mutable endpoint_indices = [|0;0;0;0;0;0;0;0|]
     val mutable line_indices = [|0;0;0;0;0;0;0;0|]
@@ -281,7 +283,7 @@ class polygon = object
     method read fh =
         kind <- of_enum poly_kind_descriptor (input_word fh);
         flags <- input_word fh;
-        permutation <- input_word fh;
+        permutation <- input_signed_word fh;
         vertex_count <- input_word fh;
         endpoint_indices <- Array.make vertices_per_poly 0;
         for j = 0 to vertices_per_poly - 1 do
@@ -333,7 +335,7 @@ class polygon = object
     method write fh =
         output_word fh (to_enum poly_kind_descriptor kind);
         output_word fh flags;
-        output_word fh permutation;
+        output_signed_word fh permutation;
         output_word fh vertex_count;
         Array.iter (fun x -> output_word fh x) endpoint_indices;
         Array.iter (fun x -> output_word fh x) line_indices;
@@ -386,7 +388,7 @@ let side_flags_descriptor = [(1, Control_Panel_Status); (2, Control_Panel);
 type side_kind = Oxygen_Refuel | Shield_Refuel | Double_Shield_Refuel |
                  Triple_Shield_Refuel | Light_Switch | Platform_Switch |
                  Tag_Switch | Pattern_Buffer | Computer_Terminal
-let side_kind_descriptor = [Oxygen_Refuel; Shield_Refuel; Double_Shield_Refuel;
+let side_kind_descriptor = 0, [Oxygen_Refuel; Shield_Refuel; Double_Shield_Refuel;
                             Triple_Shield_Refuel; Light_Switch; Platform_Switch;
                             Tag_Switch; Pattern_Buffer; Computer_Terminal]
 class side = object

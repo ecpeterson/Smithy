@@ -106,12 +106,12 @@ let edit_current_item () =
     |(None, _) |(Some (-1), _) -> ()
     |(Some index, GlFlatDraw.Media) ->
         let media = map#get_media_array () in
-        MapDialogs.edit_media (Array.get media index)
+        MapDialogs.media_dialog (Array.get media index)
     |(Some index, GlFlatDraw.Floor_Light)
     |(Some index, GlFlatDraw.Media_Light)
     |(Some index, GlFlatDraw.Ceiling_Light) ->
         let lights = map#get_lights_array () in
-        MapDialogs.edit_light (Array.get lights index)
+        MapDialogs.light_dialog (Array.get lights index)
     |_ -> ()
 let make_new_item () =
     match gl#mode () with
@@ -250,7 +250,7 @@ let tool_begin_event mouse_descriptor =
             else if line_d < highlight_distance () then
                 MapDialogs.line_dialog (Array.get (map#get_lines_array ()) line_i) map
             else if poly != None then let Some n = poly in
-                MapDialogs.poly_dialog (Array.get (map#get_polygons_array ()) n)
+                MapDialogs.poly_dialog (Array.get (map#get_polygons_array ()) n) map
         else ()
     |_ -> () end;
     gl#draw ();
