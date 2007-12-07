@@ -374,17 +374,20 @@ class map = object(self)
         (* get rid of this side from the parent array, filling in the empty end
          * slot with a -1 value, signalling emptiness *)
         delete_from_array poly_side_array n (-1);
-        (* now clean up the parent line similarly *)
-        if parent_line#cw_poly_side_index () = n then
-            parent_line#set_cw_poly_side_index (-1)
-        else if parent_line#ccw_poly_side_index () = n then
-            parent_line#set_ccw_poly_side_index (-1)
-        else dprint "How confusing!";
+        (* actually delete the side from the sides array *)
+        sides <- delete_from_array_and_resize sides n;
         (* iterate through all the available polys, shifting the indices into
          * the sides array down as needed *)
         Array.iter (fun poly -> destructive_map
                 (fun x -> if x > n then x - 1 else x)
-                (poly#side_indices ())) polygons
+                (poly#side_indices ())) polygons;
+        (* iterate through the lines, again shifting indices *)
+        Array.iter (fun line ->
+            let (cw, ccw) = line#cw_poly_side_index (), line#ccw_poly_side_index () in
+            if cw = n then line#set_cw_poly_side_index (-1);
+            if cw > n then line#set_cw_poly_side_index (cw - 1);
+            if ccw = n then line#set_ccw_poly_side_index (-1);
+            if ccw > n then line#set_ccw_poly_side_index (ccw - 1)) lines
 
     method delete_poly n =
         let poly = Array.get polygons n in
@@ -500,4 +503,20 @@ class map = object(self)
             if x#kind () != Platform then () else
             if y > n then x#set_permutation (y - 1) else
             if y = n then x#set_permutation (-1)) polygons
+
+    method nuke () =
+        if objs = [||] then () else begin
+            self#delete_obj 0;
+            self#nuke ()
+        end
+
+    method pave () =
+        if sides = [||] then () else begin
+            self#delete_side 0;
+            self#pave ()
+        end
+
+    method nuke_and_pave () =
+        self#nuke ();
+        self#pave ()
 end

@@ -433,9 +433,9 @@ let special_menu_toolkit =
      `I ("Edit Map Item _Parameters...", CamlExt.id);
      `S;
      `I ("_Recenter Level", CamlExt.id);
-     `I ("Pave Level", CamlExt.id);
-     `I ("Nuke Objects Only...", CamlExt.id);
-     `I ("Nuke and Pave Level...", CamlExt.id)]
+     `I ("Pave Level", map#pave);
+     `I ("Nuke Objects Only...", map#nuke);
+     `I ("Nuke and Pave Level...", map#nuke_and_pave)]
 
 (* entry point for the application proper *)
 let _ =
