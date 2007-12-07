@@ -5,12 +5,7 @@ look into packing tables
 + find / create a facing control for the various dialogs that require it
 + finish the object dialog, which is currently in a half-formed state
 + write the platform dialog
-+ finish the polygon dialog, which currently needs to invoke the platform dlg
-+ change the way platforms are handled and attach them to polygons, rather
-than storing them in a separate array.  this will allow really easy, smart
-internal handling of the platform data, since it's never referenced by more
-than one polygon and it's annoying to have to shuffle them each time we change
-a polygon type
++ finish platform deletion and its editor dialog
 + replace the object blips with object icons (i.e. finish loading those TGAs)
 + make the light dialog do something
 + fix the gtk **CRITICAL thing on start-up
@@ -51,8 +46,6 @@ avoid multi-level matching (match over tuples instead)
 + make the filename string in the map header actually meaningful
 + push GTK events in handle_keys in Smithy.ml instead of calling choose_button
 directly
-+ the OK buttons in dialogs aren't being added properly or something.  what's
-wrong is really obvious, and really should be fixed
 + change the select_line_loop routine to use all lists instead of the mix of
 lists and arrays, upon second thought using arrays there doesn't actually make
 anything faster or slower, and lists are pretty

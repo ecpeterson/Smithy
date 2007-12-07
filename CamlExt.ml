@@ -84,17 +84,17 @@ let to_bitflag descriptor x =
             |_ -> 0 in
     List.fold_left (fun x y -> x + search descriptor y) 0 x
 
-let to_enum descriptor x =
+let to_enum (start, descriptor) x =
     let rec search lst acc =
         match lst with
             |[] -> raise (Failure "of_enum can't find match!")
             |y :: ys ->
                 if x = y then acc
                          else search ys (acc+1) in
-    search descriptor 0
+    search descriptor start
 
-let of_enum descriptor x =
-    List.nth descriptor x
+let of_enum (start, descriptor) x =
+    List.nth descriptor (x + start)
 
 let rec output_padding fh n =
     if n = 0 then () else begin

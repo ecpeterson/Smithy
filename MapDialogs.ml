@@ -8,11 +8,10 @@ let labeled_entry ~label ~text ~packing =
 let point_dialog point =
     let (px, py) = point#vertex () in
     let w = GWindow.dialog ~title:"Point Parameters" () in
-    let box = GPack.vbox ~packing:w#action_area#add () in
     let ex = labeled_entry ~label:"X Coordinate:" ~text:(string_of_int px)
-            ~packing:box#add in
+            ~packing:w#vbox#add in
     let ey = labeled_entry ~label:"Y Coordinate:" ~text:(string_of_int py)
-            ~packing:box#add in
+            ~packing:w#vbox#add in
     w#add_button_stock `OK `OK;
     begin match w#run () with
     |`OK ->
@@ -25,13 +24,12 @@ let line_dialog line map =
     let flags = line#flags () in
     let (cw, ccw) = line#cw_poly_side_index (), line#ccw_poly_side_index () in
     let w = GWindow.dialog ~title:"Line Parameters" () in
-    let box = GPack.vbox ~packing:w#action_area#add () in
     let solid = GButton.check_button ~label:"Solid"
-        ~active:(List.mem SOLID flags) ~packing:box#add () in
+        ~active:(List.mem SOLID flags) ~packing:w#vbox#add () in
     let transparent = GButton.check_button ~label:"Transparent"
-        ~active:(List.mem TRANSPARENT flags) ~packing:box#add () in
+        ~active:(List.mem TRANSPARENT flags) ~packing:w#vbox#add () in
     let empty = GButton.check_button ~label:"Empty"
-        ~active:(cw = -1 && ccw = -1) ~packing:box#add () in
+        ~active:(cw = -1 && ccw = -1) ~packing:w#vbox#add () in
     w#add_button_stock `OK `OK;
     begin match w#run () with
     |`OK ->
@@ -48,38 +46,48 @@ let line_dialog line map =
     |_ -> () end;
     w#destroy ()
 
-let poly_dialog poly =
+let platform_dialog plat =
+    ()
+
+let poly_dialog poly map =
     let deal_with_type_change kind () =
         begin match (poly#kind (), kind) with
         (* do we just want to open the platform dialog again? *)
-        |(Platform, Platform) -> ()
+        |(Platform, Platform) ->
+            let plat = Array.get (map#get_platforms_array ()) (poly#permutation ()) in
+            platform_dialog plat
         (* do we want to trash an old platform? *)
-        |(Platform, _) -> ()
+        |(Platform, _) ->
+            map#delete_platform (poly#permutation ())
         (* do we want to create a new platform? *)
-        |(_, Platform) -> ()
+        |(_, Platform) ->
+            let plat = new MapTypes.platform in
+            platform_dialog plat;
+            let plat_idx = map#add_platform plat in
+            poly#set_permutation plat_idx
         (* do we need to take no special action? *)
         |_ -> () end;
-        (* finally set the kind of the polgon *)
+        (* finally set the kind of the polygon *)
         poly#set_kind kind in
     let w = GWindow.dialog ~title:"Polygon Parameters" () in
-    let box = GPack.vbox ~packing:w#action_area#add () in
-    let hb1 = GPack.hbox ~packing:box#add () in
+    let hb1 = GPack.hbox ~packing:w#vbox#add () in
     let label = GMisc.label ~text:"Type: " ~packing:hb1#add () in
     let opt = GMenu.option_menu ~packing:hb1#add () in
     let menu = GMenu.menu ~packing:opt#set_menu () in
     CamlExt.iter_indexed (fun label index ->
             let item = GMenu.menu_item ~label ~packing:menu#append () in
             item#connect#activate (deal_with_type_change
-                (CamlExt.of_enum MapTypes.poly_kind_descriptor (index + 1))))
+                (CamlExt.of_enum MapTypes.poly_kind_descriptor index)))
         ["Normal"; "Item Impassable"; "Monster & Item Impassable"; "Hill";
-         "Platform"; "Light On Trigger"; "Platform On Trigger";
+         "Base"; "Platform"; "Light On Trigger"; "Platform On Trigger";
          "Light Off Trigger"; "Platform Off Trigger"; "Teleporter";
          "Zone Border"; "Goal"; "Visible Monster Trigger";
          "Invisible Monster Trigger"; "Dual Monster Trigger"; "Item Trigger";
-         "Must be Explored"; "Automatic Exit"];
-    opt#set_history (CamlExt.to_enum MapTypes.poly_kind_descriptor (poly#kind ()) - 1);
+         "Must be Explored"; "Automatic Exit"; "Minor Ouch"; "Major Ouch";
+         "Glue"; "Glue Trigger"; "Superglue"];
+    opt#set_history (CamlExt.to_enum MapTypes.poly_kind_descriptor (poly#kind ()));
     let liquid = labeled_entry ~label:"Liquid:" ~text:(string_of_int (poly#media_index ()))
-            ~packing:box#add in
+            ~packing:w#vbox#add in
     w#add_button_stock `OK `OK;
     ignore (w#run ());
     begin try
@@ -90,17 +98,16 @@ let poly_dialog poly =
 
 let obj_dialog obj =
     let window = GWindow.dialog ~title:"Object Parameters" () in
-    let vbox = GPack.vbox ~packing:window#action_area#add () in
-    let hbox = GPack.hbox ~packing:vbox#add () in
+    let hbox = GPack.hbox ~packing:window#vbox#add () in
     GMisc.label ~packing:hbox#add ~text:"Group: " ();
     let opt = GMenu.option_menu ~packing:hbox#add () in
     let menu = GMenu.menu ~packing:opt#set_menu () in
     CamlExt.iter_indexed (fun label index ->
         ignore (GMenu.menu_item ~label ~packing:menu#append ()))
         ["Monster"; "Scenery"; "Object"; "Player"; "Goal"; "Sound"];
-    let height_label = GMisc.label ~packing:vbox#add ~text:"Height: 0.0" () in
+    let height_label = GMisc.label ~packing:window#vbox#add ~text:"Height: 0.0" () in
     let height_adj = GData.adjustment ~value:0.0 ~lower:(-9.0) ~upper:9.0 () in
-    let height_scroll = GRange.scrollbar `HORIZONTAL ~packing:vbox#pack
+    let height_scroll = GRange.scrollbar `HORIZONTAL ~packing:window#vbox#pack
                                          ~adjustment:height_adj () in
     height_adj#connect#changed (fun () ->
         let value = height_adj#value in
@@ -111,10 +118,9 @@ let obj_dialog obj =
 
 let info_dialog map () =
     let w = GWindow.dialog ~title:"Level Parameters" () in
-    let vbox = GPack.vbox ~packing:w#action_area#add () in
     let level_name = labeled_entry ~label:"Level Name:" ~text:""
-            ~packing:vbox#add in
-    let twobox = GPack.hbox ~packing:vbox#add () in
+            ~packing:w#vbox#add in
+    let twobox = GPack.hbox ~packing:w#vbox#add () in
     let lbox = GPack.vbox ~packing:twobox#add () in
     let fourbox = GPack.hbox ~packing:lbox#add () in
     GMisc.label ~packing:fourbox#add ~text:"Environment" ();
@@ -139,7 +145,7 @@ let info_dialog map () =
                    ~packing:f2box#add () in
     let magnetic = GButton.check_button ~label:"Magnetic"
                    ~packing:f2box#add () in
-    let threebox = GPack.hbox ~packing:vbox#add () in
+    let threebox = GPack.hbox ~packing:w#vbox#add () in
     let f3 = GBin.frame ~label:"Game Type" ~packing:threebox#add () in
     let f3box = GPack.vbox ~packing:f3#add () in
     let solo = GButton.check_button ~label:"Single Player"
@@ -167,10 +173,9 @@ let info_dialog map () =
     |_ -> () end;
     w#destroy ()
 
-let edit_media media =
+let media_dialog media =
     let w = GWindow.dialog ~title:"Liquid Parameters" () in
-    let vbox = GPack.vbox ~packing:w#action_area#add () in
-    let hbox1 = GPack.hbox ~packing:vbox#add () in
+    let hbox1 = GPack.hbox ~packing:w#vbox#add () in
     GMisc.label ~packing:hbox1#add ~text:"Type:" ();
     let opt = GMenu.option_menu ~packing:hbox1#add () in
     let menu = GMenu.menu ~packing:opt#set_menu () in
@@ -178,10 +183,10 @@ let edit_media media =
         ignore (GMenu.menu_item ~label ~packing:menu#append ()))
         ["Water"; "Lava"; "Alien Goo"; "Sewage"; "Jjaro Goo"];
     let based_on = labeled_entry ~label:"Based On:" ~text:""
-            ~packing:vbox#add in
+            ~packing:w#vbox#add in
     let tide_parameter = labeled_entry ~label:"Tide Parameter:" ~text:""
-            ~packing:vbox#add in
-    let hbox4 = GPack.hbox ~packing:vbox#add () in
+            ~packing:w#vbox#add in
+    let hbox4 = GPack.hbox ~packing:w#vbox#add () in
     (* facing (subcaptioned Flow Direction) belongs in hbox4 *)
     let vbox2 = GPack.vbox ~packing:hbox4#add () in
     let flow_strength = labeled_entry ~label:"Flow Strength:" ~text:""
@@ -191,7 +196,7 @@ let edit_media media =
     let high_tide = labeled_entry ~label:"High Tide:" ~text:""
             ~packing:vbox2#add in
     let obstructed = GButton.check_button
-        ~label:"Liquid's sound obstructed by floor" ~packing:vbox#add () in
+        ~label:"Liquid's sound obstructed by floor" ~packing:w#vbox#add () in
     w#add_button_stock `OK `OK;
     begin match w#run () with
     |_ -> () end;
@@ -199,11 +204,11 @@ let edit_media media =
 
 let make_media map =
     let m = new MapTypes.media in
-    edit_media m;
+    media_dialog m;
     map#add_media m
 
 (* TODO: add an actual dialog here *)
-let edit_light light =
+let light_dialog light =
     let generate_frame () =
         let frame = GBin.frame ~label:"Becoming Active" () in
         let vbox = GPack.vbox ~packing:frame#add () in
@@ -224,7 +229,7 @@ let edit_light light =
                 ~packing:vbox#add in
         (frame, func, period, dperiod, intensity, dintensity) in
     let w = GWindow.dialog ~title:"Light Parameters" () in
-    let table = GPack.table ~columns:3 ~rows:3 ~packing:w#action_area#add () in
+    let table = GPack.table ~columns:3 ~rows:3 ~packing:w#vbox#add () in
     let vbox11 = GPack.vbox () in
     table#attach ~left:0 ~top:0 (vbox11#coerce);
     let hbox = GPack.hbox ~packing:vbox11#add () in
@@ -264,36 +269,35 @@ let edit_light light =
 
 let make_light map =
     let l = new MapTypes.light in
-    edit_light l;
+    light_dialog l;
     map#add_light l
 
 let map_manager gl () =
     let w = GWindow.dialog ~title:"Map Manager" () in
-    let vbox = GPack.vbox ~packing:w#action_area#add () in
-    let hbox = GPack.hbox ~packing:vbox#add () in
+    let hbox = GPack.hbox ~packing:w#vbox#add () in
     GMisc.label ~text:"Grid Size:" ~packing:hbox#add ();
     let entry = GEdit.entry ~packing:hbox#add
         ~text:(string_of_int (gl#grid_factor ())) () in
     let display_grid = GButton.check_button ~label:"Display Grid"
-                                            ~packing:vbox#add () in
+                                            ~packing:w#vbox#add () in
     let constrain_grid = GButton.check_button ~label:"Constrain Grid"
-                                              ~packing:vbox#add () in
+                                              ~packing:w#vbox#add () in
     let monsters = GButton.check_button ~label:"Show Monsters"
-                                        ~packing:vbox#add () in
+                                        ~packing:w#vbox#add () in
     let objects = GButton.check_button ~label:"Show Objects"
-                                       ~packing:vbox#add () in
+                                       ~packing:w#vbox#add () in
     let scenery = GButton.check_button ~label:"Show Scenery"
-                                       ~packing:vbox#add () in
+                                       ~packing:w#vbox#add () in
     let players = GButton.check_button ~label:"Show Players"
-                                       ~packing:vbox#add () in
+                                       ~packing:w#vbox#add () in
     let goals = GButton.check_button ~label:"Show Goals"
-                                     ~packing:vbox#add () in
+                                     ~packing:w#vbox#add () in
     let sounds = GButton.check_button ~label:"Show Sounds"
-                                      ~packing:vbox#add () in
+                                      ~packing:w#vbox#add () in
     let annotations = GButton.check_button ~label:"Show Annotations"
-                                        ~packing:vbox#add () in
+                                        ~packing:w#vbox#add () in
     let crosshairs = GButton.check_button ~label:"Visual Mode Crosshairs"
-                                          ~packing:vbox#add () in
+                                          ~packing:w#vbox#add () in
     w#add_button_stock `OK `OK;
     begin match w#run () with
     |_ -> try gl#set_grid_factor (int_of_string entry#text) with _ -> () end;
