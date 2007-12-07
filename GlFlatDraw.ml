@@ -13,11 +13,15 @@ let transparent_line_color = (0.0, 1.0, 1.0)
 let highlight_color        = (1.0, 0.5, 0.0)
 let invalid_polygon        = (1.0, 0.5, 0.5)
 
+let poly_type_saturation = 0.5
+let poly_type_value = 0.5
+(* end colors! *)
+
 type highlighted_component = No_Highlight | Point of int | Line of int |
                              Poly of int | Object of int
 
 type renderer_mode = Draw | Floor_Height | Ceiling_Height | Media |
-                     Floor_Light | Ceiling_Light | Media_Light
+                     Floor_Light | Ceiling_Light | Media_Light | Polygon_Type
 open MapFormat
 
 let rec draw_poly poly_ring n =
@@ -257,6 +261,18 @@ class gldrawer (ar:GlGtk.area)
                     (* convert to an rgb-range value *)
                     let height = x#floor_height () /. 18. +. 0.5 in
                     GlDraw.color (height, height, height);
+                    draw_poly vertex_array 0)
+                |Polygon_Type -> (fun x ->
+                    let vertex_array = List.map (fun x ->
+                        (Array.get (map#get_points_array ()) x)#vertex ()) (map#get_poly_ring x) in
+                    let kind = float (CamlExt.to_enum MapTypes.poly_kind_descriptor
+                        (x#kind ())) in
+                    let length = float (List.length
+                        ((fun (_, x) -> x) MapTypes.poly_kind_descriptor)) in
+                    let color = CamlExt.hsv_to_rgb (kind /. length,
+                                                    poly_type_saturation,
+                                                    poly_type_value) in
+                    GlDraw.color color;
                     draw_poly vertex_array 0)
                 |_ -> (fun x -> ()) in
         Array.iter render_fn polygons
