@@ -13,3 +13,5 @@ The Forge Tutorials are available (compressed with Stuffit) on
 trilogyrelease.bungie.org and contain useful behavioral information.
 The Smithy homepage, in case you missed it in the License, is at
 smithy.sf.net.  A TODO tracker can be found there.
+http://www.cs.rit.edu/~ncs/color/t_convert.html used this to write the
+hsv-to-rgb converter

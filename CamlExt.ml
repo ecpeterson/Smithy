@@ -180,3 +180,29 @@ let iter_indexed f lst =
 
 let array_fold_left_indexed f init arr =
     let (x, y) = Array.fold_left (fun (x, i) y -> (f x y i, i+1)) (init, 0) arr in x
+
+let memoize f =
+    let h = Hashtbl.create 0 in
+    fun x ->
+        try Hashtbl.find h x
+        with Not_found ->
+            let v = f x in
+            Hashtbl.add h x v;
+            v
+
+let hsv_to_rgb (h, s, v) = 
+    if s = 0.0 then (v, v, v) else
+    let h = h *. 6. in
+    let i = floor h in
+    let f = floor (h -. i) /. 6.0 in
+    let p = v *. (1. -. s) in
+    let q = v *. (1. -. s *. f) in
+    let t = v *. (1. -. s *. (1. -. f)) in
+    match int_of_float i with
+        |0 -> (v, t, p)
+        |1 -> (q, v, p)
+        |2 -> (p, v, t)
+        |3 -> (p, q, v)
+        |4 -> (t, p, v)
+        |_ -> (v, p, q) (* case 5 *)
+let hsv_to_rgb = memoize hsv_to_rgb

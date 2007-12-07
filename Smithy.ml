@@ -371,6 +371,8 @@ let change_mode box entry buttons button_text1 button_text2 label_text mode =
     newbutton#set_label button_text1;
     editbutton#set_label button_text2;
     gl#set_mode mode
+let to_poly_type_mode () =
+    change_mode false false false "" "" "" GlFlatDraw.Polygon_Type
 let to_draw_mode () =
     change_mode true false false "" "" "" GlFlatDraw.Draw
 let to_floor_height_mode () =
@@ -408,7 +410,7 @@ let view_menu_toolkit =
      `M ("_Elevation", [`I ("Floor", to_floor_height_mode);
                         `I ("Ceiling", to_ceiling_height_mode)]);
      `M ("_Textures",  [`I ("Floor", CamlExt.id); `I ("Ceiling", CamlExt.id);]);
-     `I ("_Polygon Types", CamlExt.id);
+     `I ("_Polygon Types", to_poly_type_mode);
      `S;
      `M ("_Lights",    [`I ("Floor", to_floor_light_mode);
                         `I ("Ceiling", to_ceiling_light_mode);
