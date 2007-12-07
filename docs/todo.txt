@@ -9,7 +9,6 @@ look into packing tables
 + replace the object blips with object icons (i.e. finish loading those TGAs)
 + make the light dialog do something
 + fix the gtk **CRITICAL thing on start-up
-+ remember open/save paths rather than defaulting to the pwd
 + add Shapes reading support, at least for wall textures
 + add ceiling / floor texturing support
 + add Pfhorte- / Obed-style texturing
@@ -30,8 +29,7 @@ look into packing tables
 + add temporary object highlights until the object glyphs are done
 + add Goto... function (i.e. add recenter-on-point function)
 + add placement chunk dialog / functionality
-+ add nuke, pave, nuke & pave
-+ add polygon types view
++ make polygon types view capable of setting types
 + add ambient / random sounds views
 + add New Level functionality
 + refactor files like Smithy.ml, the ones that just have loads of unrelated

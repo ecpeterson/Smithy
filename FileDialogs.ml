@@ -5,6 +5,8 @@
 
 open MapFormat
 
+let path = ref None
+
 let fail_dialog () =
     let dialog = GWindow.dialog ~title:Resources.warning ~modal:true () in
     let hb1 = GPack.hbox ~packing:dialog#action_area#add () in
@@ -15,6 +17,8 @@ let fail_dialog () =
 
 let open_file_dialog map_obj set_title gl () =
     let dialog = GWindow.file_selection ~title:"Open Map" () in
+    begin match !path with None -> () | Some path ->
+        dialog#set_filename path end;
     begin match dialog#run () with
         |`OK ->
             begin try map_obj#read_from_file dialog#filename;
@@ -22,11 +26,14 @@ let open_file_dialog map_obj set_title gl () =
             with _ -> fail_dialog () end;
         |_ -> ()
     end;
+    path := Some dialog#filename;
     dialog#destroy ();
     ignore (gl#draw ())
 
 let save_file_dialog map_obj set_title () =
     let dialog = GWindow.file_selection ~title:"Save Map" () in
+    begin match !path with None -> () | Some path ->
+        dialog#set_filename path end;
     begin match dialog#run () with
         |`OK ->
             begin try map_obj#write_to_file dialog#filename;
@@ -34,6 +41,7 @@ let save_file_dialog map_obj set_title () =
             with _ -> fail_dialog () end
         |_ -> ()
     end;
+    path := Some dialog#filename;
     dialog#destroy ()
 
 let silent_save map_obj set_title () =
