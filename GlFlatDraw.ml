@@ -17,8 +17,9 @@ let poly_type_saturation = 0.5
 let poly_type_value = 0.5
 (* end colors! *)
 
-type highlighted_component = No_Highlight | Point of int | Line of int |
-                             Poly of int | Object of int
+type highlighted_component = No_Highlight | Point of int list |
+                             Line of int list | Poly of int list |
+                             Object of int list
 
 type renderer_mode = Draw | Floor_Height | Ceiling_Height | Media |
                      Floor_Light | Ceiling_Light | Media_Light | Polygon_Type
@@ -291,27 +292,30 @@ class gldrawer (ar:GlGtk.area)
         GlDraw.color highlight_color;
         match highlighted_component with
             |Point n ->
-                let (x, y) = (Array.get (map#get_points_array ()) n)#vertex () in
-                GlDraw.point_size 5.0;
-                GlDraw.begins `points;
-                GlDraw.vertex2 (float x, float y);
-                GlDraw.ends ()
+                List.iter (fun n ->
+                    let (x, y) = (Array.get (map#get_points_array ()) n)#vertex () in
+                    GlDraw.point_size 5.0;
+                    GlDraw.begins `points;
+                    GlDraw.vertex2 (float x, float y);
+                    GlDraw.ends ()) n
             |Line n ->
-                let line = Array.get (map#get_lines_array ()) n in
-                let (p0, p1) = line#endpoints () in
-                let (x0, y0) = (Array.get (map#get_points_array ()) p0)#vertex () in
-                let (x1, y1) = (Array.get (map#get_points_array ()) p1)#vertex () in
-                GlDraw.line_width 4.0;
-                GlDraw.begins `lines;
-                GlDraw.vertex2 (float x0, float y0);
-                GlDraw.vertex2 (float x1, float y1);
-                GlDraw.ends ()
+                List.iter (fun n ->
+                    let line = Array.get (map#get_lines_array ()) n in
+                    let (p0, p1) = line#endpoints () in
+                    let (x0, y0) = (Array.get (map#get_points_array ()) p0)#vertex () in
+                    let (x1, y1) = (Array.get (map#get_points_array ()) p1)#vertex () in
+                    GlDraw.line_width 4.0;
+                    GlDraw.begins `lines;
+                    GlDraw.vertex2 (float x0, float y0);
+                    GlDraw.vertex2 (float x1, float y1);
+                    GlDraw.ends ()) n
             |Poly n ->
-                let poly = Array.get (map#get_polygons_array ()) n in
-                let poly_ring = map#get_poly_ring poly in
-                draw_poly (List.map
-                    (fun x -> (Array.get (map#get_points_array ()) x)#vertex ())
-                    poly_ring) 0
+                List.iter (fun n ->
+                    let poly = Array.get (map#get_polygons_array ()) n in
+                    let poly_ring = map#get_poly_ring poly in
+                    draw_poly (List.map
+                        (fun x -> (Array.get (map#get_points_array ()) x)#vertex ())
+                        poly_ring) 0) n
             |No_Highlight
             |_ -> () (* this fallthrough case is for other highlighted things *)
 

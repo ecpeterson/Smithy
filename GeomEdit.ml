@@ -166,9 +166,12 @@ let fill_poly x y map =
 
 let delete gl map =
     begin match gl#highlighted () with
-        |GlFlatDraw.Point n -> map#delete_point n
-        |GlFlatDraw.Line n -> map#delete_line n
-        |GlFlatDraw.Poly n -> map#delete_poly n
+        |GlFlatDraw.Point n ->
+            List.iter (fun n -> map#delete_point n) n
+        |GlFlatDraw.Line n ->
+            List.iter (fun n -> map#delete_line n) n
+        |GlFlatDraw.Poly n ->
+            List.iter (fun n -> map#delete_poly n) n
         |GlFlatDraw.No_Highlight
         |_ -> ()
     end;
