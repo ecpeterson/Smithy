@@ -228,13 +228,13 @@ let tool_begin_event mouse_descriptor =
     |GlFlatDraw.Draw, 1, _, _, _ ->
         if tool = buttonarrow then
             if point_d < highlight_distance () then
-                gl#set_highlighted (GlFlatDraw.Point point_i)
+                gl#set_highlighted (GlFlatDraw.Point [point_i])
             else if obj_d < highlight_distance () then
-                gl#set_highlighted (GlFlatDraw.Object obj_i)
+                gl#set_highlighted (GlFlatDraw.Object [obj_i])
             else if line_d < highlight_distance () then
-                gl#set_highlighted (GlFlatDraw.Line line_i)
+                gl#set_highlighted (GlFlatDraw.Line [line_i])
             else if poly != None then
-                let Some n = poly in gl#set_highlighted (GlFlatDraw.Poly n)
+                let Some n = poly in gl#set_highlighted (GlFlatDraw.Poly [n])
             else
                 gl#set_highlighted GlFlatDraw.No_Highlight
         else if tool = buttonline then
@@ -295,14 +295,17 @@ let tool_in_event motion_descriptor =
                                int_of_float (float y +. delta_y), z) in
             begin match gl#highlighted () with
                 |GlFlatDraw.Point n ->
-                    shift_point n
+                    List.iter (fun n -> shift_point n) n
                 |GlFlatDraw.Line n ->
-                    shift_line (Array.get (map#get_lines_array ()) n)
+                    List.iter (fun n ->
+                        shift_line (Array.get (map#get_lines_array ()) n)) n
                 |GlFlatDraw.Poly n ->
-                    let poly = Array.get (map#get_polygons_array ()) n in
-                    shift_poly poly 0
+                    List.iter (fun n -> 
+                        let poly = Array.get (map#get_polygons_array ()) n in
+                        shift_poly poly 0) n
                 |GlFlatDraw.Object n ->
-                    shift_obj (Array.get (map#get_objs_array ()) n)
+                    List.iter (fun n ->
+                        shift_obj (Array.get (map#get_objs_array ()) n)) n
                 |_ -> () end;
             gl#draw ()
         else if tool = buttonline then
@@ -323,13 +326,14 @@ let tool_end_event mouse_descriptor =
     begin match gl#mode () with
     |GlFlatDraw.Draw ->
         if tool = buttonarrow then
-            match gl#highlighted () with GlFlatDraw.Object n -> begin
+            match gl#highlighted () with GlFlatDraw.Object n ->
+                List.iter (fun n ->
                 let obj = Array.get (map#get_objs_array ()) n in
                 let (x, y, _) = obj#point () in
                 let poly = map#get_enclosing_poly (float x) (float y) in
                 match poly with
                     |None -> map#delete_obj n
-                    |Some a -> obj#set_polygon a end
+                    |Some a -> obj#set_polygon a) n
             |_ -> ()
         else if tool = buttonzoom then
             match button with
