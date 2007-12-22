@@ -20,7 +20,7 @@ let create_menu label menubar =
 (** set up GTK widgets **)
 (* the main draw window *)
 let window = GWindow.window ~width:500 ~height:300 ~title:"Smithy"
-    ~allow_shrink:true ()
+    ~allow_shrink:true ~show:false ()
 let vbox = GPack.vbox ~packing:window#add ()
 let menu_bar = GMenu.menu_bar ~packing:vbox#pack ~height:20 ()
 let file_menu = create_menu "File" menu_bar
@@ -44,7 +44,8 @@ let sbc = sb#new_context ~name:"Test"
 let set_status x = sbc#pop (); sbc#push x
 
 (* the toolbar *)
-let toolbar = GWindow.window ~type_hint:`TOOLBAR ~title:"Smithy Toolkit" ()
+let toolbar = GWindow.window ~type_hint:`TOOLBAR ~title:"Smithy Toolkit"
+                             ~show:false ()
 let vbox = GPack.vbox ~packing:toolbar#add ()
 let hbox1 = GPack.hbox ~packing:vbox#pack ()
 let hbox2 = GPack.hbox ~packing:vbox#pack ()
@@ -457,6 +458,7 @@ let _ =
         (fun obj -> ignore (obj#event#connect#button_press ~callback:
             (fun _ -> toolbar_clicked obj; false))) buttons;
     toolbar#show ();
+    window#present ();
     let args = Sys.argv in
     if Array.length args > 1 then
         map#read_from_file (Array.get args (Array.length args - 1));
