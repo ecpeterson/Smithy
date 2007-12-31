@@ -54,7 +54,7 @@ let poly_dialog poly map =
         begin match (poly#kind (), kind) with
         (* do we just want to open the platform dialog again? *)
         |(Platform, Platform) ->
-            let plat = Array.get (map#get_platforms_array ()) (poly#permutation ()) in
+            let plat = (map#get_platforms_array ()).(poly#permutation ()) in
             platform_dialog plat
         (* do we want to trash an old platform? *)
         |(Platform, _) ->

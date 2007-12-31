@@ -287,11 +287,11 @@ class polygon = object
         vertex_count <- input_word fh;
         endpoint_indices <- Array.make vertices_per_poly 0;
         for j = 0 to vertices_per_poly - 1 do
-            Array.set endpoint_indices j (input_word fh)
+            endpoint_indices.(j) <- (input_word fh)
         done;
         line_indices <- Array.make vertices_per_poly 0;
         for j = 0 to vertices_per_poly - 1 do
-            Array.set line_indices j (input_word fh)
+            line_indices.(j) <- (input_word fh)
         done;
         floor_texture <- sd_of_int (input_word fh);
         ceiling_texture <- sd_of_int (input_word fh);
@@ -308,7 +308,7 @@ class polygon = object
         ceiling_transfer_mode <- input_word fh;
         adjacent_polygon_indices <- Array.make vertices_per_poly 0;
         for j = 0 to vertices_per_poly - 1 do
-            Array.set adjacent_polygon_indices j (input_word fh)
+            adjacent_polygon_indices.(j) <- (input_word fh)
         done;
         first_neighbor_index <- input_word fh;
         neighbor_count <- input_word fh;
@@ -317,7 +317,7 @@ class polygon = object
         center <- (centerx, centery);
         side_indices <- Array.make vertices_per_poly 0;
         for j = 0 to vertices_per_poly - 1 do
-            Array.set side_indices j (input_word fh)
+            side_indices.(j) <- (input_word fh)
         done;
         let floor_originx = input_word fh in
         let floor_originy = input_word fh in

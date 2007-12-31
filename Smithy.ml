@@ -107,12 +107,12 @@ let edit_current_item () =
     |(None, _) |(Some (-1), _) -> ()
     |(Some index, GlFlatDraw.Media) ->
         let media = map#get_media_array () in
-        MapDialogs.media_dialog (Array.get media index)
+        MapDialogs.media_dialog media.(index)
     |(Some index, GlFlatDraw.Floor_Light)
     |(Some index, GlFlatDraw.Media_Light)
     |(Some index, GlFlatDraw.Ceiling_Light) ->
         let lights = map#get_lights_array () in
-        MapDialogs.light_dialog (Array.get lights index)
+        MapDialogs.light_dialog lights.(index)
     |_ -> ()
 let make_new_item () =
     match gl#mode () with
@@ -184,45 +184,45 @@ let tool_begin_event mouse_descriptor =
     let (obj_d, obj_i) = map#get_closest_object x y in
     begin match (gl#mode (), button, !numeric_int, !numeric_float, poly) with
     |GlFlatDraw.Media_Light, 1, Some v, _, Some p ->
-        let poly = Array.get (map#get_polygons_array ()) p in
+        let poly = (map#get_polygons_array ()).(p) in
         poly#set_media_lightsource v
     |GlFlatDraw.Media_Light, 3, _, _, Some p ->
-        let poly = Array.get (map#get_polygons_array ()) p in
+        let poly = (map#get_polygons_array ()).(p) in
         let v = poly#media_lightsource () in
         numeric_entry#set_text (string_of_int v)
     |GlFlatDraw.Ceiling_Light, 1, Some v, _, Some p ->
-        let poly = Array.get (map#get_polygons_array ()) p in
+        let poly = (map#get_polygons_array ()).(p) in
         poly#set_ceiling_lightsource v
     |GlFlatDraw.Ceiling_Light, 3, _, _, Some p ->
-        let poly = Array.get (map#get_polygons_array ()) p in
+        let poly = (map#get_polygons_array ()).(p) in
         let v = poly#ceiling_lightsource () in
         numeric_entry#set_text (string_of_int v)
     |GlFlatDraw.Floor_Light, 1, Some v, _, Some p ->
-        let poly = Array.get (map#get_polygons_array ()) p in
+        let poly = (map#get_polygons_array ()).(p) in
         poly#set_floor_lightsource v
     |GlFlatDraw.Floor_Light, 3, _, _, Some p ->
-        let poly = Array.get (map#get_polygons_array ()) p in
+        let poly = (map#get_polygons_array ()).(p) in
         let v = poly#floor_lightsource () in
         numeric_entry#set_text (string_of_int v)
     |GlFlatDraw.Ceiling_Height, 1, _, Some v, Some p ->
-        let poly = Array.get (map#get_polygons_array ()) p in
+        let poly = (map#get_polygons_array ()).(p) in
         poly#set_ceiling_height v
     |GlFlatDraw.Ceiling_Height, 3, _, _, Some p ->
-        let poly = Array.get (map#get_polygons_array ()) p in
+        let poly = (map#get_polygons_array ()).(p) in
         let v = poly#ceiling_height () in
         numeric_entry#set_text (string_of_float v)
     |GlFlatDraw.Floor_Height, 1, _, Some v, Some p ->
-        let poly = Array.get (map#get_polygons_array ()) p in
+        let poly = (map#get_polygons_array ()).(p) in
         poly#set_floor_height v
     |GlFlatDraw.Floor_Height, 3, _, _, Some p ->
-        let poly = Array.get (map#get_polygons_array ()) p in
+        let poly = (map#get_polygons_array ()).(p) in
         let v = poly#floor_height () in
         numeric_entry#set_text (string_of_float v)
     |GlFlatDraw.Media, 1, Some v, _, Some p ->
-        let poly = Array.get (map#get_polygons_array ()) p in
+        let poly = (map#get_polygons_array ()).(p) in
         poly#set_media_index v
     |GlFlatDraw.Media, 3, _, _, Some p ->
-        let poly = Array.get (map#get_polygons_array ()) p in
+        let poly = (map#get_polygons_array ()).(p) in
         let v = poly#media_index () in
         numeric_entry#set_text (string_of_int v)
     |GlFlatDraw.Draw, 1, _, _, _ ->
@@ -245,13 +245,13 @@ let tool_begin_event mouse_descriptor =
     |GlFlatDraw.Draw, 3, _, _, _ ->
         if tool = buttonarrow then
             if point_d < highlight_distance () then
-                MapDialogs.point_dialog (Array.get (map#get_points_array ()) point_i)
+                MapDialogs.point_dialog (map#get_points_array ()).(point_i)
             else if obj_d < highlight_distance () then
-                MapDialogs.obj_dialog (Array.get (map#get_objs_array ()) obj_i)
+                MapDialogs.obj_dialog (map#get_objs_array ()).(obj_i)
             else if line_d < highlight_distance () then
-                MapDialogs.line_dialog (Array.get (map#get_lines_array ()) line_i) map
+                MapDialogs.line_dialog (map#get_lines_array ()).(line_i) map
             else if poly != None then let Some n = poly in
-                MapDialogs.poly_dialog (Array.get (map#get_polygons_array ()) n) map
+                MapDialogs.poly_dialog (map#get_polygons_array ()).(n) map
         else ()
     |_ -> () end;
     gl#draw ();
@@ -275,7 +275,7 @@ let tool_in_event motion_descriptor =
             let delta_x = (x -. old_x) /. (gl#get_zoom ()) in
             let delta_y = (y -. old_y) /. (gl#get_zoom ()) in
             let shift_point p =
-                let point = Array.get (map#get_points_array ()) p in
+                let point = (map#get_points_array ()).(p) in
                 let (px, py) = point#vertex () in
                 point#set_vertex (int_of_float (float px +. delta_x),
                                   int_of_float (float py +. delta_y));
@@ -286,7 +286,7 @@ let tool_in_event motion_descriptor =
                 shift_point p1 in
             let rec shift_poly poly n =
                 if n = poly#vertex_count () then () else
-                let index = Array.get (poly#endpoint_indices ()) n in
+                let index = (poly#endpoint_indices ()).(n) in
                 shift_point index;
                 shift_poly poly (n+1) in
             let shift_obj obj =
@@ -298,14 +298,14 @@ let tool_in_event motion_descriptor =
                     List.iter (fun n -> shift_point n) n
                 |GlFlatDraw.Line n ->
                     List.iter (fun n ->
-                        shift_line (Array.get (map#get_lines_array ()) n)) n
+                        shift_line (map#get_lines_array ()).(n)) n
                 |GlFlatDraw.Poly n ->
                     List.iter (fun n -> 
-                        let poly = Array.get (map#get_polygons_array ()) n in
+                        let poly = (map#get_polygons_array ()).(n) in
                         shift_poly poly 0) n
                 |GlFlatDraw.Object n ->
                     List.iter (fun n ->
-                        shift_obj (Array.get (map#get_objs_array ()) n)) n
+                        shift_obj (map#get_objs_array ()).(n)) n
                 |_ -> () end;
             gl#draw ()
         else if tool = buttonline then
@@ -328,7 +328,7 @@ let tool_end_event mouse_descriptor =
         if tool = buttonarrow then
             match gl#highlighted () with GlFlatDraw.Object n ->
                 List.iter (fun n ->
-                let obj = Array.get (map#get_objs_array ()) n in
+                let obj = (map#get_objs_array ()).(n) in
                 let (x, y, _) = obj#point () in
                 let poly = map#get_enclosing_poly (float x) (float y) in
                 match poly with
@@ -465,5 +465,5 @@ let _ =
     window#present ();
     let args = Sys.argv in
     if Array.length args > 1 then
-        map#read_from_file (Array.get args (Array.length args - 1));
+        map#read_from_file args.(Array.length args - 1);
     GMain.Main.main ()

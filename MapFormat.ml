@@ -35,7 +35,7 @@ let read_chunk fh chunk_length entry_length factory =
     for i = 0 to (chunk_length / entry_length) - 1 do
         let entry = factory () in
         entry#read fh;
-        Array.set array i entry
+        array.(i) <- entry
     done;
     array
 
@@ -293,8 +293,8 @@ class map = object(self)
             distance (x, y) (ix, iy) in
         array_fold_left_indexed (fun (accd, acci) this_line i ->
             let (p0i, p1i) = this_line#endpoints () in
-            let (p0x, p0y) = (Array.get points p0i)#vertex () in
-            let (p1x, p1y) = (Array.get points p1i)#vertex () in
+            let (p0x, p0y) = points.(p0i)#vertex () in
+            let (p1x, p1y) = points.(p1i)#vertex () in
             let d = line_distance (float p0x, float p0y) (float p1x, float p1y) (x0, y0) in
             if d < accd then (d, i) else (accd, acci)) (infinity, 0) lines
 
@@ -321,9 +321,9 @@ class map = object(self)
             sum_angles points (x0, y0) (i+1) (angle p0 p1 +. acc) in
         let rec g_e_p_aux x0 y0 i =
             if i = Array.length polygons then None else
-            let poly = Array.get polygons i in
+            let poly = polygons.(i) in
             let poly_ring = self#get_poly_ring poly in
-            let poly_points = List.map (fun x -> (Array.get points x)#vertex ()) poly_ring in
+            let poly_points = List.map (fun x -> points.(x)#vertex ()) poly_ring in
             let sum = sum_angles poly_points (x0, y0) 0 0.0 in
             if abs_float sum < pi then
                 g_e_p_aux x0 y0 (i+1)
@@ -333,13 +333,13 @@ class map = object(self)
 
     method get_poly_ring (poly : polygon) =
         let endpoints = Array.map
-            (fun x -> (Array.get lines x)#endpoints ())
+            (fun x -> lines.(x)#endpoints ())
             (poly#line_indices ()) in
         let rec loop n acc =
             if n = poly#vertex_count () then acc else
-            let (e0, e1) = Array.get endpoints n in
+            let (e0, e1) = endpoints.(n) in
             if n = 0 then begin
-                let (e2, e3) = Array.get endpoints 1 in
+                let (e2, e3) = endpoints.(1) in
                 if e0 = e2 || e0 = e3 then
                     loop 1 [e0]
                 else
@@ -357,19 +357,19 @@ class map = object(self)
                            (float y0 -. (float y1))**2.0)**0.5) in
         let rec line_loop n =
             if n = line_length then () else
-            let line = Array.get lines n in
+            let line = lines.(n) in
             let (p0, p1) = line#endpoints () in
             if p0 = point || p1 = point then
-                let p0 = (Array.get points p0)#vertex () in
-                let p1 = (Array.get points p1)#vertex () in
+                let p0 = points.(p0)#vertex () in
+                let p1 = points.(p1)#vertex () in
                 line#set_length (length p0 p1);
             line_loop (n+1) in
         line_loop 0
 
     method delete_side n =
-        let side = Array.get sides n in
-        let parent_poly = Array.get polygons (side#polygon_index ()) in
-        let parent_line = Array.get lines (side#line_index ()) in
+        let side = sides.(n) in
+        let parent_poly = polygons.(side#polygon_index ()) in
+        let parent_line = lines.(side#line_index ()) in
         let poly_side_array = parent_poly#side_indices () in
         (* get rid of this side from the parent array, filling in the empty end
          * slot with a -1 value, signalling emptiness *)
@@ -390,7 +390,7 @@ class map = object(self)
             if ccw > n then line#set_ccw_poly_side_index (ccw - 1)) lines
 
     method delete_poly n =
-        let poly = Array.get polygons n in
+        let poly = polygons.(n) in
         (*let lsides = poly#side_indices () in*)
          (*deletes a whole sides array *)
         (*let rec trash_sides m =*)
@@ -427,7 +427,7 @@ class map = object(self)
             if pi > n then side#set_polygon_index (pi - 1)) sides
 
     method delete_line n =
-        let line = Array.get lines n in
+        let line = lines.(n) in
         (* if our line is attached to polygons, delete them *)
         let poly0 = line#cw_poly_owner () in
         let poly1 = line#ccw_poly_owner () in
@@ -465,7 +465,7 @@ class map = object(self)
         (* if we have a parent line, find it *)
         let rec aux acc =
             if acc = lines_length then -1 else
-            let (p0, p1) = (Array.get lines acc)#endpoints () in
+            let (p0, p1) = lines.(acc)#endpoints () in
             if p0 = n || p1 = n then acc else aux (acc + 1) in
         let target_line = aux 0 in
         if target_line != -1 then begin

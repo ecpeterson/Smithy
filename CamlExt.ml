@@ -114,7 +114,7 @@ let find_in_array arr obj =
     let length = Array.length arr in
     let rec fia_aux arr obj acc =
         if acc = length then acc else
-        if Array.get arr acc = obj
+        if arr.(acc) = obj
             then acc
             else fia_aux arr obj (acc+1) in
     fia_aux arr obj 0
@@ -124,16 +124,16 @@ let delete_from_array arr obj replace =
     let len = Array.length arr in
     let rec dfa_aux arr replace acc =
         if acc >= pos && acc < len - 1 then begin
-            Array.set arr acc (Array.get arr (acc + 1));
+            arr.(acc) <- arr.(acc + 1);
             dfa_aux arr replace (acc + 1)
         end else
-            Array.set arr acc replace in
+            arr.(acc) <- replace in
     if pos < len then dfa_aux arr replace pos else ()
 
 let destructive_map f arr =
     let len = Array.length arr in
     let rec dm_aux f arr n =
-        Array.set arr n (f (Array.get arr n));
+        arr.(n) <- f arr.(n);
         if n = len - 1 then () else dm_aux f arr (n+1) in
     dm_aux f arr 0
 
@@ -179,7 +179,8 @@ let iter_indexed f lst =
     i_i_aux f lst 0
 
 let array_fold_left_indexed f init arr =
-    let (x, y) = Array.fold_left (fun (x, i) y -> (f x y i, i+1)) (init, 0) arr in x
+    let (x, y) = Array.fold_left (fun (x, i) y ->
+        (f x y i, i+1)) (init, 0) arr in x
 
 let memoize f =
     let h = Hashtbl.create 0 in
