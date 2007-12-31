@@ -174,8 +174,8 @@ class gldrawer (ar:GlGtk.area)
         let points = map#get_points_array () in
         let draw_line line =
             let (v1, v2) = line#endpoints () in
-            let p1 = Array.get points v1 in
-            let p2 = Array.get points v2 in
+            let p1 = points.(v1) in
+            let p2 = points.(v2) in
             let (x1, y1) = p1#vertex () in
             let (x2, y2) = p2#vertex () in
             if List.mem MapTypes.TRANSPARENT (line#flags ()) then
@@ -200,7 +200,7 @@ class gldrawer (ar:GlGtk.area)
                 |Media ->
                     let rec count_media i acci accl =
                         if i = poly_count then acci else
-                        let m = (Array.get polygons i)#media_index () in
+                        let m = polygons.(i)#media_index () in
                         if List.mem m accl
                             then count_media (i+1) acci accl
                             else count_media (i+1) (acci+1) (m :: accl) in
@@ -212,14 +212,14 @@ class gldrawer (ar:GlGtk.area)
             match mode with
                 |Draw -> (fun x ->
                     let vertex_array = List.map (fun x ->
-                        (Array.get (map#get_points_array ()) x)#vertex ()) (map#get_poly_ring x) in
+                        (map#get_points_array ()).(x)#vertex ()) (map#get_poly_ring x) in
                     let concave = vertex_array_is_concave vertex_array in
                     if concave then GlDraw.color invalid_polygon
                         else GlDraw.color polygon_color;
                     draw_poly vertex_array 0)
                 |Media_Light -> (fun x ->
                     let vertex_array = List.map (fun x ->
-                        (Array.get (map#get_points_array ()) x)#vertex ()) (map#get_poly_ring x) in
+                        (map#get_points_array ()).(x)#vertex ()) (map#get_poly_ring x) in
                     let color = match (x#media_index (), x#media_lightsource ()) with
                         (_, -1) |(-1, _) -> (0.5, 0.5, 0.5)
                         |         (_, l) -> (float l /. (float count), 0.0, 0.0) in
@@ -227,7 +227,7 @@ class gldrawer (ar:GlGtk.area)
                     draw_poly vertex_array 0)
                 |Floor_Light -> (fun x ->
                     let vertex_array = List.map (fun x ->
-                        (Array.get (map#get_points_array ()) x)#vertex ()) (map#get_poly_ring x) in
+                        (map#get_points_array ()).(x)#vertex ()) (map#get_poly_ring x) in
                     let color = match x#floor_lightsource () with
                         (-1) -> (0.5, 0.5, 0.5)
                           |l -> (float l /. (float count), 0.0, 0.0) in
@@ -235,7 +235,7 @@ class gldrawer (ar:GlGtk.area)
                     draw_poly vertex_array 0)
                 |Ceiling_Light -> (fun x ->
                     let vertex_array = List.map (fun x ->
-                        (Array.get (map#get_points_array ()) x)#vertex ()) (map#get_poly_ring x) in
+                        (map#get_points_array ()).(x)#vertex ()) (map#get_poly_ring x) in
                     let color = match x#ceiling_lightsource () with
                         (-1) -> (0.5, 0.5, 0.5)
                           |l -> (float l /. (float count), 0.0, 0.0) in
@@ -243,7 +243,7 @@ class gldrawer (ar:GlGtk.area)
                     draw_poly vertex_array 0)
                 |Media -> (fun x ->
                     let vertex_array = List.map (fun x ->
-                        (Array.get (map#get_points_array ()) x)#vertex ()) (map#get_poly_ring x) in
+                        (map#get_points_array ()).(x)#vertex ()) (map#get_poly_ring x) in
                     let color = match x#media_index () with
                         (-1) -> (0.5, 0.5, 0.5)
                           |m -> (float m /. (float count), 0.0, 0.0) in
@@ -251,21 +251,21 @@ class gldrawer (ar:GlGtk.area)
                     draw_poly vertex_array 0)
                 |Ceiling_Height -> (fun x ->
                     let vertex_array = List.map (fun x ->
-                        (Array.get (map#get_points_array ()) x)#vertex ()) (map#get_poly_ring x) in
+                        (map#get_points_array ()).(x)#vertex ()) (map#get_poly_ring x) in
                     (* convert to an rgb-range value *)
                     let height = x#ceiling_height () /. 18. +. 0.5 in
                     GlDraw.color (height, height, height);
                     draw_poly vertex_array 0)
                 |Floor_Height -> (fun x ->
                     let vertex_array = List.map (fun x ->
-                        (Array.get (map#get_points_array ()) x)#vertex ()) (map#get_poly_ring x) in
+                        (map#get_points_array ()).(x)#vertex ()) (map#get_poly_ring x) in
                     (* convert to an rgb-range value *)
                     let height = x#floor_height () /. 18. +. 0.5 in
                     GlDraw.color (height, height, height);
                     draw_poly vertex_array 0)
                 |Polygon_Type -> (fun x ->
                     let vertex_array = List.map (fun x ->
-                        (Array.get (map#get_points_array ()) x)#vertex ()) (map#get_poly_ring x) in
+                        (map#get_points_array ()).(x)#vertex ()) (map#get_poly_ring x) in
                     let kind = float (CamlExt.to_enum MapTypes.poly_kind_descriptor
                         (x#kind ())) in
                     let length = float (List.length
@@ -293,17 +293,17 @@ class gldrawer (ar:GlGtk.area)
         match highlighted_component with
             |Point n ->
                 List.iter (fun n ->
-                    let (x, y) = (Array.get (map#get_points_array ()) n)#vertex () in
+                    let (x, y) = (map#get_points_array ()).(n)#vertex () in
                     GlDraw.point_size 5.0;
                     GlDraw.begins `points;
                     GlDraw.vertex2 (float x, float y);
                     GlDraw.ends ()) n
             |Line n ->
                 List.iter (fun n ->
-                    let line = Array.get (map#get_lines_array ()) n in
+                    let line = (map#get_lines_array ()).(n) in
                     let (p0, p1) = line#endpoints () in
-                    let (x0, y0) = (Array.get (map#get_points_array ()) p0)#vertex () in
-                    let (x1, y1) = (Array.get (map#get_points_array ()) p1)#vertex () in
+                    let (x0, y0) = (map#get_points_array ()).(p0)#vertex () in
+                    let (x1, y1) = (map#get_points_array ()).(p1)#vertex () in
                     GlDraw.line_width 4.0;
                     GlDraw.begins `lines;
                     GlDraw.vertex2 (float x0, float y0);
@@ -311,10 +311,10 @@ class gldrawer (ar:GlGtk.area)
                     GlDraw.ends ()) n
             |Poly n ->
                 List.iter (fun n ->
-                    let poly = Array.get (map#get_polygons_array ()) n in
+                    let poly = (map#get_polygons_array ()).(n) in
                     let poly_ring = map#get_poly_ring poly in
                     draw_poly (List.map
-                        (fun x -> (Array.get (map#get_points_array ()) x)#vertex ())
+                        (fun x -> (map#get_points_array ()).(x)#vertex ())
                         poly_ring) 0) n
             |No_Highlight
             |_ -> () (* this fallthrough case is for other highlighted things *)
