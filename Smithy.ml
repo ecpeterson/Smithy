@@ -226,17 +226,33 @@ let tool_begin_event mouse_descriptor =
         let v = poly#media_index () in
         numeric_entry#set_text (string_of_int v)
     |GlFlatDraw.Draw, 1, _, _, _ ->
+        let state = Gdk.Convert.modifier (GdkEvent.Button.state mouse_descriptor) in
+        if List.mem `SHIFT state then
+            print_endline "shift!"
+        else
+            print_endline "no shift!";
         if tool = buttonarrow then
-            if point_d < highlight_distance () then
-                gl#set_highlighted (GlFlatDraw.Point [point_i])
-            else if obj_d < highlight_distance () then
-                gl#set_highlighted (GlFlatDraw.Object [obj_i])
-            else if line_d < highlight_distance () then
-                gl#set_highlighted (GlFlatDraw.Line [line_i])
-            else if poly != None then
-                let Some n = poly in gl#set_highlighted (GlFlatDraw.Poly [n])
-            else
-                gl#set_highlighted GlFlatDraw.No_Highlight
+            match List.mem `SHIFT state, gl#highlighted () with
+            |true, GlFlatDraw.Point n when point_d < highlight_distance () ->
+                    gl#set_highlighted (GlFlatDraw.Point (point_i :: n))
+            |_ when point_d < highlight_distance () ->
+                    gl#set_highlighted (GlFlatDraw.Point [point_i])
+            |true, GlFlatDraw.Object n when obj_d < highlight_distance () ->
+                    gl#set_highlighted (GlFlatDraw.Object (obj_i :: n))
+            |_ when obj_d < highlight_distance () ->
+                    gl#set_highlighted (GlFlatDraw.Object [obj_i])
+            |true, GlFlatDraw.Line n when line_d < highlight_distance () ->
+                    gl#set_highlighted (GlFlatDraw.Line (line_i :: n))
+            |_ when line_d < highlight_distance () ->
+                    gl#set_highlighted (GlFlatDraw.Line [line_i])
+            |true, GlFlatDraw.Poly m when poly != None ->
+                    let Some n = poly in
+                    gl#set_highlighted (GlFlatDraw.Poly (n :: m))
+            |_ when poly != None ->
+                    let Some n = poly in
+                    gl#set_highlighted (GlFlatDraw.Poly [n])
+            |_ ->
+                    gl#set_highlighted GlFlatDraw.No_Highlight
         else if tool = buttonline then
             GeomEdit.start_line x y map (highlight_distance ())
         else if tool = buttonfill then
