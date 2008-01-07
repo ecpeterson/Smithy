@@ -26,6 +26,7 @@ let menu_bar = GMenu.menu_bar ~packing:vbox#pack ~height:20 ()
 let file_menu = create_menu "File" menu_bar
 let view_menu = create_menu "View" menu_bar
 let special_menu = create_menu "Special" menu_bar
+let smithy_menu = create_menu "Smithy" menu_bar
 let hbox = GPack.hbox ~packing:vbox#add ()
 let eventbox = GBin.event_box ~packing:hbox#add ()
 let ar = GlGtk.area [`USE_GL;`RGBA;`DOUBLEBUFFER]
@@ -226,12 +227,10 @@ let tool_begin_event mouse_descriptor =
         let v = poly#media_index () in
         numeric_entry#set_text (string_of_int v)
     |GlFlatDraw.Draw, 1, _, _, _ ->
-        let state = Gdk.Convert.modifier (GdkEvent.Button.state mouse_descriptor) in
-        if List.mem `SHIFT state then
-            print_endline "shift!"
-        else
-            print_endline "no shift!";
         if tool = buttonarrow then
+            (* see TODO list about things pertaining to this that need to be
+             * fixed; there are quite a few. *)
+            let state = Gdk.Convert.modifier (GdkEvent.Button.state mouse_descriptor) in
             match List.mem `SHIFT state, gl#highlighted () with
             |true, GlFlatDraw.Point n when point_d < highlight_distance () ->
                     gl#set_highlighted (GlFlatDraw.Point (point_i :: n))
@@ -458,6 +457,9 @@ let special_menu_toolkit =
      `I ("Nuke Objects Only...", map#nuke);
      `I ("Nuke and Pave Level...", map#nuke_and_pave)]
 
+let smithy_menu_toolkit =
+    [`I ("Merge Selected Points", GeomEdit.merge_points gl map)]
+
 (* entry point for the application proper *)
 let _ =
     window#event#connect#delete ~callback:deleting_window;
@@ -473,6 +475,7 @@ let _ =
     GToolbox.build_menu file_menu ~entries:file_menu_toolkit;
     GToolbox.build_menu view_menu ~entries:view_menu_toolkit;
     GToolbox.build_menu special_menu ~entries:special_menu_toolkit;
+    GToolbox.build_menu smithy_menu ~entries:smithy_menu_toolkit;
     window#show ();
     List.iter
         (fun obj -> ignore (obj#event#connect#button_press ~callback:
