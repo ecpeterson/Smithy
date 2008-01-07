@@ -258,3 +258,25 @@ let connect_line x y map gl choose_distance =
             map#add_line line2;
             do_line pi
     end else do_new_point () end else do_new_point ()
+
+(* TODO: this is not done, lol *)
+let merge_points gl map () =
+    match gl#highlighted () with
+    |GlFlatDraw.Point n -> begin
+        (* need to be sure no polys are attached to our pointset *)
+        if not (Array.fold_left (fun x y ->
+            let y = y#endpoint_indices () in
+            Array.fold_left (fun x y ->
+                x || List.mem y n) false y || x) false (map#get_polygons_array ()))
+        then begin
+        let n :: ns = n in
+        let rec do_merge ns =
+            match ns with [] -> () | new_n :: ns ->
+            (* is there a line between these two?  delete it *)
+            (* update line endpoints *)
+            (* update polygon endpoint array *)
+            (* change all new_n to n in map *)
+            do_merge ns in
+        do_merge ns;
+        gl#draw () end
+    end |_ -> () (* we can't merge things other than points! *)

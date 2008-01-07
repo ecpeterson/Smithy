@@ -51,5 +51,9 @@ anything faster or slower, and lists are pretty
 could somehow avoid that happening (hide instead of close or something)
 + put strings into Resources.ml or some similar thing for purposes of i18n
 + some kind of plugin interface would be pretty sweet
-+ add multiple highlights
-+ merging points would be sweet (possible with multiple highlights)
++ highlighting a highlighted component should remove its highlight
++ some things weren't thought through so well with multiple highlighted
+components, like dragging things around.  if you highlight multiple polys,
+some lines get moved multiple time in the same interface tic.  figure that one
+out, genius :/
++ merging points would be sweet, halfway implemented in GeomEdit.ml
