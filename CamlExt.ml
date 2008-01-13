@@ -16,7 +16,7 @@ let ($) a b =
 let (@) a b =
     fun x -> a (b x)
 
-(* reading wider integers out of binary files *)
+(** reading wider integers out of binary files **)
 let byte_cap = 256
 let word_cap = 65536
 
@@ -31,6 +31,7 @@ let output_word fh word =
     output_byte fh first_byte;
     output_byte fh second_byte
 
+(* utilities so we can read signed shorts *)
 let unsigned_to_signed_16 x =
     let sign = x land 0x8000 in
     let contents = x land 0x7fff in
@@ -68,6 +69,7 @@ let output_fixed fh x =
     output_word fh word1;
     output_word fh word2
 
+(* and some utilities to read enumerative types *)
 let rec of_bitflag descriptor x =
     match descriptor with
     |[] -> []
@@ -96,6 +98,7 @@ let to_enum (start, descriptor) x =
 let of_enum (start, descriptor) x =
     List.nth descriptor (x + start)
 
+(* not all structs are byte-aligned, more utility *)
 let rec output_padding fh n =
     if n = 0 then () else begin
     output_byte fh 0;
@@ -106,10 +109,18 @@ let output_string_n fh str len =
     output_string fh str;
     ignore (output_padding fh (len - (String.length str)))
 
+(* two debugging print routines *)
 let dprint str =
     print_endline str;
     flush stdout
 
+let rec print_array arr =
+    match arr with
+        |[] -> print_endline ""; flush stdout
+        |x :: xs -> print_int x; print_string ";"; print_array xs
+
+(** array mangling routines, since all our map structures are arrays **)
+(* finds obj in arr using whatever = is defined as for obj *)
 let find_in_array arr obj =
     let length = Array.length arr in
     let rec fia_aux arr obj acc =
@@ -119,6 +130,8 @@ let find_in_array arr obj =
             else fia_aux arr obj (acc+1) in
     fia_aux arr obj 0
 
+(* deletes obj from an arr, shifts the remainder over, and fills the tail of the
+ * array with replace *)
 let delete_from_array arr obj replace =
     let pos = find_in_array arr obj in
     let len = Array.length arr in
@@ -130,6 +143,7 @@ let delete_from_array arr obj replace =
             arr.(acc) <- replace in
     if pos < len then dfa_aux arr replace pos else ()
 
+(* an in-place map *)
 let destructive_map f arr =
     let len = Array.length arr in
     let rec dm_aux f arr n =
@@ -137,33 +151,35 @@ let destructive_map f arr =
         if n = len - 1 then () else dm_aux f arr (n+1) in
     dm_aux f arr 0
 
+(* deletes index n from arr and resizes it inefficiently *)
 let delete_from_array_and_resize arr n =
     let len = Array.length arr in
     Array.append (Array.sub arr 0 n) (Array.sub arr (n+1) (len - n - 1))
 
+(** some geometric functions that get used a lot *)
+(* dot products *)
 let dot (x0, y0) (x1, y1) =
     x0 * x1 + y0 * y1
 
 let dotf (x0, y0) (x1, y1) =
     x0 *. x1 +. y0 *. y1
 
+(* cross products *)
 let crossf (x0, y0) (x1, y1) =
     y0 *. x1 -. x0 *. y1
 
 let cross (x0, y0) (x1, y1) =
     y0 * x1 - x0 * y1
 
+(* euclidean norm on R^2 *)
 let norm (x, y) =
     (x**2.0 +. y**2.0)**0.5
 
+(* euclidean metric on R^2 *)
 let distance (x0, y0) (x1, y1) =
     norm ((x1 -. x0), (y1 -. y0))
 
-let rec print_array arr =
-    match arr with
-        |[] -> print_endline ""; flush stdout
-        |x :: xs -> print_int x; print_string ";"; print_array xs
-
+(* replicating a nice idea from Mathematica *)
 let map_indexed f lst =
     let rec m_i_aux f lst acc =
         match lst with
@@ -182,6 +198,8 @@ let array_fold_left_indexed f init arr =
     let (x, y) = Array.fold_left (fun (x, i) y ->
         (f x y i, i+1)) (init, 0) arr in x
 
+(* my favorite piece of code ever, takes a function 'a -> 'b and returns a
+ * function 'a -> 'b that incorporates a memoization layer *)
 let memoize f =
     let h = Hashtbl.create 0 in
     fun x ->
@@ -191,6 +209,7 @@ let memoize f =
             Hashtbl.add h x v;
             v
 
+(* conversion between color indexing formats *)
 let hsv_to_rgb (h, s, v) = 
     if s = 0.0 then (v, v, v) else
     let h = h *. 6. in
@@ -206,4 +225,4 @@ let hsv_to_rgb (h, s, v) =
         |3 -> (p, q, v)
         |4 -> (t, p, v)
         |_ -> (v, p, q) (* case 5 *)
-let hsv_to_rgb = memoize hsv_to_rgb
+let hsv_to_rgb = memoize hsv_to_rgb (*memoize this bitch*)
