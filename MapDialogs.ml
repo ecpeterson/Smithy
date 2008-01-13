@@ -1,5 +1,6 @@
 open MapTypes
 
+(* utility that constructs an edit box with a prefixed caption *)
 let labeled_entry ~label ~text ~packing =
     let hbox = GPack.hbox ~packing () in
     GMisc.label ~packing:hbox#add ~text:label ();
@@ -207,7 +208,6 @@ let make_media map =
     media_dialog m;
     map#add_media m
 
-(* TODO: add an actual dialog here *)
 let light_dialog light =
     let generate_frame () =
         let frame = GBin.frame ~label:"Becoming Active" () in

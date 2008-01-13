@@ -1,8 +1,9 @@
 (*** GlFlatDraw.ml contains the object (which contains the routines) that
  * control the updating of the overhead map surface.  ***)
 
-(* colors!
- * TODO: make configurable and move somewhere else *)
+(** colors!
+ * TODO: make configurable and move somewhere else **)
+(* these define what color things get painted while in draw mode *)
 let background_color       = (0.3, 0.3, 0.3)
 let grid_color             = (0.5, 0.5, 0.5)
 let anchor_point_color     = (0.3, 0.8, 0.8)
@@ -13,29 +14,42 @@ let transparent_line_color = (0.0, 1.0, 1.0)
 let highlight_color        = (1.0, 0.5, 0.0)
 let invalid_polygon        = (1.0, 0.5, 0.5)
 
+(* these define S and V in the HSV calculation while in poly type edit mode *)
 let poly_type_saturation = 0.5
 let poly_type_value = 0.5
-(* end colors! *)
+(** end colors! **)
 
+(* we keep track of what item is highlighted as part of the drawing / interface
+ * object, and we have an enumerative type to match across *)
 type highlighted_component = No_Highlight | Point of int list |
                              Line of int list | Poly of int list |
                              Object of int list
 
+(* the drawing object has a bunch of different states that it can be in that
+ * affects what information is displayed, here we have an enumerative type that
+ * describes the modes *)
 type renderer_mode = Draw | Floor_Height | Ceiling_Height | Media |
                      Floor_Light | Ceiling_Light | Media_Light | Polygon_Type
+
 open MapFormat
 
-let rec draw_poly poly_ring n =
-    if n = 0 then GlDraw.begins `polygon;
-    let (x, y) = List.hd poly_ring in
-    GlDraw.vertex2 (float x, float y);
-    match poly_ring with
-        |x :: [] -> GlDraw.ends ()
-        |x :: xs -> draw_poly xs (n+1)
-        |_ -> ()
+(* a helper utility to draw a polygon point ring *)
+let draw_poly poly_ring =
+    let rec d_p_aux poly_ring =
+        let (x, y) = List.hd poly_ring in
+        GlDraw.vertex2 (float x, float y);
+        match poly_ring with
+            |x :: [] -> GlDraw.ends ()
+            |x :: xs -> d_p_aux xs
+            |_ -> () in
+    GlDraw.begins `polygon;
+    d_p_aux poly_ring
 
+(* checks a point ring for concavity *)
 let vertex_array_is_concave vertices =
     let length = List.length vertices in
+    (* this runs a generic comparison function on the cross products of adjacent
+     * lines, returns true if all the comparisons pass and false otherwise *)
     let rec loop_compare vertices comp n =
         if n = length then true else begin
         let next1 = (if n = length - 1 then 0 else n + 1) in
@@ -49,12 +63,16 @@ let vertex_array_is_concave vertices =
             loop_compare vertices comp (n+1)
         else
             false end in
+    (* if all the crosses are nonpositive, we have a clockwise point loop *)
     let vertex_array_is_cw vertices =
         loop_compare vertices (fun x -> x <= 0) 0 in
+    (* if all the crosses are nonnegative, we have a ccw point loop *)
     let vertex_array_is_ccw vertices =
         loop_compare vertices (fun x -> x >= 0) 0 in
+    (* and we want to test for loops that are neither completely cw nor ccw *)
     not (vertex_array_is_cw vertices) && not (vertex_array_is_ccw vertices)
 
+(** this is the generic drawing / interface class **)
 class gldrawer (ar:GlGtk.area)
                (vadj: GData.adjustment)
                (hadj: GData.adjustment) = object (self)
@@ -71,6 +89,8 @@ class gldrawer (ar:GlGtk.area)
 
     (* store a reference to the map geometry object *)
     val mutable map = new MapFormat.map
+
+    (* and store mode information *)
     val mutable highlighted_component = No_Highlight
     val mutable mode = Draw
 
@@ -195,6 +215,8 @@ class gldrawer (ar:GlGtk.area)
         let polygons = map#get_polygons_array () in
         let poly_count = Array.length polygons in
         let points = map#get_points_array () in
+        (* some modes require a singular precalculation of some kind, typically
+         * the number of distinct types of something *)
         let count =
             match mode with
                 |Media ->
@@ -208,62 +230,74 @@ class gldrawer (ar:GlGtk.area)
                 |Floor_Light |Ceiling_Light |Media_Light ->
                     Array.length (map#get_lights_array ())
                 |_ -> 0 in
+        (* render_fn is the function that gets called during the poly iteration,
+         * and which rendering mode can have its own render function.  TODO:
+         * this code is bulky and repetitive, local lets would slim it down
+         * considerably *)
         let render_fn =
             match mode with
                 |Draw -> (fun x ->
+                    (* shade based on concavity *)
                     let vertex_array = List.map (fun x ->
                         (map#get_points_array ()).(x)#vertex ()) (map#get_poly_ring x) in
                     let concave = vertex_array_is_concave vertex_array in
                     if concave then GlDraw.color invalid_polygon
                         else GlDraw.color polygon_color;
-                    draw_poly vertex_array 0)
+                    draw_poly vertex_array)
                 |Media_Light -> (fun x ->
+                    (* shade based on media light *)
                     let vertex_array = List.map (fun x ->
                         (map#get_points_array ()).(x)#vertex ()) (map#get_poly_ring x) in
                     let color = match (x#media_index (), x#media_lightsource ()) with
                         (_, -1) |(-1, _) -> (0.5, 0.5, 0.5)
                         |         (_, l) -> (float l /. (float count), 0.0, 0.0) in
                     GlDraw.color color;
-                    draw_poly vertex_array 0)
+                    draw_poly vertex_array)
                 |Floor_Light -> (fun x ->
+                    (* shade based on floor light *)
                     let vertex_array = List.map (fun x ->
                         (map#get_points_array ()).(x)#vertex ()) (map#get_poly_ring x) in
                     let color = match x#floor_lightsource () with
                         (-1) -> (0.5, 0.5, 0.5)
                           |l -> (float l /. (float count), 0.0, 0.0) in
                     GlDraw.color color;
-                    draw_poly vertex_array 0)
+                    draw_poly vertex_array)
                 |Ceiling_Light -> (fun x ->
+                    (* shade based on ceiling light *)
                     let vertex_array = List.map (fun x ->
                         (map#get_points_array ()).(x)#vertex ()) (map#get_poly_ring x) in
                     let color = match x#ceiling_lightsource () with
                         (-1) -> (0.5, 0.5, 0.5)
                           |l -> (float l /. (float count), 0.0, 0.0) in
                     GlDraw.color color;
-                    draw_poly vertex_array 0)
+                    draw_poly vertex_array)
                 |Media -> (fun x ->
+                    (* shade based on media index *)
                     let vertex_array = List.map (fun x ->
                         (map#get_points_array ()).(x)#vertex ()) (map#get_poly_ring x) in
                     let color = match x#media_index () with
                         (-1) -> (0.5, 0.5, 0.5)
                           |m -> (float m /. (float count), 0.0, 0.0) in
                     GlDraw.color color;
-                    draw_poly vertex_array 0)
+                    draw_poly vertex_array)
                 |Ceiling_Height -> (fun x ->
+                    (* shade based on ceiling height *)
                     let vertex_array = List.map (fun x ->
                         (map#get_points_array ()).(x)#vertex ()) (map#get_poly_ring x) in
                     (* convert to an rgb-range value *)
                     let height = x#ceiling_height () /. 18. +. 0.5 in
                     GlDraw.color (height, height, height);
-                    draw_poly vertex_array 0)
+                    draw_poly vertex_array)
                 |Floor_Height -> (fun x ->
+                    (* shade based on floor height *)
                     let vertex_array = List.map (fun x ->
                         (map#get_points_array ()).(x)#vertex ()) (map#get_poly_ring x) in
                     (* convert to an rgb-range value *)
                     let height = x#floor_height () /. 18. +. 0.5 in
                     GlDraw.color (height, height, height);
-                    draw_poly vertex_array 0)
+                    draw_poly vertex_array)
                 |Polygon_Type -> (fun x ->
+                    (* shade based on polygon type *)
                     let vertex_array = List.map (fun x ->
                         (map#get_points_array ()).(x)#vertex ()) (map#get_poly_ring x) in
                     let kind = float (CamlExt.to_enum MapTypes.poly_kind_descriptor
@@ -274,10 +308,13 @@ class gldrawer (ar:GlGtk.area)
                                                     poly_type_saturation,
                                                     poly_type_value) in
                     GlDraw.color color;
-                    draw_poly vertex_array 0)
-                |_ -> (fun x -> ()) in
+                    draw_poly vertex_array)
+                |_ -> (fun x -> ()) in (* ill-defined mode! *)
+        (* actually do the iteration *)
         Array.iter render_fn polygons
 
+(* draw all the objects *)
+(* TODO: use those TGAs instead of uninformative green blips! *)
     method private draw_objs () =
         let objs = map#get_objs_array () in
         GlDraw.color (0.0, 1.0, 0.0);
@@ -315,7 +352,7 @@ class gldrawer (ar:GlGtk.area)
                     let poly_ring = map#get_poly_ring poly in
                     draw_poly (List.map
                         (fun x -> (map#get_points_array ()).(x)#vertex ())
-                        poly_ring) 0) n
+                        poly_ring)) n
             |No_Highlight
             |_ -> () (* this fallthrough case is for other highlighted things *)
 
@@ -365,6 +402,7 @@ class gldrawer (ar:GlGtk.area)
         vadj#set_bounds ~lower:(half_map_width *. (0. -. z))
                         ~upper:(half_map_width *. z -. height) ()
 
+(* set the zoom level and recenter the screen *)
     method set_zoom_with_center z x y =
         hadj#set_bounds ~lower:(half_map_width *. (0. -. z))
                         ~upper:(half_map_width *. z -. width) ();
@@ -385,20 +423,24 @@ class gldrawer (ar:GlGtk.area)
     method set_map x =
         map <- x
 
+(* get/set renderer state *)
     method mode () = mode
     method set_mode x =
         mode <- x;
         if x != Draw then highlighted_component <- No_Highlight
 
+(* convert a screen location to a map location, used for clicks *)
     method to_map_coords x y =
         ((x +. hadj#value) /. zoom_factor, (y +. vadj#value) /. zoom_factor)
     
+(* get/set highlights *)
     method set_highlighted x =
         highlighted_component <- x;
         self#draw ()
     method highlighted () =
         highlighted_component
 
+(* get/set the number of grid lines drawn *)
     method set_grid_factor x =
         grid_factor <- x
     method grid_factor () =
