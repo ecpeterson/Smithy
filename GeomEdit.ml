@@ -8,7 +8,7 @@ let select_line_loop x y map =
     let points = map#get_points_array () in
     (* get a list of all lines to the left of our mouse click that pass
      * through the range of y values containing our mouse click. *)
-    let build_array () =
+    let build_list () =
         (* tests to see if this line is hit by a ray due east of our mouse click *)
         let test_line n =
             let line = lines.(n) in
@@ -19,23 +19,15 @@ let select_line_loop x y map =
             let x_intersect = p0x + (int_of_float (u *. (float p1x -. (float p0x)))) in
             if u >= 0.0 && u <= 1.0 && x_intersect > x then true
             else false in
-        (* returns a count of all candidate lines, so we can build the array *)
-        let rec line_count n acc =
-            if n = lines_length then acc else
-            if test_line n then 
-                 line_count (n+1) (acc+1)
-            else line_count (n+1)  acc    in
         (* fills an array full of candidates *)
-        let rec fill_array arr lines_position array_position =
-            if lines_position = lines_length then () else
+        let rec fill_list lines_position =
+            if lines_position = lines_length then [] else
             if test_line lines_position then begin
-                arr.(array_position) <- lines_position;
-                fill_array arr (lines_position+1) (array_position+1)
+                lines_position :: fill_list (lines_position+1)
             end else
-                fill_array arr (lines_position+1) array_position in
-        (* the actual array of poly loop candidates *)
-        let starters = Array.create (line_count 0 0) 0 in
-        fill_array starters 0 0;
+                fill_list (lines_position+1) in
+        (* the actual list of poly loop candidates *)
+        let starters = fill_list 0 in
         (* returns the x-coordinate on a line that intercepts the aforementioned
          * ray, used to sort the lines outward *)
         let get_intersection_point line =
@@ -50,8 +42,7 @@ let select_line_loop x y map =
             let l1 = get_intersection_point lines.(l1) in
             let l2 = get_intersection_point lines.(l2) in
             if l1 < l2 then -1 else if l1 = l2 then 0 else 1 in
-        Array.sort sort_helper starters;
-        starters in
+        List.sort sort_helper starters in
     (* gets the family of lines connected to a particular point.  note that this
      * function returns a list! *)
     let rec get_neighbors index p =
@@ -111,19 +102,18 @@ let select_line_loop x y map =
             |None -> None
             |Some a -> Some (tightest :: a) end in
     (* attempt to build a line loop out of each candidate line *)
-    let rec array_iter n starters =
-        if n = Array.length starters then None else begin
-        let starter = starters.(n) in
+    let rec array_iter starters =
+        match starters with [] -> None | starter :: starters ->
         let (ep0, ep1) = lines.(starter)#endpoints () in
         let (_, p0y) = points.(ep0)#vertex () in
         let (_, p1y) = points.(ep1)#vertex () in
         let (ep0, ep1) = if p0y < p1y then (ep0, ep1) else (ep1, ep0) in
         try begin match build_loop ep0 ep0 ep1 0 starter with
-            |None -> array_iter (n+1) starters
+            |None -> array_iter starters
             |Some result -> Some (starter :: result) end 
-        with |_ -> array_iter (n+1) starters end in
+        with |_ -> array_iter starters in
     (* dominoes! *)
-    array_iter 0 (build_array ())
+    array_iter (build_list ())
 
 let fill_poly x y map =
     (* first make sure we're not trying to fill an existing poly *)
