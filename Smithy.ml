@@ -97,12 +97,15 @@ let map = new map
 let numeric_int = ref (None)
 let numeric_float = ref (None)
 
+(* whenever we have the user type something into the entry box, we want to
+ * update our reference variables to match *)
 let entry_callback () =
     let t = numeric_entry#text in
     begin numeric_int := try Some (int_of_string t) with _ -> begin
         try Some (int_of_float (float_of_string t)) with _ -> None end end;
     begin numeric_float := try Some (float_of_string t) with _ -> begin
         try Some (float (int_of_string t)) with _ -> None end end
+(* depending upon what mode we're in, launch the appropriate dialog *)
 let edit_current_item () =
     match (!numeric_int, gl#mode ()) with
     |(None, _) |(Some (-1), _) -> ()
@@ -115,6 +118,8 @@ let edit_current_item () =
         let lights = map#get_lights_array () in
         MapDialogs.light_dialog lights.(index)
     |_ -> ()
+(* depending upon what mode we're in, spawn in a new light/media/whatever and
+ * open the editor so that we can customize it *)
 let make_new_item () =
     match gl#mode () with
         |GlFlatDraw.Media ->
@@ -134,8 +139,10 @@ let make_new_item () =
 let deleting_window _ =
     false
 
+(* a mnemonic to set the title of the window *)
 let set_title x = window#set_title x
 
+(* TODO: this gets called when the user wants a fresh map *)
 let new_map () =
     ()
 
@@ -173,17 +180,23 @@ let highlight_distance () = 4.0 /. (gl#get_zoom ())
 
 (* this gets called when we start applying a tool *)
 let tool_begin_event mouse_descriptor =
+    (* unwrap values actually useful to us *)
     let x = GdkEvent.Button.x mouse_descriptor in
     let y = GdkEvent.Button.y mouse_descriptor in
     let button = GdkEvent.Button.button mouse_descriptor in
     let tool = active_tool () in
+    (* make note of the mouse click for dragging tools *)
     x0 := x; y0 := y; x1 := x; y1 := y;
+    (* get nearby objects, since tools frequently need them *)
     let (x, y) = gl#to_map_coords x y in
     let (point_d, point_i) = map#get_closest_point x y in
     let (line_d, line_i) = map#get_closest_line x y in
     let poly = map#get_enclosing_poly x y in
     let (obj_d, obj_i) = map#get_closest_object x y in
+    (* biiiiig switch statement that selects what exactly we want to be doing
+     * with this mouse click *)
     begin match (gl#mode (), button, !numeric_int, !numeric_float, poly) with
+    (* a bunch of these get and set media/light/height/whatever attributes *)
     |GlFlatDraw.Media_Light, 1, Some v, _, Some p ->
         let poly = (map#get_polygons_array ()).(p) in
         poly#set_media_lightsource v
@@ -227,11 +240,14 @@ let tool_begin_event mouse_descriptor =
         let v = poly#media_index () in
         numeric_entry#set_text (string_of_int v)
     |GlFlatDraw.Draw, 1, _, _, _ ->
+        (* in draw mode, we have to deal with what kind of tool to apply *)
         if tool = buttonarrow then
             (* see TODO list about things pertaining to this that need to be
              * fixed; there are quite a few. *)
             let state = Gdk.Convert.modifier (GdkEvent.Button.state mouse_descriptor) in
             match List.mem `SHIFT state, gl#highlighted () with
+            (* the arrow tool selects things on mouse down, and multiple things
+             * when shift is being held *)
             |true, GlFlatDraw.Point n when point_d < highlight_distance () ->
                     gl#set_highlighted (GlFlatDraw.Point (point_i :: n))
             |_ when point_d < highlight_distance () ->
@@ -252,13 +268,17 @@ let tool_begin_event mouse_descriptor =
                     gl#set_highlighted (GlFlatDraw.Poly [n])
             |_ ->
                     gl#set_highlighted GlFlatDraw.No_Highlight
+        (* the line tool draws lines *)
         else if tool = buttonline then
             GeomEdit.start_line x y map (highlight_distance ())
+        (* and the fill tool fills line loops with polygons *)
         else if tool = buttonfill then
             GeomEdit.fill_poly (int_of_float x) (int_of_float y) map
         else ()
     |GlFlatDraw.Draw, 3, _, _, _ ->
         if tool = buttonarrow then
+            (* a right-click in draw mode with the arrow tool means we want to
+             * inspect a map element *)
             if point_d < highlight_distance () then
                 MapDialogs.point_dialog (map#get_points_array ()).(point_i)
             else if obj_d < highlight_distance () then
@@ -274,6 +294,7 @@ let tool_begin_event mouse_descriptor =
 
 (* this gets called when we're dragging a tool around *)
 let tool_in_event motion_descriptor =
+    (* extract values actually useful to us *)
     let x = GdkEvent.Motion.x motion_descriptor in
     let y = GdkEvent.Motion.y motion_descriptor in
     let old_x = !x1 in
@@ -281,14 +302,17 @@ let tool_in_event motion_descriptor =
     let tool = active_tool () in
     begin match gl#mode () with
     |GlFlatDraw.Draw ->
+        (* if we're panning, then pan *)
         if tool = buttonpan then
             let horig = hadj#value +. old_x in
             let vorig = vadj#value +. old_y in
             hadj#set_value (horig -. x);
             vadj#set_value (vorig -. y)
+        (* if we're using the arrow, drag *)
         else if tool = buttonarrow then
             let delta_x = (x -. old_x) /. (gl#get_zoom ()) in
             let delta_y = (y -. old_y) /. (gl#get_zoom ()) in
+            (* utilities for easy dragging *)
             let shift_point p =
                 let point = (map#get_points_array ()).(p) in
                 let (px, py) = point#vertex () in
@@ -324,6 +348,7 @@ let tool_in_event motion_descriptor =
                 |_ -> () end;
             gl#draw ()
         else if tool = buttonline then
+            (* and if we're drawing a line, keep drawing its intermediates *)
             let (x, y) = gl#to_map_coords x y in
             GeomEdit.draw_line x y map gl
         else ()
@@ -341,6 +366,8 @@ let tool_end_event mouse_descriptor =
     begin match gl#mode () with
     |GlFlatDraw.Draw ->
         if tool = buttonarrow then
+            (* if we were dragging around objects, be sure to place them in the
+             * appropriate polygon! *)
             match gl#highlighted () with GlFlatDraw.Object n ->
                 List.iter (fun n ->
                 let obj = (map#get_objs_array ()).(n) in
@@ -351,17 +378,20 @@ let tool_end_event mouse_descriptor =
                     |Some a -> obj#set_polygon a) n
             |_ -> ()
         else if tool = buttonzoom then
+            (* if we were using the zoom tool, apply the zoom *)
             match button with
                 |1 -> zoom_in ()
                 |3 -> zoom_out ()
                 |_ -> ()
         else if tool = buttonline then
+            (* if we were drawing a line, finalize it *)
             let (x, y) = gl#to_map_coords x y in
             GeomEdit.connect_line x y map gl (highlight_distance ())
         else ()
     |_ -> () end;
     false
 
+(* handles keyboard shortcuts *)
 (* TODO: make this event driven *)
 let handle_keys key =
     let state = GdkEvent.Key.state key in
@@ -382,7 +412,9 @@ let handle_keys key =
         |65288 -> GeomEdit.delete gl map
         |_   -> () end;
     false
-
+(* when we change between renderer modes, the GTK toolkits have to be modified
+ * and hidden/shown appropriately.  change_mode is an abstraction of this
+ * process, and the to_*_mode functions contain data to pass to change_mode *)
 let change_mode box entry buttons button_text1 button_text2 label_text mode =
     if box then toolbar#show () else toolbar#misc#hide ();
     if entry then entry_toolbar#show () else entry_toolbar#misc#hide ();

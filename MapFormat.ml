@@ -22,6 +22,7 @@ let media_length = 32
 let placement_length = 12
 let platform_length = 32
 
+(* TODO: is it feasible to move these to MapTypes? *)
 type environment_code = Water | Lava | Sewage | Jjaro | Pfhor
 let environment_descriptor = 0, [Water; Lava; Sewage; Jjaro; Pfhor]
 type environment_flag = Vacuum | Magnetic | Rebellion | Low_Grav
@@ -30,6 +31,7 @@ type mission_type = Extermination | Exploration | Retrieval | Repair | Rescue
 let mission_descriptor = [1, Extermination; 2, Exploration; 4, Retrieval;
                           8, Repair; 16, Rescue]
 
+(* utility to read in all the entries of a chunk, given an entry factory *)
 let read_chunk fh chunk_length entry_length factory =
     let array = Array.make (chunk_length / entry_length) (factory ()) in
     for i = 0 to (chunk_length / entry_length) - 1 do
@@ -39,6 +41,7 @@ let read_chunk fh chunk_length entry_length factory =
     done;
     array
 
+(* utility to write out all the entries of a chunk, given the array of entries *)
 let write_chunk fh array entry_length chunk_header =
     let length = Array.length array in
     let start = pos_out fh in
@@ -125,6 +128,7 @@ class map = object(self)
         really_input fh level_name 0 66;
         entry_point_flags <- input_dword fh
 
+    (* write out a map info chunk *)
     method private write_info fh =
         let pos = pos_out fh in
         output_string fh "Minf"; (* chunk header *)
@@ -190,7 +194,7 @@ class map = object(self)
         output_word fh 2; (* output the wad version, forge uses 2 *)
         output_word fh 1; (* output the data version, forge uses 1 *)
         output_string_n fh "TODO filename" 64; (* string containing the short filename *)
-        output_dword fh 0; (* checksum *)
+        output_dword fh 0; (* TODO: checksum *)
         output_dword fh 0; (* temporary directory offset *)
         output_word fh 1; (* wad count *)
         output_word fh 0; (* application-specific directory size *)
@@ -267,7 +271,8 @@ class map = object(self)
         platforms <- Array.append platforms append_array;
         Array.length platforms - 1
 
-    (* geometry selection functions *)
+    (** geometry selection functions **)
+    (* gets the closest object to the point (x0, y0) *)
     method get_closest_object x0 y0 =
         array_fold_left_indexed (fun (accd, acci) this_obj i ->
             let (xi, yi, _) = this_obj#point () in
@@ -275,6 +280,7 @@ class map = object(self)
             if this_distance < accd then (this_distance, i) else (accd, acci))
                 (infinity, 0) objs
 
+    (* gets the closest map point to the point (x0, y0) *)
     method get_closest_point x0 y0 =
         array_fold_left_indexed (fun (accd, acci) this_point i ->
             match this_point#vertex () with (xi, yi) ->
@@ -282,6 +288,7 @@ class map = object(self)
             if this_distance < accd then (this_distance, i) else (accd, acci))
                 (infinity, 0) points
 
+    (* gets the closest line to the point (x0, y0) *)
     method get_closest_line x0 y0 =
         let line_distance (e0x, e0y) (e1x, e1y) (x, y) =
             let u = (((x -. e0x) *. (e1x -. e0x)) +. ((y -. e0y) *. (e1y -. e0y)))
@@ -298,8 +305,13 @@ class map = object(self)
             let d = line_distance (float p0x, float p0y) (float p1x, float p1y) (x0, y0) in
             if d < accd then (d, i) else (accd, acci)) (infinity, 0) lines
 
+    (* gets a polygon that encloses the point (x0, y0) *)
     method get_enclosing_poly x0 y0 =
+        (* what a useful constant *)
         let pi = asin 1.0 *. 2.0 in
+        (* computes the angle between the line from the origin to (x0, y0) and
+         * the line from the origin to (x1, y1), returns a value in the range
+         * [-pi, pi] *)
         let angle (x0, y0) (x1, y1) =
             let theta1 = atan2 y0 x0 in
             let theta2 = atan2 y1 x1 in
@@ -311,6 +323,10 @@ class map = object(self)
                 dtheta +. 2.0 *. pi
             else
                 dtheta in
+        (* the idea here is that if we triangulate a polygon by taking a bunch
+         * of triangles that all share a common point ( (x0, y0) ), if that
+         * common point is inside the polygon then these triangles sweep out a
+         * signed angle of 2pi and a signed angle of 0 otherwise *)
         let rec sum_angles points (x0, y0) i acc =
             if i >= List.length points then acc else
             let next = (if i = (List.length points) - 1 then 0 else i + 1) in
@@ -319,6 +335,7 @@ class map = object(self)
             let p0 = (float p0x -. x0, float p0y -. y0) in
             let p1 = (float p1x -. x0, float p1y -. y0) in
             sum_angles points (x0, y0) (i+1) (angle p0 p1 +. acc) in
+        (* iterate through the map's polygons until we find one that works *)
         let rec g_e_p_aux x0 y0 i =
             if i = Array.length polygons then None else
             let poly = polygons.(i) in
@@ -331,6 +348,10 @@ class map = object(self)
                 Some i in
         g_e_p_aux (x0 +. 1.0) (y0 +. 1.0) 0
 
+    (* takes a polygon and manually forms the point loop based on the poly's
+     * guaranteed-to-be-generated line loop.  most of the mess comes from
+     * ordering the line's vertices, which aren't guaranteed to be in any
+     * particular order *)
     method get_poly_ring (poly : polygon) =
         let endpoints = Array.map
             (fun x -> lines.(x)#endpoints ())
@@ -350,6 +371,8 @@ class map = object(self)
                 loop (n+1) (e0 :: acc) in
         loop 0 []
 
+    (* when we move a point, we'll want to recalcuate the lengths of lines
+     * attached to it.  this takes care of that entire process *)
     method recalculate_lengths point =
         let line_length = Array.length lines in
         let length (x0, y0) (x1, y1) =
@@ -366,6 +389,7 @@ class map = object(self)
             line_loop (n+1) in
         line_loop 0
 
+    (* deletes a side (i.e. a texture) and performs cleanup *)
     method delete_side n =
         let side = sides.(n) in
         let parent_poly = polygons.(side#polygon_index ()) in
@@ -389,6 +413,7 @@ class map = object(self)
             if ccw = n then line#set_ccw_poly_side_index (-1);
             if ccw > n then line#set_ccw_poly_side_index (ccw - 1)) lines
 
+    (* deletes a polygon and performs cleanup *)
     method delete_poly n =
         let poly = polygons.(n) in
         (*let lsides = poly#side_indices () in*)
@@ -426,6 +451,7 @@ class map = object(self)
             let pi = side#polygon_index () in
             if pi > n then side#set_polygon_index (pi - 1)) sides
 
+    (* deletes a line and performs cleanup *)
     method delete_line n =
         let line = lines.(n) in
         (* if our line is attached to polygons, delete them *)
@@ -460,6 +486,7 @@ class map = object(self)
                 let li = x#line_index () in
                 x#set_line_index (if li > n then li - 1 else li)) sides
 
+    (* deletes a point and performs cleanup *)
     method delete_point n =
         let lines_length = Array.length lines in
         (* if we have a parent line, find it *)
@@ -489,6 +516,7 @@ class map = object(self)
                     (x#endpoint_indices ())) polygons
         end
 
+    (* deletes an object and performs cleanup *)
     method delete_obj n =
         objs <- delete_from_array_and_resize objs n;
         Array.iter (fun x ->
@@ -496,6 +524,7 @@ class map = object(self)
             if y > n then x#set_first_object (y-1) else
             if y = n then x#set_first_object (-1)) polygons
 
+    (* deletes a platform and performs cleanup *)
     method delete_platform n =
         platforms <- delete_from_array_and_resize platforms n;
         Array.iter (fun x ->
@@ -504,18 +533,22 @@ class map = object(self)
             if y > n then x#set_permutation (y - 1) else
             if y = n then x#set_permutation (-1)) polygons
 
+    (* safely deletes all the objects in a map *)
     method nuke () =
         if objs = [||] then () else begin
             self#delete_obj 0;
             self#nuke ()
         end
 
+    (* safely deletes all the sides in a map *)
+    (* TODO: wipe floor/ceiling textures too *)
     method pave () =
         if sides = [||] then () else begin
             self#delete_side 0;
             self#pave ()
         end
 
+    (* hee hee *)
     method nuke_and_pave () =
         self#nuke ();
         self#pave ()

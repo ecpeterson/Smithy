@@ -57,3 +57,4 @@ components, like dragging things around.  if you highlight multiple polys,
 some lines get moved multiple time in the same interface tic.  figure that one
 out, genius :/
 + merging points would be sweet, halfway implemented in GeomEdit.ml
++ anything marked TODO in the source

@@ -1,5 +1,7 @@
 open CamlExt
 
+(* reads in a TGA file and returns a Raw object to be supplied to the OpenGL
+ * routines for texture creation *)
 let read_tga_from_handle fh =
     let id_size = input_byte fh in
     let cmap_exists = input_byte fh in
@@ -29,6 +31,7 @@ let read_tga_from_handle fh =
     dump_to_raw 0;
     raw
 
+(* a wrapper that deals with file opening and closing *)
 let read_tga name =
     let fh = open_in_bin name in
     let raw = read_tga_from_handle fh in
