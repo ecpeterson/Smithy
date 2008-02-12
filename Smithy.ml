@@ -490,7 +490,8 @@ let special_menu_toolkit =
      `I ("Nuke and Pave Level...", map#nuke_and_pave)]
 
 let smithy_menu_toolkit =
-    [`I ("Merge Selected Points", GeomEdit.merge_points gl map)]
+    [`I ("Merge Selected Points", GeomEdit.merge_points gl map);
+     `I ("Garbage Collect", Gc.full_major)]
 
 (* entry point for the application proper *)
 let _ =
