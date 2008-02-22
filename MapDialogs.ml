@@ -119,8 +119,8 @@ let obj_dialog obj =
 
 let info_dialog map () =
     let w = GWindow.dialog ~title:"Level Parameters" () in
-    let level_name = labeled_entry ~label:"Level Name:" ~text:""
-            ~packing:w#vbox#add in
+    let level_name = labeled_entry ~label:"Level Name:"
+        ~text:(map#get_level_name ()) ~packing:w#vbox#add in
     let twobox = GPack.hbox ~packing:w#vbox#add () in
     let lbox = GPack.vbox ~packing:twobox#add () in
     let fourbox = GPack.hbox ~packing:lbox#add () in
@@ -171,6 +171,9 @@ let info_dialog map () =
     let rescue = GButton.check_button ~label:"Rescue" ~packing:f1box#add () in
     w#add_button_stock `OK `OK;
     begin match w#run () with
+    |`OK -> begin
+        map#set_level_name level_name#text
+    end
     |_ -> () end;
     w#destroy ()
 

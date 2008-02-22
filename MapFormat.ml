@@ -239,6 +239,10 @@ class map = object(self)
     method get_filename () = filename
     method get_lights_array () = lights
     method get_platforms_array () = platforms
+    method get_level_name () = level_name
+    
+    (* allow others to set our info state *)
+    method set_level_name x = level_name <- x
 
     (* allow others to add objects *)
     method add_point point =
