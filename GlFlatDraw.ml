@@ -102,18 +102,6 @@ class gldrawer (ar:GlGtk.area)
         GlClear.color background_color;
         Gl.disable `depth_test;
         List.iter Gl.enable [`line_smooth; `point_smooth];
-        ar#connect#reshape ~callback:
-            (fun ~width ~height ->
-                ar#make_current ();
-                self#reshape (float width) (float height));
-        ar#connect#realize ~callback:
-            (fun () ->
-                ar#make_current ();
-                self#reortho ());
-        ar#connect#display ~callback:
-            (fun () ->
-                ar#make_current ();
-                self#draw ());
         vadj#connect#value_changed (fun _ -> self#set_voffset (vadj#value));
         hadj#connect#value_changed (fun _ -> self#set_hoffset (hadj#value));
         self#reortho ()
