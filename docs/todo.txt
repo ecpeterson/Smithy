@@ -57,4 +57,6 @@ components, like dragging things around.  if you highlight multiple polys,
 some lines get moved multiple time in the same interface tic.  figure that one
 out, genius :/
 + merging points would be sweet, halfway implemented in GeomEdit.ml
++ apparently we're leaving locations and sizes of fresh windows up to the wm,
+which causes bad behavior on other machines.  figure it out
 + anything marked TODO in the source

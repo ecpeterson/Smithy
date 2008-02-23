@@ -5,6 +5,7 @@ SOURCES = CamlExt.ml \
 	  MapTypes.ml \
 	  MapFormat.ml \
 	  GlFlatDraw.ml \
+	  DrawController.ml \
 	  MapDialogs.ml \
 	  GeomEdit.ml \
 	  FileDialogs.ml \

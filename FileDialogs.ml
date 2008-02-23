@@ -35,7 +35,7 @@ let open_file_dialog map_obj set_title gl () =
     path := Some dialog#filename;
     dialog#destroy ();
     (* refresh the screen with the new map contents *)
-    ignore (gl#draw ())
+    ignore (gl#display ())
 
 (* almost the same, but for the save dialog *)
 let save_file_dialog map_obj set_title () =
