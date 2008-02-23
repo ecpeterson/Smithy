@@ -9,12 +9,10 @@ let const a = fun x -> a
 let rec pow n a = if a = 0 then 1 else n * (pow n (a - 1))
 
 (* some haskell wishes *)
-let ($) a b =
-    let x = a in
-    let y = b in
-    x y
-let (@) a b =
-    fun x -> a (b x)
+let ($) a b = a b
+let (@) a b = fun x -> a (b x)
+let (|>) x y = y x (* left-associative *)
+let (@>) x y = y x (* right-assocative *)
 
 (** reading wider integers out of binary files **)
 let byte_cap = 256
@@ -42,10 +40,12 @@ let signed_to_unsigned_16 x =
     if x < 0 then 0x10000 - x else x
 
 let input_signed_word fh =
-    unsigned_to_signed_16 (input_word fh)
+    input_word fh
+        |> unsigned_to_signed_16
 
 let output_signed_word fh x =
-    output_word fh (signed_to_unsigned_16 x)
+    signed_to_unsigned_16 x
+        |> output_word fh
 
 let input_dword fh =
     let first_word = input_word fh in
