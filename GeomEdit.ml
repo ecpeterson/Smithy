@@ -185,16 +185,16 @@ let fill_poly x y map =
 (* dispatch for deleting a highlighted map item *)
 let delete gl map =
     begin match gl#highlighted () with
-        |GlFlatDraw.Point n ->
+        |`Point n ->
             List.iter (fun n -> map#delete_point n) n
-        |GlFlatDraw.Line n ->
+        |`Line n ->
             List.iter (fun n -> map#delete_line n) n
-        |GlFlatDraw.Poly n ->
+        |`Poly n ->
             List.iter (fun n -> map#delete_poly n) n
-        |GlFlatDraw.No_Highlight
+        |`No_Highlight
         |_ -> ()
     end;
-    gl#set_highlighted GlFlatDraw.No_Highlight;
+    gl#set_highlighted `No_Highlight;
     gl#draw ()
 
 (* while we're drawing a line, this keeps track of the point we selected at the
@@ -245,7 +245,7 @@ let start_line x y map choose_distance =
 let draw_line x y map gl =
     gl#draw_without_update ();
     let (s, t) = (map#get_points_array ()).(!start_point)#vertex () in
-    GlDraw.color GlFlatDraw.line_color;
+    GlDraw.color Colors.line_color;
     GlDraw.begins `lines;
     GlDraw.vertex2 (float s, float t);
     GlDraw.vertex2 (x, y);
@@ -300,7 +300,7 @@ let connect_line x y map gl choose_distance =
 (* TODO: this is not done, lol *)
 let merge_points gl map () =
     match gl#highlighted () with
-    |GlFlatDraw.Point n -> begin
+    |`Point n -> begin
         (* need to be sure no polys are attached to our pointset *)
         if not (Array.fold_left (fun x y ->
             let y = y#endpoint_indices () in

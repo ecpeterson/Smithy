@@ -2,6 +2,9 @@
  * functionality of OCaml itself, need no larger context to justify their
  * existence, and may be used frequently throughout the program ***)
 
+(* initialize GTK itself *)
+let _ = GtkMain.Main.init ()
+
 (* some functionals *)
 let id x = x
 let const a = fun x -> a

@@ -1,4 +1,5 @@
 open GlFlatDraw
+open VisualMode
 
 type glmode = Flat_Draw | VISUAL_MODE
 
@@ -8,8 +9,10 @@ class glcontroller (ar: GlGtk.area)
     (* we need to keep track of our modes *)
     val mutable mode = Flat_Draw
     val gldrawer = new gldrawer ar (vscroll#adjustment) (hscroll#adjustment)
+    val visualmode = new visualmode ar
 
     method gldrawer = gldrawer
+    method visualmode = visualmode
 
     (* set up the hooks to GTK *)
     initializer
@@ -39,8 +42,11 @@ class glcontroller (ar: GlGtk.area)
         match mode with
             |Flat_Draw ->
                 gldrawer#draw ()
+            |VISUAL_MODE ->
+                visualmode#display ()
             |_ -> ()
 
+    method mode () = mode
     method set_mode x =
         (* perform cleanup from old mode *)
         begin match mode with
@@ -52,9 +58,52 @@ class glcontroller (ar: GlGtk.area)
         begin match mode with
             |Flat_Draw ->
                 GlDraw.line_width 1.0;
-                GlClear.color GlFlatDraw.background_color;
+                GlClear.color Colors.background_color;
                 Gl.disable `depth_test;
                 self#realize ()
+            |VISUAL_MODE ->
+                visualmode#init ()
             |_ -> ()
         end
+
+    (* routines for piping the GUI inputs where they need to go *)
+    method send_key (key: GdkEvent.Key.t) =
+        let state = GdkEvent.Key.state key in
+        let keyval = GdkEvent.Key.keyval key in
+        match mode with
+            |Flat_Draw -> gldrawer#handle_key keyval
+            |_ -> false
+
+    val mutable click0 = 0.0, 0.0
+    val mutable click1 = 0.0, 0.0
+
+    method send_mousedown mouse_descriptor =
+        let x = GdkEvent.Button.x mouse_descriptor in
+        let y = GdkEvent.Button.y mouse_descriptor in
+        let button = GdkEvent.Button.button mouse_descriptor in
+        let state = Gdk.Convert.modifier (GdkEvent.Button.state mouse_descriptor) in
+        (* store the beginning of the click *)
+        click0 <- x, y;
+        click1 <- x, y;
+        (* let our modes handle the rest *)
+        match mode with
+            |Flat_Draw -> gldrawer#tool_begin_event x y button state
+            |_ -> false
+
+    method send_mousedrag (mouse_descriptor: GdkEvent.Motion.t) =
+        let x = GdkEvent.Motion.x mouse_descriptor in
+        let y = GdkEvent.Motion.y mouse_descriptor in
+        let (oldx, oldy) = click1 in
+        click1 <- (x, y);
+        match mode with
+            |Flat_Draw -> gldrawer#tool_in_event click0 (oldx, oldy) click1
+            |_ -> false
+
+    method send_mouseup   (mouse_descriptor: GdkEvent.Button.t) =
+        let x = GdkEvent.Button.x mouse_descriptor in
+        let y = GdkEvent.Button.y mouse_descriptor in
+        let button = GdkEvent.Button.button mouse_descriptor in
+        match mode with
+            |Flat_Draw -> gldrawer#tool_end_event click0 click1 button
+            |_ -> false
 end

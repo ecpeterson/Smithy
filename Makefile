@@ -1,13 +1,15 @@
 RESULT = smithy
 SOURCES = CamlExt.ml \
 	  Resources.ml \
+	  Colors.ml \
 	  TGALoader.ml \
 	  MapTypes.ml \
 	  MapFormat.ml \
-	  GlFlatDraw.ml \
-	  DrawController.ml \
 	  MapDialogs.ml \
 	  GeomEdit.ml \
+	  GlFlatDraw.ml \
+	  VisualMode.ml \
+	  DrawController.ml \
 	  FileDialogs.ml \
 	  Smithy.ml
 LIBS = lablgtk lablgl lablgtkgl
