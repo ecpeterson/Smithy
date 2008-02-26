@@ -172,6 +172,12 @@ class gldrawer (ar:GlGtk.area)
             |_ -> () end;
         self#draw ()
 
+    method init () =
+        GlDraw.line_width 1.0;
+        GlClear.color Colors.background_color;
+        Gl.disable `depth_test;
+        self#reortho ()
+
 (* initialize the opengl renderer, add callbacks *)
     initializer
         GlDraw.line_width 1.0;
@@ -199,6 +205,8 @@ class gldrawer (ar:GlGtk.area)
 (* when our perspective over the map changes, we call reortho to tell OpenGL to
  * move with our program state *)
     method reortho () =
+        GlMat.mode `modelview;
+        GlMat.load_identity ();
         GlDraw.viewport 0 0 (int_of_float width) (int_of_float height);
         GlMat.mode `projection;
         GlMat.load_identity ();

@@ -10,7 +10,7 @@ class glcontroller (ar: GlGtk.area)
     val mutable mode = Flat_Draw
     val gldrawer = new gldrawer ar (vscroll#adjustment) (hscroll#adjustment)
     val visualmode = new visualmode ar
-    val map = new MapFormat.map
+    val mutable map = new MapFormat.map
 
     method gldrawer = gldrawer
     method visualmode = visualmode
@@ -27,6 +27,11 @@ class glcontroller (ar: GlGtk.area)
         ar#connect#realize ~callback:self#realize;
         ar#connect#display ~callback:self#display;
         ()
+
+    method set_map x =
+        map <- x;
+        gldrawer#set_map x;
+        visualmode#set_map x
 
     method reshape ~width ~height =
         ar#make_current ();
@@ -62,10 +67,7 @@ class glcontroller (ar: GlGtk.area)
         (* initialize the new mode *)
         begin match mode with
             |Flat_Draw ->
-                GlDraw.line_width 1.0;
-                GlClear.color Colors.background_color;
-                Gl.disable `depth_test;
-                self#realize ()
+                gldrawer#init ()
             |VISUAL_MODE ->
                 visualmode#init ()
             |_ -> ()

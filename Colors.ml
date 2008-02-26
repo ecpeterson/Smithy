@@ -13,4 +13,9 @@ let invalid_polygon        = (1.0, 0.5, 0.5)
 (* these define S and V in the HSV calculation while in poly type edit mode *)
 let poly_type_saturation = 0.5
 let poly_type_value = 0.5
+
+(* these define colors while in VISUAL MODE *)
+let ceiling_color = (1.0, 0.0, 0.0)
+let floor_color = (0.0, 1.0, 0.0)
+let wall_color = (0.0, 0.0, 1.0)
 (** end colors! **)
