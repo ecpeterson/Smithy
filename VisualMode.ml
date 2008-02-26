@@ -25,9 +25,8 @@ class visualmode (ar: GlGtk.area) = object (self)
         let (x, y, z) = pos in
         let (pitch, yaw, roll) = orientation in
         GlMat.load_identity ();
-        GlMat.rotate ~x:0.0 ~y:0.0 ~z:1.0 ~angle:roll ();
-        GlMat.rotate ~x:0.0 ~y:1.0 ~z:0.0 ~angle:yaw ();
         GlMat.rotate ~x:1.0 ~y:0.0 ~z:0.0 ~angle:pitch ();
+        GlMat.rotate ~x:0.0 ~y:1.0 ~z:0.0 ~angle:yaw ();
         GlMat.translate ~x ~y ~z ()
 
     method display () =
