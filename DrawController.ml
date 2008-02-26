@@ -10,12 +10,17 @@ class glcontroller (ar: GlGtk.area)
     val mutable mode = Flat_Draw
     val gldrawer = new gldrawer ar (vscroll#adjustment) (hscroll#adjustment)
     val visualmode = new visualmode ar
+    val map = new MapFormat.map
 
     method gldrawer = gldrawer
     method visualmode = visualmode
+    method map = map
 
-    (* set up the hooks to GTK *)
     initializer
+        (* set up the child maps *)
+        gldrawer#set_map map;
+        visualmode#set_map map;
+        (* set up the hooks to GTK *)
         GlDraw.shade_model `smooth;
         List.iter Gl.enable [`line_smooth; `point_smooth];
         ar#connect#reshape ~callback:self#reshape;
@@ -72,6 +77,7 @@ class glcontroller (ar: GlGtk.area)
         let keyval = GdkEvent.Key.keyval key in
         match mode with
             |Flat_Draw -> gldrawer#handle_key keyval
+            |VISUAL_MODE -> visualmode#send_key keyval
             |_ -> false
 
     val mutable click0 = 0.0, 0.0
