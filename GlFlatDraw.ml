@@ -136,6 +136,7 @@ class gldrawer (ar:GlGtk.area)
 
     (* store a reference to the map geometry object *)
     val mutable map = new MapFormat.map
+    method set_map x = map <- x
 
     (* and store mode information *)
     val mutable highlighted_component = `No_Highlight
