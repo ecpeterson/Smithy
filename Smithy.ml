@@ -152,7 +152,7 @@ let _ =
     eventbox#event#connect#button_press ~callback:gl#send_mousedown;
     eventbox#event#connect#motion_notify ~callback:gl#send_mousedrag;
     eventbox#event#connect#button_release ~callback:gl#send_mouseup;
-    gl#gldrawer#set_map map;
+    gl#set_map map;
     GToolbox.build_menu file_menu ~entries:file_menu_toolkit;
     GToolbox.build_menu view_menu ~entries:view_menu_toolkit;
     GToolbox.build_menu special_menu ~entries:special_menu_toolkit;
