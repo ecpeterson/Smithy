@@ -38,6 +38,19 @@ class visualmode (ar: GlGtk.area) = object (self)
         (* draw the polys *)
         let points = map#get_points_array () in
         Array.iter (fun poly ->
+            (* draw ceiling *)
+            GlDraw.color Colors.ceiling_color;
+            let glarray = Array.make (3*(poly#vertex_count ())) 0.0 in
+            for i = 0 to poly#vertex_count () - 1 do
+                let (x0, y0) = points.((poly#endpoint_indices ()).(i))#vertex () in
+                glarray.(3*i) <- float_of_int x0;
+                glarray.(3*i + 1) <- poly#ceiling_height () *. 1024.0;
+                glarray.(3*i + 2) <- float_of_int y0;
+            done;
+            let raw = Raw.of_float_array glarray `double in
+            GlArray.enable `vertex;
+            GlArray.vertex `three raw;
+            GlArray.draw_arrays `line_loop 0 (poly#vertex_count ());
             (* draw floor *)
             GlDraw.color Colors.floor_color;
             GlDraw.begins `line_loop;
@@ -45,16 +58,6 @@ class visualmode (ar: GlGtk.area) = object (self)
                 let (x, y) = points.(x)#vertex () in
                 GlDraw.vertex3 (float_of_int x,
                                 poly#floor_height () *. 1024.0,
-                                float_of_int y))
-                    (Array.sub (poly#endpoint_indices ()) 0 (poly#vertex_count ()));
-            GlDraw.ends ();
-            (* draw ceiling *)
-            GlDraw.color Colors.ceiling_color;
-            GlDraw.begins `line_loop;
-            Array.iter (fun x ->
-                let (x, y) = points.(x)#vertex () in
-                GlDraw.vertex3 (float_of_int x,
-                                poly#ceiling_height () *. 1024.0,
                                 float_of_int y))
                     (Array.sub (poly#endpoint_indices ()) 0 (poly#vertex_count ()));
             GlDraw.ends ();
