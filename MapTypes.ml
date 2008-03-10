@@ -36,6 +36,18 @@ let pnts_reader fh =
     let vertex_y = input_signed_word fh in
     point#set_vertex (vertex_x, vertex_y);
     point
+let epnt_reader fh =
+    let point = new point in
+    let flags = input_word fh in
+    let highest_adjacent_floor_height = input_signed_word fh in
+    let lowest_adjacent_ceiling_height = input_signed_word fh in
+    let vertex_x = input_signed_word fh in
+    let vertex_y = input_signed_word fh in
+    point#set_vertex (vertex_x, vertex_y);
+    let transformed_x = input_signed_word fh in
+    let transformed_y = input_signed_word fh in
+    let supporting_poly_index = input_signed_word fh in
+    point
 let pnts_writer fh point =
     let (x, y) = point#vertex () in
     output_signed_word fh x;

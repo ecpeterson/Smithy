@@ -21,6 +21,7 @@ let info_length = 88
 let media_length = 32
 let placement_length = 12
 let platform_length = 32
+let optimized_point_length = 16
 
 (* TODO: is it feasible to move these to MapTypes? *)
 type environment_code = Water | Lava | Sewage | Jjaro | Pfhor
@@ -94,6 +95,8 @@ class map = object(self)
         placements <- read_chunk fh length placement_length plac_reader
     method private read_platforms fh length =
         platforms <- read_chunk fh length platform_length plat_reader
+    method private read_optimized_points fh length =
+        points <- read_chunk fh length optimized_point_length epnt_reader
 
     (* write out various chunks *)
     method private write_points fh =
@@ -164,6 +167,8 @@ class map = object(self)
             |"plac" -> self#read_placements fh length
             |"plat" -> self#read_platforms fh length
             |"medi" -> self#read_media fh length
+            (* and now support for optimized chunks *)
+            |"EPNT" -> self#read_optimized_points fh length
             |_ -> print_endline ("epic fail: " ^ chunk_name)
         end;
         seek_in fh (next_offset + offset_of_first_chunk);
