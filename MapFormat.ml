@@ -32,27 +32,26 @@ let mission_descriptor = [1, Extermination; 2, Exploration; 4, Retrieval;
                           8, Repair; 16, Rescue]
 
 (* utility to read in all the entries of a chunk, given an entry factory *)
-let read_chunk fh chunk_length entry_length factory =
-    let array = Array.make (chunk_length / entry_length) (factory ()) in
+let read_chunk fh chunk_length entry_length (reader: in_channel -> 'a) =
+    let array = Array.make (chunk_length / entry_length) (Obj.magic () : 'a) in
     for i = 0 to (chunk_length / entry_length) - 1 do
-        let entry = factory () in
-        entry#read fh;
-        array.(i) <- entry
+        array.(i) <- reader fh
     done;
     array
 
 (* utility to write out all the entries of a chunk, given the array of entries *)
-let write_chunk fh array entry_length chunk_header =
+let write_chunk fh array entry_length chunk_header writer =
     let length = Array.length array in
     let start = pos_out fh in
     let chunk_length = length * entry_length in
+    let writer = writer fh in
     if length > 0 then begin
         output_string fh chunk_header; (* header *)
             (* the +16 here is for the length of the header itself *)
         output_dword fh (start + chunk_length - offset_of_first_chunk + 16);
         output_dword fh chunk_length;
         output_padding fh 4; (* "offset", screw that *)
-        Array.iter (fun x -> x#write fh) array
+        Array.iter (fun x -> writer x) array
     end else ()
 
 (* we wrap it in a class 'cause why not *)
@@ -78,44 +77,43 @@ class map = object(self)
 
     (* read in various chunks *)
     method private read_points fh length =
-        points <- read_chunk fh length point_length (fun () -> new point)
+        points <- read_chunk fh length point_length pnts_reader
     method private read_lines fh length =
-        lines <- read_chunk fh length line_length (fun () -> new line)
+        lines <- read_chunk fh length line_length lins_reader
     method private read_polys fh length =
-        polygons <- read_chunk fh length poly_length (fun () -> new polygon)
+        polygons <- read_chunk fh length poly_length poly_reader
     method private read_sides fh length =
-        sides <- read_chunk fh length side_length (fun () -> new side)
+        sides <- read_chunk fh length side_length sids_reader
     method private read_lights fh length =
-        lights <- read_chunk fh length light_length (fun () -> new light)
+        lights <- read_chunk fh length light_length lite_reader
     method private read_objects fh length =
-        objs <- read_chunk fh length obj_length (fun () -> new obj)
+        objs <- read_chunk fh length obj_length objs_reader
     method private read_media fh length =
-        media <- read_chunk fh length media_length (fun () -> new media)
+        media <- read_chunk fh length media_length medi_reader
     method private read_placements fh length =
-        placements <- read_chunk fh length placement_length
-                                 (fun () -> new placement)
+        placements <- read_chunk fh length placement_length plac_reader
     method private read_platforms fh length =
-        platforms <- read_chunk fh length platform_length (fun () -> new platform)
+        platforms <- read_chunk fh length platform_length plat_reader
 
     (* write out various chunks *)
     method private write_points fh =
-        write_chunk fh points point_length "PNTS"
+        write_chunk fh points point_length "PNTS" pnts_writer
     method private write_lines fh =
-        write_chunk fh lines line_length "LINS"
+        write_chunk fh lines line_length "LINS" lins_writer
     method private write_polys fh =
-        write_chunk fh polygons poly_length "POLY"
+        write_chunk fh polygons poly_length "POLY" poly_writer
     method private write_sides fh =
-        write_chunk fh sides side_length "SIDS"
+        write_chunk fh sides side_length "SIDS" sids_writer
     method private write_lights fh =
-        write_chunk fh lights light_length "LITE"
+        write_chunk fh lights light_length "LITE" lite_writer
     method private write_objects fh =
-        write_chunk fh objs obj_length "OBJS"
+        write_chunk fh objs obj_length "OBJS" objs_writer
     method private write_media fh =
-        write_chunk fh media media_length "medi"
+        write_chunk fh media media_length "medi" medi_writer
     method private write_placements fh =
-        write_chunk fh placements placement_length "plac"
+        write_chunk fh placements placement_length "plac" plac_writer
     method private write_platforms fh =
-        write_chunk fh platforms platform_length "plat"
+        write_chunk fh platforms platform_length "plat" plat_writer
 
     (* read in a map info chunk *)
     method private read_info fh length =
