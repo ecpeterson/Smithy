@@ -16,6 +16,9 @@ let poly_type_value = 0.5
 
 (* these define colors while in VISUAL MODE *)
 let ceiling_color = (1.0, 0.0, 0.0)
+let ceiling_fill_color = (0.0, 1.0, 1.0)
 let floor_color = (0.0, 1.0, 0.0)
+let floor_fill_color = (1.0, 0.0, 1.0)
 let wall_color = (0.0, 0.0, 1.0)
+let wall_fill_color = (1.0, 1.0, 0.0)
 (** end colors! **)

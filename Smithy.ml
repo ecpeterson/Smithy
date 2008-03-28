@@ -28,7 +28,7 @@ let special_menu = create_menu "Special" menu_bar
 let smithy_menu = create_menu "Smithy" menu_bar
 let hbox = GPack.hbox ~packing:vbox#add ()
 let eventbox = GBin.event_box ~packing:hbox#add ()
-let ar = GlGtk.area [`USE_GL;`RGBA;`DOUBLEBUFFER]
+let ar = GlGtk.area [`USE_GL;`RGBA;`DOUBLEBUFFER;`DEPTH_SIZE 16]
                     ~packing:eventbox#add ~show:true ()
 let vadj = GData.adjustment ~value:0.0 ~lower:(0.0 -. half_map_width)
                             ~upper:half_map_width ~step_incr:16.0 ()
