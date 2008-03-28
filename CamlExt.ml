@@ -122,6 +122,10 @@ let rec print_array arr =
         |[] -> print_endline ""; flush stdout
         |x :: xs -> print_int x; print_string ";"; print_array xs
 
+let rec print_array2 arr =
+    Array.iter (fun x -> print_int x; print_string ";") arr;
+    print_endline ""
+
 (** array mangling routines, since all our map structures are arrays **)
 (* finds obj in arr using whatever = is defined as for obj *)
 let find_in_array arr obj =
