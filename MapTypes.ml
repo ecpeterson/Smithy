@@ -397,14 +397,17 @@ let side_flags_descriptor = [(1, Control_Panel_Status); (2, Control_Panel);
                              (4, Repair_Switch); (8, Destructive_Switch);
                              (16, Lighted_Switch); (32, Switch_Can_Be_Destroyed);
                              (64, Switch_Can_Only_Be_Hit_By_Projectiles)]
-type side_kind = Oxygen_Refuel | Shield_Refuel | Double_Shield_Refuel |
-                 Triple_Shield_Refuel | Light_Switch | Platform_Switch |
-                 Tag_Switch | Pattern_Buffer | Computer_Terminal
-let side_kind_descriptor = 0, [Oxygen_Refuel; Shield_Refuel; Double_Shield_Refuel;
-                            Triple_Shield_Refuel; Light_Switch; Platform_Switch;
-                            Tag_Switch; Pattern_Buffer; Computer_Terminal]
+type side_kind = Full_Side | High_Side | Low_Side | Composite_Side | Split_Side
+let side_kind_descriptor = 0, [Full_Side; High_Side; Low_Side; Composite_Side;
+                               Split_Side]
+(*type side_kind = Oxygen_Refuel | Shield_Refuel | Double_Shield_Refuel |*)
+                 (*Triple_Shield_Refuel | Light_Switch | Platform_Switch |*)
+                 (*Tag_Switch | Pattern_Buffer | Computer_Terminal*)
+(*let side_kind_descriptor = 0, [Oxygen_Refuel; Shield_Refuel; Double_Shield_Refuel;*)
+                            (*Triple_Shield_Refuel; Light_Switch; Platform_Switch;*)
+                            (*Tag_Switch; Pattern_Buffer; Computer_Terminal]*)
 class side = object
-    val mutable kind = Oxygen_Refuel
+    val mutable kind = Full_Side
     val mutable flags = ([] : side_flags list)
     val mutable primary_texture = empty_st
     val mutable secondary_texture = empty_st
