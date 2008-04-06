@@ -243,6 +243,7 @@ class map = object(self)
     method get_lights_array () = lights
     method get_platforms_array () = platforms
     method get_level_name () = level_name
+    method get_sides_array () = sides
     
     (* allow others to set our info state *)
     method set_level_name x = level_name <- x

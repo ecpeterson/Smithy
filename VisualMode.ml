@@ -41,9 +41,9 @@ class visualmode (ar: GlGtk.area) = object (self)
             let glarray = Array.make (3*(poly#vertex_count ())) 0.0 in
             for i = 0 to poly#vertex_count () - 1 do
                 let (x0, y0) = points.((poly#endpoint_indices ()).(i))#vertex () in
-                glarray.(3*i) <- float_of_int x0;
+                glarray.(3*i) <- float x0;
                 glarray.(3*i + 1) <- poly#ceiling_height () *. 1024.0;
-                glarray.(3*i + 2) <- float_of_int y0;
+                glarray.(3*i + 2) <- float y0;
             done;
             let raw = Raw.of_float_array glarray `double in
             GlArray.enable `vertex;
@@ -56,9 +56,9 @@ class visualmode (ar: GlGtk.area) = object (self)
             let glarray = Array.make (3*(poly#vertex_count ())) 0.0 in
             for i = 0 to poly#vertex_count () - 1 do
                 let (x0, y0) = points.((poly#endpoint_indices ()).(i))#vertex () in
-                glarray.(3*i) <- float_of_int x0;
+                glarray.(3*i) <- float x0;
                 glarray.(3*i + 1) <- poly#floor_height () *. 1024.0;
-                glarray.(3*i + 2) <- float_of_int y0;
+                glarray.(3*i + 2) <- float y0;
             done;
             let raw = Raw.of_float_array glarray `double in
             GlArray.enable `vertex;
@@ -66,34 +66,51 @@ class visualmode (ar: GlGtk.area) = object (self)
             GlDraw.color Colors.floor_fill_color;
             GlArray.draw_arrays `polygon 0 (poly#vertex_count ());
             GlDraw.color Colors.floor_color;
-            GlArray.draw_arrays `line_loop 0 (poly#vertex_count ());
-            (* draw walls *)
-            let glarray = Array.make (12*(poly#vertex_count ())) 0.0 in
-            for i = 0 to poly#vertex_count () - 1 do
-                let (x0, y0) = points.((poly#endpoint_indices ()).(i))#vertex () in
-                let (x1, y1) = points.((poly#endpoint_indices ()).(
-                    (i + 1) mod (poly#vertex_count ())))#vertex () in
-                glarray.(12*i     ) <- float_of_int x0;
-                glarray.(12*i +  1) <- poly#floor_height () *. 1024.0;
-                glarray.(12*i +  2) <- float_of_int y0;
-                glarray.(12*i +  3) <- float_of_int x0;
-                glarray.(12*i +  4) <- poly#ceiling_height () *. 1024.0;
-                glarray.(12*i +  5) <- float_of_int y0;
-                glarray.(12*i +  6) <- float_of_int x1;
-                glarray.(12*i +  7) <- poly#ceiling_height () *. 1024.0;
-                glarray.(12*i +  8) <- float_of_int y1;
-                glarray.(12*i +  9) <- float_of_int x1;
-                glarray.(12*i + 10) <- poly#floor_height () *. 1024.0;
-                glarray.(12*i + 11) <- float_of_int y1;
-            done;
-            let raw = Raw.of_float_array glarray `double in
-            GlArray.enable `vertex;
-            GlArray.vertex `three raw;
-            GlDraw.color Colors.wall_fill_color;
-            GlArray.draw_arrays `quads 0 (poly#vertex_count () * 4);
-            GlDraw.color Colors.wall_color;
-            GlArray.draw_arrays `lines 0 (poly#vertex_count () * 4))
+            GlArray.draw_arrays `line_loop 0 (poly#vertex_count ()))
             (map#get_polygons_array ());
+        GlDraw.color Colors.wall_fill_color;
+        Array.iter (fun line ->
+            let (cw_side, ccw_side) =
+                line#cw_poly_side_index (), line#ccw_poly_side_index () in
+            let (cw_poly, ccw_poly) =
+                line#cw_poly_owner (), line#ccw_poly_owner () in
+            let (p0, p1) = line#endpoints () in
+            let p0x, p0y = (map#get_points_array ()).(p0)#vertex () in
+            let p1x, p1y = (map#get_points_array ()).(p1)#vertex () in
+            if cw_poly != -1 && ccw_poly != -1 then begin
+                (* ceiling to ceiling, floor to floor *)
+                let cw_poly = (map#get_polygons_array ()).(cw_poly) in
+                let ccw_poly = (map#get_polygons_array ()).(ccw_poly) in
+                GlDraw.begins `quads;
+                    GlDraw.vertex3 (float p0x, cw_poly#floor_height () *. 1024.0, float p0y);
+                    GlDraw.vertex3 (float p0x, ccw_poly#floor_height () *. 1024.0, float p0y);
+                    GlDraw.vertex3 (float p1x, ccw_poly#floor_height () *. 1024.0, float p1y);
+                    GlDraw.vertex3 (float p1x, cw_poly#floor_height () *. 1024.0, float p1y);
+                    GlDraw.vertex3 (float p0x, cw_poly#ceiling_height () *. 1024.0, float p0y);
+                    GlDraw.vertex3 (float p0x, ccw_poly#ceiling_height () *. 1024.0, float p0y);
+                    GlDraw.vertex3 (float p1x, ccw_poly#ceiling_height () *. 1024.0, float p1y);
+                    GlDraw.vertex3 (float p1x, cw_poly#ceiling_height () *. 1024.0, float p1y);
+                GlDraw.ends ();
+            end else if cw_poly != -1 then begin
+                (* cw_poly gets full side *)
+                let cw_poly = (map#get_polygons_array ()).(cw_poly) in
+                GlDraw.begins `quads;
+                    GlDraw.vertex3 (float p0x, cw_poly#floor_height () *. 1024.0, float p0y);
+                    GlDraw.vertex3 (float p1x, cw_poly#floor_height () *. 1024.0, float p1y);
+                    GlDraw.vertex3 (float p1x, cw_poly#ceiling_height () *. 1024.0, float p1y);
+                    GlDraw.vertex3 (float p0x, cw_poly#ceiling_height () *. 1024.0, float p0y);
+                GlDraw.ends ();
+            end else if ccw_poly != -1 then begin
+                (* ccw_poly_gets full side *)
+                let ccw_poly = (map#get_polygons_array ()).(ccw_poly) in
+                GlDraw.begins `quads;
+                    GlDraw.vertex3 (float p0x, ccw_poly#floor_height () *. 1024.0, float p0y);
+                    GlDraw.vertex3 (float p1x, ccw_poly#floor_height () *. 1024.0, float p1y);
+                    GlDraw.vertex3 (float p1x, ccw_poly#ceiling_height () *. 1024.0, float p1y);
+                    GlDraw.vertex3 (float p0x, ccw_poly#ceiling_height () *. 1024.0, float p0y);
+                GlDraw.ends ();
+            end)
+            (map#get_lines_array ());
         (* swap the buffers *)
         Gl.flush ();
         ar#swap_buffers ()
