@@ -1,6 +1,11 @@
 let movestep = 100.0
 let rotstep  = 1.0
 
+let rgb_of_st ((x, y), (clut, collection, shape)) =
+    CamlExt.hsv_to_rgb (float shape /. 32.0,
+                        float (collection + 16) /. 64.0,
+                        float (clut + 4) /. 16.0)
+
 class visualmode (ar: GlGtk.area) = object (self)
     val mutable map = new MapFormat.map
     method set_map x = map <- x
@@ -48,7 +53,7 @@ class visualmode (ar: GlGtk.area) = object (self)
             let raw = Raw.of_float_array glarray `double in
             GlArray.enable `vertex;
             GlArray.vertex `three raw;
-            GlDraw.color Colors.ceiling_fill_color;
+            GlDraw.color (rgb_of_st ((0, 0), poly#ceiling_texture ()));
             GlArray.draw_arrays `polygon 0 (poly#vertex_count ());
             GlDraw.color Colors.ceiling_color;
             GlArray.draw_arrays `line_loop 0 (poly#vertex_count ());
@@ -63,13 +68,13 @@ class visualmode (ar: GlGtk.area) = object (self)
             let raw = Raw.of_float_array glarray `double in
             GlArray.enable `vertex;
             GlArray.vertex `three raw;
-            GlDraw.color Colors.floor_fill_color;
+            GlDraw.color (rgb_of_st ((0, 0), poly#floor_texture ()));
             GlArray.draw_arrays `polygon 0 (poly#vertex_count ());
             GlDraw.color Colors.floor_color;
             GlArray.draw_arrays `line_loop 0 (poly#vertex_count ()))
             (map#get_polygons_array ());
-        GlDraw.color Colors.wall_fill_color;
         Array.iter (fun line ->
+            GlDraw.color Colors.wall_fill_color;
             let (cw_side, ccw_side) =
                 line#cw_poly_side_index (), line#ccw_poly_side_index () in
             let (cw_poly, ccw_poly) =
@@ -77,15 +82,49 @@ class visualmode (ar: GlGtk.area) = object (self)
             let (p0, p1) = line#endpoints () in
             let p0x, p0y = (map#get_points_array ()).(p0)#vertex () in
             let p1x, p1y = (map#get_points_array ()).(p1)#vertex () in
+            let cw_side = try (map#get_sides_array ()).(cw_side) with
+                              |_ -> new MapTypes.side in
+            let ccw_side = try (map#get_sides_array ()).(ccw_side) with
+                               |_ -> new MapTypes.side in
+            let ceil_desc =
+                if cw_side#kind () = MapTypes.Split_Side ||
+                   cw_side#kind () = MapTypes.High_Side then
+                    cw_side#primary_texture ()
+                else if ccw_side#kind () = MapTypes.Split_Side ||
+                        ccw_side#kind () = MapTypes.High_Side then
+                    ccw_side#primary_texture ()
+                else MapTypes.empty_st in
+            let floor_desc =
+                if cw_side#kind () = MapTypes.Split_Side then
+                    cw_side#secondary_texture ()
+                else if cw_side#kind () = MapTypes.Low_Side then
+                    cw_side#primary_texture ()
+                else if ccw_side#kind () = MapTypes.Split_Side then
+                    ccw_side#secondary_texture ()
+                else if ccw_side#kind () = MapTypes.Low_Side then
+                    ccw_side#primary_texture ()
+                else MapTypes.empty_st in
+            let full_desc =
+                if cw_side#kind () = MapTypes.Full_Side then
+                    cw_side#primary_texture ()
+                else if ccw_side#kind () = MapTypes.Full_Side then
+                    ccw_side#primary_texture ()
+                else
+                    MapTypes.empty_st in
+            let ceil_rgb = rgb_of_st ceil_desc in
+            let floor_rgb = rgb_of_st floor_desc in
+            let full_rgb = rgb_of_st full_desc in
             if cw_poly != -1 && ccw_poly != -1 then begin
                 (* ceiling to ceiling, floor to floor *)
                 let cw_poly = (map#get_polygons_array ()).(cw_poly) in
                 let ccw_poly = (map#get_polygons_array ()).(ccw_poly) in
                 GlDraw.begins `quads;
+                    GlDraw.color floor_rgb;
                     GlDraw.vertex3 (float p0x, cw_poly#floor_height () *. 1024.0, float p0y);
                     GlDraw.vertex3 (float p0x, ccw_poly#floor_height () *. 1024.0, float p0y);
                     GlDraw.vertex3 (float p1x, ccw_poly#floor_height () *. 1024.0, float p1y);
                     GlDraw.vertex3 (float p1x, cw_poly#floor_height () *. 1024.0, float p1y);
+                    GlDraw.color ceil_rgb;
                     GlDraw.vertex3 (float p0x, cw_poly#ceiling_height () *. 1024.0, float p0y);
                     GlDraw.vertex3 (float p0x, ccw_poly#ceiling_height () *. 1024.0, float p0y);
                     GlDraw.vertex3 (float p1x, ccw_poly#ceiling_height () *. 1024.0, float p1y);
@@ -95,6 +134,7 @@ class visualmode (ar: GlGtk.area) = object (self)
                 (* cw_poly gets full side *)
                 let cw_poly = (map#get_polygons_array ()).(cw_poly) in
                 GlDraw.begins `quads;
+                    GlDraw.color full_rgb;
                     GlDraw.vertex3 (float p0x, cw_poly#floor_height () *. 1024.0, float p0y);
                     GlDraw.vertex3 (float p1x, cw_poly#floor_height () *. 1024.0, float p1y);
                     GlDraw.vertex3 (float p1x, cw_poly#ceiling_height () *. 1024.0, float p1y);
@@ -104,6 +144,7 @@ class visualmode (ar: GlGtk.area) = object (self)
                 (* ccw_poly_gets full side *)
                 let ccw_poly = (map#get_polygons_array ()).(ccw_poly) in
                 GlDraw.begins `quads;
+                    GlDraw.color full_rgb;
                     GlDraw.vertex3 (float p0x, ccw_poly#floor_height () *. 1024.0, float p0y);
                     GlDraw.vertex3 (float p1x, ccw_poly#floor_height () *. 1024.0, float p1y);
                     GlDraw.vertex3 (float p1x, ccw_poly#ceiling_height () *. 1024.0, float p1y);
