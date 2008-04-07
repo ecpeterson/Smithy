@@ -21,7 +21,7 @@ let create_menu label menubar =
 let window = GWindow.window ~width:500 ~height:300 ~title:"Smithy"
     ~allow_shrink:true ~show:false ()
 let vbox = GPack.vbox ~packing:window#add ()
-let menu_bar = GMenu.menu_bar ~packing:vbox#pack ~height:20 ()
+let menu_bar = GMenu.menu_bar ~packing:vbox#pack ()
 let file_menu = create_menu "File" menu_bar
 let view_menu = create_menu "View" menu_bar
 let special_menu = create_menu "Special" menu_bar
