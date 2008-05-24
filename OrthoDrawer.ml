@@ -44,6 +44,7 @@ class orthoDrawer packing_fn = object (self)
         let y = int_of_float (GdkEvent.Button.y mouse_descriptor) in
         let button = GdkEvent.Button.button mouse_descriptor in
         let state = Gdk.Convert.modifier (GdkEvent.Button.state mouse_descriptor) in
+        let x, y = self#untransform (x, y) in
         click0 <- x, y;
         click1 <- x, y;
         mousedown_callback x y button state; false
@@ -53,11 +54,13 @@ class orthoDrawer packing_fn = object (self)
         let button = GdkEvent.Button.button mouse_descriptor in
         let state = Gdk.Convert.modifier (GdkEvent.Button.state mouse_descriptor) in
         let (x0, y0) = click0 in
+        let x, y = self#untransform (x, y) in
         click1 <- x, y;
         mouseup_callback x0 y0 x y button state; false
     method private mousedrag_callback mouse_descriptor =
         let x = int_of_float (GdkEvent.Motion.x mouse_descriptor) in
         let y = int_of_float (GdkEvent.Motion.y mouse_descriptor) in
+        let x, y = self#untransform (x, y) in
         let (oldx, oldy) = click1 in
         click1 <- x, y;
         let x0, y0 = click0 in
