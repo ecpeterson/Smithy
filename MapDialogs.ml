@@ -21,7 +21,7 @@ let point_dialog point =
     |_ -> () end;
     w#destroy ()
 
-let line_dialog line map =
+let line_dialog line =
     let flags = line#flags () in
     let (cw, ccw) = line#cw_poly_side_index (), line#ccw_poly_side_index () in
     let w = GWindow.dialog ~title:"Line Parameters" () in
@@ -39,9 +39,9 @@ let line_dialog line map =
         line#set_flags flags;
         if empty#active then begin
             let (cw, ccw) = (max cw ccw, min cw ccw) in
-            if cw != -1 then map#delete_side cw;
+            if cw != -1 then MapFormat.delete_side cw;
             line#set_cw_poly_side_index (-1);
-            if ccw != -1 then map#delete_side ccw;
+            if ccw != -1 then MapFormat.delete_side ccw;
             line#set_ccw_poly_side_index (-1)
         end else ()
     |_ -> () end;
@@ -50,21 +50,21 @@ let line_dialog line map =
 let platform_dialog plat =
     ()
 
-let poly_dialog poly map =
+let poly_dialog poly =
     let deal_with_type_change kind () =
         begin match (poly#kind (), kind) with
         (* do we just want to open the platform dialog again? *)
         |(Platform, Platform) ->
-            let plat = (map#get_platforms_array ()).(poly#permutation ()) in
+            let plat = !MapFormat.platforms.(poly#permutation ()) in
             platform_dialog plat
         (* do we want to trash an old platform? *)
         |(Platform, _) ->
-            map#delete_platform (poly#permutation ())
+            MapFormat.delete_platform (poly#permutation ())
         (* do we want to create a new platform? *)
         |(_, Platform) ->
             let plat = new MapTypes.platform in
             platform_dialog plat;
-            let plat_idx = map#add_platform plat in
+            let plat_idx = MapFormat.add_platform plat in
             poly#set_permutation plat_idx
         (* do we need to take no special action? *)
         |_ -> () end;
@@ -117,10 +117,10 @@ let obj_dialog obj =
     |_ -> () end;
     window#destroy ()
 
-let info_dialog map () =
+let info_dialog () =
     let w = GWindow.dialog ~title:"Level Parameters" () in
     let level_name = labeled_entry ~label:"Level Name:"
-        ~text:(map#get_level_name ()) ~packing:w#vbox#add in
+        ~text:!MapFormat.level_name ~packing:w#vbox#add in
     let twobox = GPack.hbox ~packing:w#vbox#add () in
     let lbox = GPack.vbox ~packing:twobox#add () in
     let fourbox = GPack.hbox ~packing:lbox#add () in
@@ -172,7 +172,7 @@ let info_dialog map () =
     w#add_button_stock `OK `OK;
     begin match w#run () with
     |`OK -> begin
-        map#set_level_name level_name#text
+        MapFormat.level_name := level_name#text
     end
     |_ -> () end;
     w#destroy ()
@@ -206,10 +206,10 @@ let media_dialog media =
     |_ -> () end;
     w#destroy ()
 
-let make_media map =
+let make_media () =
     let m = new MapTypes.media in
     media_dialog m;
-    map#add_media m
+    MapFormat.add_media m
 
 let light_dialog light =
     let generate_frame () =
@@ -277,10 +277,6 @@ let make_light map =
 
 let map_manager gl () =
     let w = GWindow.dialog ~title:"Map Manager" () in
-    let hbox = GPack.hbox ~packing:w#vbox#add () in
-    GMisc.label ~text:"Grid Size:" ~packing:hbox#add ();
-    let entry = GEdit.entry ~packing:hbox#add
-        ~text:(string_of_int (gl#grid_factor ())) () in
     let display_grid = GButton.check_button ~label:"Display Grid"
                                             ~packing:w#vbox#add () in
     let constrain_grid = GButton.check_button ~label:"Constrain Grid"
@@ -302,6 +298,6 @@ let map_manager gl () =
     let crosshairs = GButton.check_button ~label:"Visual Mode Crosshairs"
                                           ~packing:w#vbox#add () in
     w#add_button_stock `OK `OK;
-    begin match w#run () with
-    |_ -> try gl#set_grid_factor (int_of_string entry#text) with _ -> () end;
+    (* TODO: make this dialog work *)
+    w#run ();
     w#destroy ()
