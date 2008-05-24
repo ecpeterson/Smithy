@@ -3,7 +3,11 @@
  * existence, and may be used frequently throughout the program ***)
 
 (* initialize GTK itself *)
-let _ = GtkMain.Main.init ()
+let _ =
+    GtkMain.Main.init ();
+    Gdk.Rgb.init ();
+    GtkBase.Widget.set_default_visual (Gdk.Rgb.get_visual ());
+    GtkBase.Widget.set_default_colormap (Gdk.Rgb.get_cmap ())
 
 (* some functionals *)
 let id x = x
@@ -233,3 +237,6 @@ let hsv_to_rgb (h, s, v) =
         |4 -> (t, p, v)
         |_ -> (v, p, q) (* case 5 *)
 let hsv_to_rgb = memoize hsv_to_rgb (*memoize this bitch*)
+
+(* god i hate myself *)
+let rec sleep x = match x with 0 -> () | _ -> sleep (x-1)

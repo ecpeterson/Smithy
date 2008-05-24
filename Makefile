@@ -2,20 +2,20 @@ RESULT = smithy
 SOURCES = CamlExt.ml \
 	  Resources.ml \
 	  Colors.ml \
-	  TGALoader.ml \
+	  OrthoDrawer.ml \
 	  MapTypes.ml \
 	  MapFormat.ml \
 	  MapDialogs.ml \
 	  GeomEdit.ml \
-	  GlFlatDraw.ml \
-	  VisualMode.ml \
-	  DrawController.ml \
-	  FileDialogs.ml \
+	  DrawModeWindows.ml \
+	  DrawModeEvent.ml \
+	  DrawMode.ml \
 	  Smithy.ml
-LIBS = lablgtk lablgl lablgtkgl
-INCDIRS = +lablgtk2 +lablGL
-OCAMLMAKEFILE = /usr/include/OCamlMakefile
-OCAMLFLAGS = -w sy
+LIBS = lablgtk
+INCDIRS = +lablgtk2
+OCAMLMAKEFILE = /usr/share/ocamlmakefile/OCamlMakefile
+OCAMLFLAGS = -g
+OCAMLLDFLAGS = -g
 
 include $(OCAMLMAKEFILE)
 
