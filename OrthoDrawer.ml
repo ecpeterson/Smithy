@@ -14,6 +14,7 @@ class orthoDrawer packing_fn = object (self)
         eventbox#event#connect#motion_notify ~callback:self#mousedrag_callback;
         eventbox#event#connect#button_release ~callback:self#mouseup_callback;
         area#event#connect#expose ~callback:self#draw_callback;
+        area#event#connect#configure ~callback:self#resize_callback;
         ()
 
     val mutable click0 = 0, 0
@@ -33,9 +34,6 @@ class orthoDrawer packing_fn = object (self)
     method connect_draw f = draw_callback <- f
 
     method private draw_callback _ =
-        let width, height = drawable_onscreen#size in
-        buffer <- GDraw.pixmap ~width ~height ();
-        drawable <- new GDraw.drawable (buffer#pixmap);
         draw_callback ();
         drawable_onscreen#put_pixmap ~x:0 ~y:0 buffer#pixmap;
         false
@@ -65,6 +63,12 @@ class orthoDrawer packing_fn = object (self)
         click1 <- x, y;
         let x0, y0 = click0 in
         mousedrag_callback x0 y0 oldx oldy x y; false
+    method private resize_callback geom_descriptor =
+        let width = GdkEvent.Configure.width geom_descriptor in
+        let height = GdkEvent.Configure.height geom_descriptor in
+        buffer <- GDraw.pixmap ~width ~height ();
+        drawable <- new GDraw.drawable (buffer#pixmap);
+        false
 
     val mutable origin = (0, 0)
     val mutable scale = 0.1
