@@ -5,8 +5,16 @@ let highlight_distance () =
     let pixel_epsilon = 8.0 in
     pixel_epsilon /. (orthodrawer#scale ())
 
+let drag_in_progress = ref false
+
+(* this gets called when the scrollbar values change *)
+let slider_callback _ =
+    orthodrawer#set_origin (int_of_float hadj#value, int_of_float vadj#value);
+    if not !drag_in_progress then orthodrawer#draw ()
+
 (* this gets called when we start applying a tool *)
 let tool_begin_event x y button (state: Gdk.Tags.modifier list) =
+    drag_in_progress := true;
     let x, y = float x, float y in
     (* unwrap values actually useful to us *)
     let tool = active_tool () in
@@ -211,4 +219,5 @@ let tool_end_event x0 y0 x y (button: int) _ =
             GeomEdit.connect_line x y (highlight_distance ());
             orthodrawer#draw ()
         end else ()
-    |_ -> () end
+    |_ -> () end;
+    drag_in_progress := false
