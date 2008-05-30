@@ -51,7 +51,8 @@ class orthoDrawer packing_fn = object (self)
         let x, y = self#untransform (x, y) in
         click0 <- x, y;
         click1 <- x, y;
-        mousedown_callback x y button state; false
+        mousedown_callback x y button state;
+        self#draw (); false
     method private mouseup_callback mouse_descriptor =
         let x = int_of_float (GdkEvent.Button.x mouse_descriptor) in
         let y = int_of_float (GdkEvent.Button.y mouse_descriptor) in
@@ -60,7 +61,8 @@ class orthoDrawer packing_fn = object (self)
         let (x0, y0) = click0 in
         let x, y = self#untransform (x, y) in
         click1 <- x, y;
-        mouseup_callback x0 y0 x y button state; false
+        mouseup_callback x0 y0 x y button state;
+        self#draw (); false
     method private mousedrag_callback mouse_descriptor =
         let x = int_of_float (GdkEvent.Motion.x mouse_descriptor) in
         let y = int_of_float (GdkEvent.Motion.y mouse_descriptor) in
@@ -68,7 +70,8 @@ class orthoDrawer packing_fn = object (self)
         let (oldx, oldy) = click1 in
         click1 <- x, y;
         let x0, y0 = click0 in
-        mousedrag_callback x0 y0 oldx oldy x y; false
+        mousedrag_callback x0 y0 oldx oldy x y;
+        self#draw (); false
     method private resize_callback geom_descriptor =
         let width = GdkEvent.Configure.width geom_descriptor in
         let height = GdkEvent.Configure.height geom_descriptor in
@@ -81,7 +84,7 @@ class orthoDrawer packing_fn = object (self)
         | `DOWN  -> scroll_callback   0.0   1.0
         | `LEFT  -> scroll_callback (-1.0)  0.0
         | `RIGHT -> scroll_callback   1.0   0.0);
-        false
+        self#draw (); false
 
     val mutable origin = (0, 0)
     val mutable scale = 0.1
