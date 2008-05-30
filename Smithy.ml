@@ -74,8 +74,8 @@ let _ =
 (* honest to god entry point for the program *)
 let _ =
     let main_window = DrawModeWindows.drawmode_window in
-    main_window#event#connect#delete ~callback:deleting_window;
-    main_window#connect#destroy ~callback:quit_application;
+    ignore (main_window#event#connect#delete ~callback:deleting_window);
+    ignore (main_window#connect#destroy ~callback:quit_application);
     (* callback hooks for mouse/keyboard events go here *)
     let args = Sys.argv in
     if Array.length args > 1 then

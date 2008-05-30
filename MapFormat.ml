@@ -117,7 +117,7 @@ let read_info fh length =
     song_index := input_word fh;
     mission_flags := of_bitflag mission_descriptor (input_word fh);
     environment_flags := of_bitflag env_flags_descriptor (input_word fh);
-    input_dword fh; input_dword fh; (* skip 8 bytes *)
+    ignore (input_dword fh); ignore (input_dword fh); (* skip 8 bytes *)
     really_input fh !level_name 0 66;
     entry_point_flags := input_dword fh
 
