@@ -77,9 +77,7 @@ let _ = GMisc.pixmap (GDraw.pixmap_from_xpm Resources.arrowfile ())
         GMisc.pixmap (GDraw.pixmap_from_xpm Resources.textfile ())
                      ~packing:buttontext#add () |> ignore;
         GMisc.pixmap (GDraw.pixmap_from_xpm Resources.objfile ())
-                     ~packing:buttonobj#add () |> ignore;
-        GMisc.pixmap (GDraw.pixmap_from_xpm Resources.arrowfile ())
-                     ~packing:buttonarrow#add () |> ignore
+                     ~packing:buttonobj#add () |> ignore
 let buttons = [buttonarrow; buttonline; buttonpoly; buttonfill;
                buttonpan; buttonzoom; buttontext; buttonobj]
 
