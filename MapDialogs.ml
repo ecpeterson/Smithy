@@ -39,9 +39,9 @@ let line_dialog line =
         line#set_flags flags;
         if empty#active then begin
             let (cw, ccw) = (max cw ccw, min cw ccw) in
-            if cw != -1 then MapFormat.delete_side cw;
+            if cw <> -1 then MapFormat.delete_side cw;
             line#set_cw_poly_side_index (-1);
-            if ccw != -1 then MapFormat.delete_side ccw;
+            if ccw <> -1 then MapFormat.delete_side ccw;
             line#set_ccw_poly_side_index (-1)
         end else ()
     |_ -> () end;

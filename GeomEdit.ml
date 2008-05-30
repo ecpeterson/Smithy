@@ -178,7 +178,7 @@ let select_line_loop x y =
             get_neighbors (index+1) p in
     (* same as above, except we can exclude a line (useful in the algorithm) *)
     let get_neighbors_except line p =
-        List.filter (fun x -> x != line) (get_neighbors 0 p) in
+        List.filter (fun x -> x <> line) (get_neighbors 0 p) in
     (* builds a line loop from a starting line, the core algorithm *)
     let rec build_loop target prev working rec_depth starter =
         (* local utility function *)
@@ -299,5 +299,5 @@ let fill_poly x y =
         let (cw, ccw) = line#cw_poly_owner(), line#ccw_poly_owner () in
         if cw = -1 then line#set_cw_poly_owner poly_idx else
             line#set_ccw_poly_owner poly_idx;
-        if cw != -1 || ccw != -1 then
+        if cw <> -1 || ccw <> -1 then
             line#set_flags [MapTypes.TRANSPARENT]) line_loop
