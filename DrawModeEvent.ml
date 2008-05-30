@@ -12,6 +12,12 @@ let slider_callback _ =
     orthodrawer#set_origin (int_of_float hadj#value, int_of_float vadj#value);
     if not !drag_in_progress then orthodrawer#draw ()
 
+let scroll_callback dx dy =
+    if dx <> 0.0 then
+        hadj#set_value (hadj#value +. (dx *. 20.0 /. orthodrawer#scale ()));
+    if dy <> 0.0 then
+        vadj#set_value (vadj#value +. (dy *. 20.0 /. orthodrawer#scale ()))
+
 (* this gets called when we start applying a tool *)
 let tool_begin_event x y button (state: Gdk.Tags.modifier list) =
     drag_in_progress := true;
