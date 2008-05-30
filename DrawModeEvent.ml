@@ -10,17 +10,14 @@ let drag_in_progress = ref false
 (* this gets called when the scrollbar values change *)
 let slider_callback _ =
     orthodrawer#set_origin (int_of_float hadj#value, int_of_float vadj#value);
-    if not !drag_in_progress then orthodrawer#draw ()
+    orthodrawer#draw ()
 
 let scroll_callback dx dy =
-    if dx <> 0.0 then
-        hadj#set_value (hadj#value +. (dx *. 20.0 /. orthodrawer#scale ()));
-    if dy <> 0.0 then
-        vadj#set_value (vadj#value +. (dy *. 20.0 /. orthodrawer#scale ()))
+    hadj#set_value (hadj#value +. (dx *. 20.0 /. orthodrawer#scale ()));
+    vadj#set_value (vadj#value +. (dy *. 20.0 /. orthodrawer#scale ()))
 
 (* this gets called when we start applying a tool *)
 let tool_begin_event x y button (state: Gdk.Tags.modifier list) =
-    drag_in_progress := true;
     let x, y = float x, float y in
     (* unwrap values actually useful to us *)
     let tool = active_tool () in
@@ -124,14 +121,11 @@ let tool_begin_event x y button (state: Gdk.Tags.modifier list) =
             else if obj_d < highlight_distance () then
                 MapDialogs.obj_dialog !MapFormat.objs.(obj_i)
             else if line_d < highlight_distance () then (
-                MapDialogs.line_dialog !MapFormat.lines.(line_i);
-                orthodrawer#draw ()
+                MapDialogs.line_dialog !MapFormat.lines.(line_i)
             ) else if poly != None then let Some n = poly in (
-                MapDialogs.poly_dialog !MapFormat.polygons.(n);
-                orthodrawer#draw () )
+                MapDialogs.poly_dialog !MapFormat.polygons.(n))
         else ()
-    |_ -> () end;
-    orthodrawer#draw ()
+    |_ -> () end
 
 (* this gets called when we're dragging a tool around *)
 let tool_in_event x0 y0 old_x old_y x y =
@@ -184,14 +178,12 @@ let tool_in_event x0 y0 old_x old_y x y =
                     |Object n ->
                         List.iter (fun n ->
                             shift_obj !MapFormat.objs.(n)) n
-                    |_ -> () end;
-            orthodrawer#draw ()
+                    |_ -> () end
             else if tool = buttonline then
                 (* and if we're drawing a line, keep drawing its intermediates *)
                 GeomEdit.draw_line x y orthodrawer
             else ()
-        |_ -> () end;
-    orthodrawer#draw ()
+        |_ -> () end
 
 (* and this gets called when we release the mouse button and apply the tool *)
 let tool_end_event x0 y0 x y (button: int) _ =
@@ -222,8 +214,6 @@ let tool_end_event x0 y0 x y (button: int) _ =
         else if tool = buttonline then begin
             (* if we were drawing a line, finalize it *)
             (* TODO: does connect_line really need access to gldrawer? *)
-            GeomEdit.connect_line x y (highlight_distance ());
-            orthodrawer#draw ()
+            GeomEdit.connect_line x y (highlight_distance ()); ()
         end else ()
-    |_ -> () end;
-    drag_in_progress := false
+    |_ -> () end
