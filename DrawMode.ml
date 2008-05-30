@@ -64,8 +64,8 @@ let draw _ =
 (* set up draw mode event hooks *)
 let _ =
     orthodrawer#connect_draw draw;
-    vadj#connect#value_changed DrawModeEvent.slider_callback;
-    hadj#connect#value_changed DrawModeEvent.slider_callback;
+    ignore (vadj#connect#value_changed DrawModeEvent.slider_callback);
+    ignore (hadj#connect#value_changed DrawModeEvent.slider_callback);
     orthodrawer#connect_mousedown DrawModeEvent.tool_begin_event;
     orthodrawer#connect_mouseup   DrawModeEvent.tool_end_event;
     orthodrawer#connect_mousedrag DrawModeEvent.tool_in_event;

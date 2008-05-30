@@ -212,6 +212,6 @@ let tool_end_event x0 y0 x y (button: int) _ =
         else if tool = buttonline then begin
             (* if we were drawing a line, finalize it *)
             (* TODO: does connect_line really need access to gldrawer? *)
-            GeomEdit.connect_line x y (highlight_distance ()); ()
+            ignore (GeomEdit.connect_line x y (highlight_distance ())); ()
         end else ()
     |_ -> () end

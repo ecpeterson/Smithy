@@ -4,7 +4,7 @@
 
 (* initialize GTK itself *)
 let _ =
-    GtkMain.Main.init ();
+    ignore (GtkMain.Main.init ());
     Gdk.Rgb.init ();
     GtkBase.Widget.set_default_visual (Gdk.Rgb.get_visual ());
     GtkBase.Widget.set_default_colormap (Gdk.Rgb.get_cmap ())

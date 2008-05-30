@@ -61,8 +61,8 @@ let start_line x y choose_distance =
             line1#set_endpoints (p0, pi);
             let line2 = new MapTypes.line in
             line2#set_endpoints (pi, p1);
-            MapFormat.add_line line1;
-            MapFormat.add_line line2;
+            ignore (MapFormat.add_line line1);
+            ignore (MapFormat.add_line line2);
             start_point := pi
         (* if it is owned by a poly, behave like we didn't have a line near *)
         end else do_new_point ()
@@ -72,8 +72,8 @@ let start_line x y choose_distance =
 (* while we're dragging our line around it would be nice to see it *)
 let draw_line x y drawer =
     drawer#draw ();
-    let (s, t) = !MapFormat.points.(!start_point)#vertex () in
-(*GL    GlDraw.color Colors.line_color;
+(*GL    let (s, t) = !MapFormat.points.(!start_point)#vertex () in
+    GlDraw.color Colors.line_color;
     GlDraw.begins `lines;
     GlDraw.vertex2 (float s, float t);
     GlDraw.vertex2 (x, y);
@@ -117,8 +117,8 @@ let connect_line x y choose_distance =
             line1#set_endpoints (p0, pi);
             let line2 = new MapTypes.line in
             line2#set_endpoints (pi, p1);
-            MapFormat.add_line line1;
-            MapFormat.add_line line2;
+            ignore (MapFormat.add_line line1);
+            ignore (MapFormat.add_line line2);
             do_line pi
         end else (* yup, so we act like it's not there *) do_new_point ()
     end else (* we're near nothing, spawn a new point *) do_new_point ()

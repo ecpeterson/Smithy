@@ -12,12 +12,15 @@ class orthoDrawer packing_fn = object (self)
         drawable_onscreen <- new GDraw.drawable (area#misc#window);
         area#event#add [`BUTTON_MOTION; `BUTTON_PRESS; `BUTTON_RELEASE;
                         `EXPOSURE; `STRUCTURE; `SCROLL; `POINTER_MOTION_HINT];
-        eventbox#event#connect#button_press ~callback:self#mousedown_callback;
-        eventbox#event#connect#motion_notify ~callback:self#mousedrag_callback;
-        eventbox#event#connect#button_release ~callback:self#mouseup_callback;
-        area#event#connect#expose ~callback:self#draw_callback;
-        area#event#connect#configure ~callback:self#resize_callback;
-        area#event#connect#scroll ~callback:self#scroll_callback;
+        ignore (eventbox#event#connect#button_press
+                    ~callback:self#mousedown_callback);
+        ignore (eventbox#event#connect#motion_notify
+                    ~callback:self#mousedrag_callback);
+        ignore (eventbox#event#connect#button_release
+                    ~callback:self#mouseup_callback);
+        ignore (area#event#connect#expose ~callback:self#draw_callback);
+        ignore (area#event#connect#configure ~callback:self#resize_callback);
+        ignore (area#event#connect#scroll ~callback:self#scroll_callback);
         ()
 
     val mutable click0 = 0, 0
