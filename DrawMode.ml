@@ -68,4 +68,5 @@ let _ =
     hadj#connect#value_changed DrawModeEvent.slider_callback;
     orthodrawer#connect_mousedown DrawModeEvent.tool_begin_event;
     orthodrawer#connect_mouseup   DrawModeEvent.tool_end_event;
-    orthodrawer#connect_mousedrag DrawModeEvent.tool_in_event
+    orthodrawer#connect_mousedrag DrawModeEvent.tool_in_event;
+    orthodrawer#connect_scroll DrawModeEvent.scroll_callback
