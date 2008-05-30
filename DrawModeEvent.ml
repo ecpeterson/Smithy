@@ -5,8 +5,6 @@ let highlight_distance () =
     let pixel_epsilon = 8.0 in
     pixel_epsilon /. (orthodrawer#scale ())
 
-let drag_in_progress = ref false
-
 (* this gets called when the scrollbar values change *)
 let slider_callback _ =
     orthodrawer#set_origin (int_of_float hadj#value, int_of_float vadj#value);
