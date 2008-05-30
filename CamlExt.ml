@@ -40,7 +40,7 @@ let output_word fh word =
 let unsigned_to_signed_16 x =
     let sign = x land 0x8000 in
     let contents = x land 0x7fff in
-    if sign != 0 then contents - 0x8000 else contents
+    if sign <> 0 then contents - 0x8000 else contents
 
 let signed_to_unsigned_16 x =
     let x = x land 0xffff in
@@ -81,7 +81,7 @@ let rec of_bitflag descriptor x =
     match descriptor with
     |[] -> []
     |(x1, x2) :: xs ->
-        if x land x1 != 0
+        if x land x1 <> 0
             then x2 :: of_bitflag xs x
             else of_bitflag xs x
 

@@ -95,10 +95,10 @@ let tool_begin_event x y button (state: Gdk.Tags.modifier list) =
                     highlight := Line (line_i :: n)
             |_ when line_d < highlight_distance () ->
                     highlight := Line [line_i]
-            |true, Poly m when poly != None ->
+            |true, Poly m when poly <> None ->
                     let Some n = poly in
                     highlight := Poly (n :: m)
-            |_ when poly != None ->
+            |_ when poly <> None ->
                     let Some n = poly in
                     highlight := Poly [n]
             |_ ->
@@ -120,7 +120,7 @@ let tool_begin_event x y button (state: Gdk.Tags.modifier list) =
                 MapDialogs.obj_dialog !MapFormat.objs.(obj_i)
             else if line_d < highlight_distance () then (
                 MapDialogs.line_dialog !MapFormat.lines.(line_i)
-            ) else if poly != None then let Some n = poly in (
+            ) else if poly <> None then let Some n = poly in (
                 MapDialogs.poly_dialog !MapFormat.polygons.(n))
         else ()
     |_ -> () end
@@ -205,10 +205,27 @@ let tool_end_event x0 y0 x y (button: int) _ =
                 |_ -> ()
         else if tool = buttonzoom then
             (* if we were using the zoom tool, apply the zoom *)
-(*GL            match button with
-            |1 -> self#set_zoom_with_center (zoom_factor *. 2.0) x y
-            |3 -> self#set_zoom_with_center (zoom_factor *. 0.5) x y
-            |_ -> () *) ()
+            let zoom_at factor xt1 yt1 =
+                let xo, yo = orthodrawer#origin () in
+                let x, y = orthodrawer#to_screen (xt1, yt1) in
+                let original_scale = orthodrawer#scale () in
+                let new_scale = original_scale *. factor in
+                orthodrawer#set_scale new_scale;
+                let xt2, yt2 = orthodrawer#to_map (x, y) in
+                let xnew, ynew =
+                    (float x) /. original_scale -. (float x) /. new_scale +.
+                        (float xo),
+                    (float y) /. original_scale -. (float y) /. new_scale +.
+                        (float yo) in
+                DrawModeWindows.hadj#set_value xnew;
+                DrawModeWindows.vadj#set_value ynew;
+                Printf.printf "%d %d %d %d %d %d %d %d\n"
+                    xo yo x y xt1 yt1 xt2 yt2;
+                flush stdout in
+            match button with
+            |1 -> zoom_at 2.0 (int_of_float x) (int_of_float y)
+            |3 -> zoom_at 0.5 (int_of_float x) (int_of_float y)
+            |_ -> ()
         else if tool = buttonline then begin
             (* if we were drawing a line, finalize it *)
             (* TODO: does connect_line really need access to gldrawer? *)

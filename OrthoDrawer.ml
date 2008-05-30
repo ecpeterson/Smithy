@@ -51,7 +51,7 @@ class orthoDrawer packing_fn = object (self)
         let y = int_of_float (GdkEvent.Button.y mouse_descriptor) in
         let button = GdkEvent.Button.button mouse_descriptor in
         let state = Gdk.Convert.modifier (GdkEvent.Button.state mouse_descriptor) in
-        let x, y = self#untransform (x, y) in
+        let x, y = self#to_map (x, y) in
         click0 <- x, y;
         click1 <- x, y;
         mousedown_callback x y button state;
@@ -62,14 +62,14 @@ class orthoDrawer packing_fn = object (self)
         let button = GdkEvent.Button.button mouse_descriptor in
         let state = Gdk.Convert.modifier (GdkEvent.Button.state mouse_descriptor) in
         let (x0, y0) = click0 in
-        let x, y = self#untransform (x, y) in
+        let x, y = self#to_map (x, y) in
         click1 <- x, y;
         mouseup_callback x0 y0 x y button state;
         self#draw (); false
     method private mousedrag_callback mouse_descriptor =
         let x = int_of_float (GdkEvent.Motion.x mouse_descriptor) in
         let y = int_of_float (GdkEvent.Motion.y mouse_descriptor) in
-        let x, y = self#untransform (x, y) in
+        let x, y = self#to_map (x, y) in
         let (oldx, oldy) = click1 in
         click1 <- x, y;
         let x0, y0 = click0 in
@@ -97,40 +97,40 @@ class orthoDrawer packing_fn = object (self)
     method set_origin x = origin <- x
     method set_scale x = scale <- x
 
-    method private transform (x, y) =
+    method to_screen (x, y) =
         let xo, yo = origin in
         (int_of_float (float (x - xo) *. scale),
             int_of_float (float (y - yo) *. scale))
 
-    method private untransform (x, y) =
+    method to_map (x, y) =
         let xo, yo = origin in
         (int_of_float (float x /. scale) + xo,
             int_of_float (float y /. scale) + yo)
 
     method point (x, y) =
-        let (x, y) = self#transform (x, y) in
+        let (x, y) = self#to_screen (x, y) in
         drawable#point ~x ~y
 
     method line (x0, y0) (x1, y1) =
-        let (x0t, y0t) = self#transform (x0, y0) in
-        let (x1t, y1t) = self#transform (x1, y1) in
+        let (x0t, y0t) = self#to_screen (x0, y0) in
+        let (x1t, y1t) = self#to_screen (x1, y1) in
         drawable#line ~x:x0t ~y:y0t ~x:x1t ~y:y1t
 
     method polygon filled points =
-        let points = List.map self#transform points in
+        let points = List.map self#to_screen points in
         drawable#polygon ~filled points
 
     method points points =
-        let points = List.map self#transform points in
+        let points = List.map self#to_screen points in
         drawable#points points
 
     method segments lines =
         let lines = List.map
-            (fun (p0, p1) -> (self#transform p0, self#transform p1)) lines in
+            (fun (p0, p1) -> (self#to_screen p0, self#to_screen p1)) lines in
         drawable#segments lines
 
     method linear_curve points =
-        let points = List.map self#transform points in
+        let points = List.map self#to_screen points in
         drawable#lines points
 
     method set_color (r, g, b) =

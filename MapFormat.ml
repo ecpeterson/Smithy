@@ -164,7 +164,7 @@ let rec read_chunks fh =
         |_ -> print_endline ("epic fail: " ^ chunk_name)
     end;
     seek_in fh (next_offset + offset_of_first_chunk);
-    if next_offset != 0
+    if next_offset <> 0
         then read_chunks fh
         else ()
 
@@ -444,8 +444,8 @@ let delete_line n =
     let poly0 = line#cw_poly_owner () in
     let poly1 = line#ccw_poly_owner () in
     let (poly0, poly1) = (max poly0 poly1, min poly0 poly1) in
-    if poly0 != -1 then delete_poly poly0;
-    if poly1 != -1 then delete_poly poly1;
+    if poly0 <> -1 then delete_poly poly0;
+    if poly1 <> -1 then delete_poly poly1;
     (* if our line is attached to points, detach this line and then count
      * their owners to see if we should delete them too *)
     (*let (p0, p1) = line#endpoints () in*)
@@ -481,7 +481,7 @@ let rec delete_point n =
         let (p0, p1) = !lines.(acc)#endpoints () in
         if p0 = n || p1 = n then acc else aux (acc + 1) in
     let target_line = aux 0 in
-    if target_line != -1 then begin
+    if target_line <> -1 then begin
         (* if we do in fact have a parent line, then we need to delete it
          * and then try again *)
         delete_line target_line;
@@ -515,7 +515,7 @@ let delete_platform n =
     platforms := delete_from_array_and_resize !platforms n;
     Array.iter (fun x ->
         let y = x#permutation () in
-        if x#kind () != Platform then () else
+        if x#kind () <> Platform then () else
         if y > n then x#set_permutation (y - 1) else
         if y = n then x#set_permutation (-1)) !polygons
 
