@@ -135,8 +135,8 @@ let tool_in_event x0 y0 old_x old_y x y =
     |Draw ->
         (* if we're panning, then pan *)
         if tool = buttonpan then
-            let horig = DrawModeWindows.hadj#value +. old_x in
-            let vorig = DrawModeWindows.vadj#value +. old_y in
+            let horig = DrawModeWindows.hadj#value +. x0 in
+            let vorig = DrawModeWindows.vadj#value +. y0 in
             DrawModeWindows.hadj#set_value (horig -. x);
             DrawModeWindows.vadj#set_value (vorig -. y)
             (* if we're using the arrow, drag *)
