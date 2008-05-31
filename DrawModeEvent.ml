@@ -219,3 +219,31 @@ let tool_end_event x0 y0 x y (button: int) _ =
             ignore (GeomEdit.connect_line x y (highlight_distance ())); ()
         end else ()
     |_ -> () end
+
+(* depending upon what mode we're in, launch the appropriate dialog *)
+let edit_current_item () =
+    try match (int_of_string numeric_entry#text, !mode) with
+    |(-1, _) -> ()
+    |(index, Liquids) ->
+        MapDialogs.media_dialog !MapFormat.media.(index)
+    |(index, Lights_Floor)
+    |(index, Lights_Liquid)
+    |(index, Lights_Ceiling) ->
+        MapDialogs.light_dialog !MapFormat.lights.(index)
+    |_ -> ()
+    with Failure "int_of_string" -> ()
+
+(* depending upon what mode we're in, spawn in a new light/media/whatever and
+ * open the editor so that we can customize it *)
+let make_new_item () =
+    begin match !mode with
+        |Liquids ->
+            let n = MapDialogs.make_media () in
+            numeric_entry#set_text (string_of_int n)
+        |Lights_Floor
+        |Lights_Liquid
+        |Lights_Ceiling ->
+            let l = MapDialogs.make_light () in
+            numeric_entry#set_text (string_of_int l)
+        |_ -> () end;
+    orthodrawer#draw ()
