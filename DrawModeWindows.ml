@@ -10,14 +10,6 @@ type highlighted_component =  No_Highlight       |
 (* some stateful data *)
 let highlight = ref No_Highlight
 
-(* the drawing object has a bunch of different states that it can be in that
- * affects what information is displayed, here we have an enumerative type that
- * describes the modes *)
-type renderer_mode = Draw | Floor_Height | Ceiling_Height | Media |
-                     Floor_Light | Ceiling_Light | Media_Light | Polygon_Type
-(* some more stateful data *)
-let mode = ref Draw
-
 (* set up the drawing window *)
 let drawmode_window = GWindow.window ~width:500 ~height:300 ~title:"Smithy"
     ~allow_shrink:true ~show:true ()
@@ -73,8 +65,21 @@ let _ =
             obj#event#connect#button_press ~callback:toolbar_clicked
         |> ignore) buttons
 
+type modes = Draw_Mode | Visual_Mode | Elevation_Floor | Elevation_Ceiling |
+             Textures_Floor | Textures_Ceiling | Polygon_Types | Lights_Floor |
+             Lights_Ceiling | Lights_Liquid | Liquids | Sounds_Ambient |
+             Sounds_Random
+let mode_descriptor = 0, [Draw_Mode; Visual_Mode; Polygon_Types;
+    Liquids; Elevation_Floor; Elevation_Ceiling; Textures_Floor;
+    Textures_Ceiling; Lights_Floor; Lights_Ceiling; Lights_Liquid;
+    Sounds_Ambient; Sounds_Random]
+let mode = ref Draw_Mode
+
 (* set up the drawing window, try not to pollute the namespace *)
 let menu_bar, orthodrawer, vadj, hadj, status =
+    let vbox = GPack.vbox ~packing:drawmode_window#add () in
+    let hbox = GPack.hbox ~packing:(vbox#pack ~expand:true) () in
+    let orthodrawer = new OrthoDrawer.orthoDrawer (hbox#pack ~expand:true) in
     let menu_xml =
    "<ui>\
       <menubar name='MenuBar'>\
@@ -180,7 +185,9 @@ let menu_bar, orthodrawer, vadj, hadj, status =
 
             r "SoundsAmbient"   11 ~label:"_Ambient Sounds";
             r "SoundsRandom"    12 ~label:"_Random Sounds";
-        ];
+        ] ~callback:(fun state ->
+            mode := of_enum mode_descriptor state;
+            orthodrawer#draw ());
 
         a "Pave"        ~label:"_Pave Level";
         a "Nuke"        ~label:"_Nuke Objects Only...";
@@ -220,9 +227,6 @@ let menu_bar, orthodrawer, vadj, hadj, status =
         toolbar_clicked ();
         button#clicked ();
         () in
-    let vbox = GPack.vbox ~packing:drawmode_window#add () in
-    let hbox = GPack.hbox ~packing:(vbox#pack ~expand:true) () in
-    let orthodrawer = new OrthoDrawer.orthoDrawer (hbox#pack ~expand:true) in
     let delete_cb _ =
         (* dispatch for deleting a highlighted map item *)
         begin match !highlight with

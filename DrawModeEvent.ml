@@ -33,49 +33,49 @@ let tool_begin_event x y button (state: Gdk.Tags.modifier list) =
     begin match (!mode, button, int_entry,
                  float_entry, poly) with
     (* a bunch of these get and set media/light/height/whatever attributes *)
-    |Media_Light, 1, Some v, _, Some p ->
+    |Lights_Liquid, 1, Some v, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         poly#set_media_lightsource v
-    |Media_Light, 3, _, _, Some p ->
+    |Lights_Liquid, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         let v = poly#media_lightsource () in
         numeric_entry#set_text (string_of_int v)
-    |Ceiling_Light, 1, Some v, _, Some p ->
+    |Lights_Ceiling, 1, Some v, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         poly#set_ceiling_lightsource v
-    |Ceiling_Light, 3, _, _, Some p ->
+    |Lights_Ceiling, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         let v = poly#ceiling_lightsource () in
         numeric_entry#set_text (string_of_int v)
-    |Floor_Light, 1, Some v, _, Some p ->
+    |Lights_Floor, 1, Some v, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         poly#set_floor_lightsource v
-    |Floor_Light, 3, _, _, Some p ->
+    |Lights_Floor, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         let v = poly#floor_lightsource () in
         numeric_entry#set_text (string_of_int v)
-    |Ceiling_Height, 1, _, Some v, Some p ->
+    |Elevation_Ceiling, 1, _, Some v, Some p ->
         let poly = !MapFormat.polygons.(p) in
         poly#set_ceiling_height v
-    |Ceiling_Height, 3, _, _, Some p ->
+    |Elevation_Ceiling, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         let v = poly#ceiling_height () in
         numeric_entry#set_text (string_of_float v)
-    |Floor_Height, 1, _, Some v, Some p ->
+    |Elevation_Floor, 1, _, Some v, Some p ->
         let poly = !MapFormat.polygons.(p) in
         poly#set_floor_height v
-    |Floor_Height, 3, _, _, Some p ->
+    |Elevation_Floor, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         let v = poly#floor_height () in
         numeric_entry#set_text (string_of_float v)
-    |Media, 1, Some v, _, Some p ->
+    |Liquids, 1, Some v, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         poly#set_media_index v
-    |Media, 3, _, _, Some p ->
+    |Liquids, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         let v = poly#media_index () in
         numeric_entry#set_text (string_of_int v)
-    |Draw, 1, _, _, _ ->
+    |Draw_Mode, 1, _, _, _ ->
         (* in draw mode, we have to deal with what kind of tool to apply *)
         if tool = buttonarrow then
             (* see TODO list about things pertaining to this that need to be
@@ -110,7 +110,7 @@ let tool_begin_event x y button (state: Gdk.Tags.modifier list) =
         else if tool = buttonfill then
             GeomEdit.fill_poly (int_of_float x) (int_of_float y)
         else ()
-    |Draw, 3, _, _, _ ->
+    |Draw_Mode, 3, _, _, _ ->
         if tool = buttonarrow then
             (* a right-click in draw mode with the arrow tool means we want to
              * inspect a map element *)
@@ -132,7 +132,7 @@ let tool_in_event x0 y0 old_x old_y x y =
     (* extract values actually useful to us *)
     let tool = active_tool () in
     begin match !mode with
-    |Draw ->
+    |Draw_Mode ->
         (* if we're panning, then pan *)
         if tool = buttonpan then
             let horig = DrawModeWindows.hadj#value +. x0 in
@@ -184,7 +184,7 @@ let tool_end_event x0 y0 x y (button: int) _ =
     let x0, y0, x, y = float x0, float y0, float x, float y in
     let tool = active_tool () in
     begin match !mode with
-    |Draw ->
+    |Draw_Mode ->
         if tool = buttonarrow then
             (* if we were dragging around objects, be sure to place them in the
              * appropriate polygon! *)
