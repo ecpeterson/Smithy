@@ -1,0 +1,16 @@
+Smithy is written in OCaml, GTK+, and OpenGL, which means you will need the following packages installed to successfully compile:
+
+    + ocaml
+    + gtk+
+    + lablgtk
+    + OCamlMakefile
+    + lablgl
+
+In particular you do /not/ need to install gtkgl, nor do you need to install lablgtk/lablgl with support for lablgl/lablgtk respectively.  The first line of the toplevel Makefile contains the path to your local copy of OCamlMakefile, which you may have to edit before compiling with 'make' or compiling and running with 'make run'.
+
+Smithy is a thoroughly unfinished application, and so it does not contain an actual installation command.  In particular, things standing in the way of actual deployment are:
+
+1) Smithy is currently hard-coded to expect the 'resources' directory to be in the same path as the executable.
+2) Smithy also currently compiles to OCaml bytecode, not to native code, which means that OCaml must be present whenever running Smithy, not just at compile time.
+
+These will of course eventually be fixed.
