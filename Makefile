@@ -1,3 +1,4 @@
+OCAMLMAKEFILE = /usr/share/ocamlmakefile/OCamlMakefile
 RESULT = smithy
 SOURCES = CamlExt.ml \
 	  Resources.ml \
@@ -13,7 +14,6 @@ SOURCES = CamlExt.ml \
 	  Smithy.ml
 LIBS = lablgtk
 INCDIRS = +lablgtk2
-OCAMLMAKEFILE = /usr/share/ocamlmakefile/OCamlMakefile
 OCAMLFLAGS = -g -w sy
 OCAMLLDFLAGS = -g
 
