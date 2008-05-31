@@ -13,6 +13,7 @@ let highlight = ref No_Highlight
 (* set up the drawing window *)
 let drawmode_window = GWindow.window ~width:500 ~height:300 ~title:"Smithy"
     ~allow_shrink:true ~show:true ()
+let set_title = drawmode_window#set_title
 
 let draw_toolbar = GWindow.window ~title:"Smithy Toolkit" ~show:true
                                   ~height:120 ~width:60 ()
@@ -227,9 +228,13 @@ let menu_bar, orthodrawer, vadj, hadj, status, zoom_at =
         a "SmithyMenu"  ~label:"S_mithy";
 
         a "New"         ~stock:`NEW;
-        a "Open"        ~stock:`OPEN;
-        a "Save"        ~stock:`SAVE;
-        a "SaveAs"      ~stock:`SAVE_AS;
+        a "Open"        ~stock:`OPEN
+                        ~callback:(FileDialogs.open_file_dialog set_title
+                                                                orthodrawer);
+        a "Save"        ~stock:`SAVE
+                        ~callback:(FileDialogs.silent_save set_title);
+        a "SaveAs"      ~stock:`SAVE_AS
+                        ~callback:(FileDialogs.save_file_dialog set_title);
         a "MergeLevels" ~label:"_Merge Levels...";
         a "ExportLevel" ~label:"_Export Level...";
         a "Quit"        ~stock:`QUIT

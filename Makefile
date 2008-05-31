@@ -7,6 +7,7 @@ SOURCES = CamlExt.ml \
 	  MapTypes.ml \
 	  MapFormat.ml \
 	  GeomEdit.ml \
+	  FileDialogs.ml \
 	  DrawModeWindows.ml \
 	  MapDialogs.ml \
 	  DrawModeEvent.ml \
