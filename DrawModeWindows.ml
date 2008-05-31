@@ -17,15 +17,15 @@ let set_title = drawmode_window#set_title
 
 let draw_toolbar = GWindow.window ~title:"Smithy Toolkit" ~show:true
                                   ~height:120 ~width:60 ()
-let buttonarrow, buttonline, buttonpoly, buttonfill,
-    buttonpan, buttonzoom, buttontext, buttonobj =
+let buttonline, buttonarrow, buttonfill, buttonpoly,
+    buttonzoom, buttonpan, buttonobj, buttontext =
         let vbox = GPack.vbox ~packing:draw_toolbar#add () in
         let hbox1 = GPack.hbox ~packing:vbox#pack () in
         let hbox2 = GPack.hbox ~packing:vbox#pack () in
         let hbox3 = GPack.hbox ~packing:vbox#pack () in
         let hbox4 = GPack.hbox ~packing:vbox#pack () in
-        GButton.toggle_button ~packing:hbox1#pack ~active:true (),
         GButton.toggle_button ~packing:hbox1#pack (),
+        GButton.toggle_button ~packing:hbox1#pack ~active:true (),
         GButton.toggle_button ~packing:hbox2#pack (),
         GButton.toggle_button ~packing:hbox2#pack (),
         GButton.toggle_button ~packing:hbox3#pack (),
