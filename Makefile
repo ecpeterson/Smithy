@@ -5,9 +5,9 @@ SOURCES = CamlExt.ml \
 	  OrthoDrawer.ml \
 	  MapTypes.ml \
 	  MapFormat.ml \
-	  MapDialogs.ml \
 	  GeomEdit.ml \
 	  DrawModeWindows.ml \
+	  MapDialogs.ml \
 	  DrawModeEvent.ml \
 	  DrawMode.ml \
 	  Smithy.ml

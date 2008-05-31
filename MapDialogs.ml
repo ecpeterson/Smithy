@@ -45,7 +45,8 @@ let line_dialog line =
             line#set_ccw_poly_side_index (-1)
         end else ()
     |_ -> () end;
-    w#destroy ()
+    w#destroy ();
+    DrawModeWindows.orthodrawer#draw ()
 
 let platform_dialog plat =
     ()

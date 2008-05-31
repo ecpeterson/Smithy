@@ -111,6 +111,11 @@ class orthoDrawer packing_fn = object (self)
         let (x, y) = self#to_screen (x, y) in
         drawable#point ~x ~y
 
+    method fat_point (x, y) thickness =
+        let (x, y) = self#to_screen (x, y) in
+        drawable#rectangle ~x:(x-thickness/2) ~y:(y-thickness/2)
+                           ~width:thickness ~height:thickness ~filled:true ()
+
     method line (x0, y0) (x1, y1) =
         let (x0t, y0t) = self#to_screen (x0, y0) in
         let (x1t, y1t) = self#to_screen (x1, y1) in
