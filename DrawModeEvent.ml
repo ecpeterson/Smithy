@@ -150,35 +150,31 @@ let tool_in_event x0 y0 old_x old_y x y =
                 point#set_vertex (int_of_float (float px +. delta_x),
                 int_of_float (float py +. delta_y));
                 MapFormat.recalculate_lengths p in
-            let shift_line line =
-                let (p0, p1) = line#endpoints () in
-                shift_point p0;
-                shift_point p1 in
-            let rec shift_poly poly n =
-                if n = poly#vertex_count () then () else
-                    let index = (poly#endpoint_indices ()).(n) in
-                    shift_point index;
-                    shift_poly poly (n+1) in
             let shift_obj obj =
                 let (x, y, z) = obj#point () in
                 obj#set_point (int_of_float (float x +. delta_x),
                 int_of_float (float y +. delta_y), z) in
                 begin match !highlight with
-                    |Point n ->
-                        List.iter (fun n -> shift_point n) n
-                    |Line n ->
+                    |Point ns ->
+                        List.iter shift_point ns
+                    |Line ns ->
+                        let points = List.fold_left (fun x y ->
+                            let p0, p1 = !MapFormat.lines.(y)#endpoints () in
+                            p0 :: p1 :: x) [] ns in
+                        List.iter shift_point (CamlExt.nub points)
+                    |Poly ns ->
+                        let points = List.fold_left (fun x y ->
+                            let poly = !MapFormat.polygons.(y) in
+                            let points = poly#endpoint_indices () in
+                            let points = Array.sub points 0
+                                (poly#vertex_count ()) in
+                            Array.to_list points @ x) [] ns in
+                        List.iter shift_point (CamlExt.nub points)
+                    |Object ns ->
                         List.iter (fun n ->
-                            shift_line !MapFormat.lines.(n)) n
-                    |Poly n ->
-                        List.iter (fun n ->
-                            let poly = !MapFormat.polygons.(n) in
-                            shift_poly poly 0) n
-                    |Object n ->
-                        List.iter (fun n ->
-                            shift_obj !MapFormat.objs.(n)) n
+                            shift_obj !MapFormat.objs.(n)) ns
                     |_ -> () end
             else if tool = buttonline then
-                (* and if we're drawing a line, keep drawing its intermediates *)
                 GeomEdit.intermediate_line x y
             else ()
         |_ -> () end
