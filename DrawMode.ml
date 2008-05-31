@@ -59,7 +59,13 @@ let draw _ =
     draw_grid ();
     draw_polygons ();
     draw_lines ();
-    draw_points ()
+    draw_points ();
+    if !GeomEdit.draw_intermediate then begin
+        orthodrawer#set_color Colors.line_color;
+        let x, y = !MapFormat.points.(!GeomEdit.start_point)#vertex () in
+        orthodrawer#line (x, y)
+                         (!GeomEdit.intermediate_x, !GeomEdit.intermediate_y)
+    end
 
 (* set up draw mode event hooks *)
 let _ =

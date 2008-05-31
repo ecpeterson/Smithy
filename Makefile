@@ -14,7 +14,7 @@ SOURCES = CamlExt.ml \
 LIBS = lablgtk
 INCDIRS = +lablgtk2
 OCAMLMAKEFILE = /usr/share/ocamlmakefile/OCamlMakefile
-OCAMLFLAGS = -g
+OCAMLFLAGS = -g -w sy
 OCAMLLDFLAGS = -g
 
 include $(OCAMLMAKEFILE)

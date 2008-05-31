@@ -179,7 +179,7 @@ let tool_in_event x0 y0 old_x old_y x y =
                     |_ -> () end
             else if tool = buttonline then
                 (* and if we're drawing a line, keep drawing its intermediates *)
-                GeomEdit.draw_line x y orthodrawer
+                GeomEdit.intermediate_line x y
             else ()
         |_ -> () end
 
@@ -218,10 +218,7 @@ let tool_end_event x0 y0 x y (button: int) _ =
                     (float y) /. original_scale -. (float y) /. new_scale +.
                         (float yo) in
                 DrawModeWindows.hadj#set_value xnew;
-                DrawModeWindows.vadj#set_value ynew;
-                Printf.printf "%d %d %d %d %d %d %d %d\n"
-                    xo yo x y xt1 yt1 xt2 yt2;
-                flush stdout in
+                DrawModeWindows.vadj#set_value ynew in
             match button with
             |1 -> zoom_at 2.0 (int_of_float x) (int_of_float y)
             |3 -> zoom_at 0.5 (int_of_float x) (int_of_float y)
@@ -232,3 +229,34 @@ let tool_end_event x0 y0 x y (button: int) _ =
             ignore (GeomEdit.connect_line x y (highlight_distance ())); ()
         end else ()
     |_ -> () end
+
+(* TODO: make this event driven *)
+let send_key key =
+    let key = GdkEvent.Key.keyval key in
+    let choose_button b =
+        toolbar_clicked b ();
+        b#clicked () in
+    begin match key with
+        |97  -> choose_button buttonarrow
+        |108 -> choose_button buttonline
+        |112 -> choose_button buttonpoly
+        |102 -> choose_button buttonfill
+        |104 -> choose_button buttonpan (* h is for hand *)
+        |122 -> choose_button buttonzoom
+        |116 -> choose_button buttontext
+        |111 -> choose_button buttonobj
+        (* TODO: does delete really need access to gldrawer? *)
+        |65535 | 65288 ->
+            (* dispatch for deleting a highlighted map item *)
+            begin match !highlight with
+                |DrawModeWindows.Point n ->
+                    List.iter (fun n -> MapFormat.delete_point n) n
+                |DrawModeWindows.Line n ->
+                    List.iter (fun n -> MapFormat.delete_line n) n
+                |DrawModeWindows.Poly n ->
+                    List.iter (fun n -> MapFormat.delete_poly n) n
+                |DrawModeWindows.No_Highlight |_ -> ()
+            end;
+            orthodrawer#draw ()
+        |_   -> () end;
+    false
