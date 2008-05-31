@@ -21,6 +21,58 @@ let mode = ref Draw
 (* set up the drawing window *)
 let drawmode_window = GWindow.window ~width:500 ~height:300 ~title:"Smithy"
     ~allow_shrink:true ~show:true ()
+
+let draw_toolbar = GWindow.window ~title:"Smithy Toolkit" ~show:true
+                                  ~height:120 ~width:60 ()
+let buttonarrow, buttonline, buttonpoly, buttonfill,
+    buttonpan, buttonzoom, buttontext, buttonobj =
+        let vbox = GPack.vbox ~packing:draw_toolbar#add () in
+        let hbox1 = GPack.hbox ~packing:vbox#pack () in
+        let hbox2 = GPack.hbox ~packing:vbox#pack () in
+        let hbox3 = GPack.hbox ~packing:vbox#pack () in
+        let hbox4 = GPack.hbox ~packing:vbox#pack () in
+        GButton.toggle_button ~packing:hbox1#pack ~active:true (),
+        GButton.toggle_button ~packing:hbox1#pack (),
+        GButton.toggle_button ~packing:hbox2#pack (),
+        GButton.toggle_button ~packing:hbox2#pack (),
+        GButton.toggle_button ~packing:hbox3#pack (),
+        GButton.toggle_button ~packing:hbox3#pack (),
+        GButton.toggle_button ~packing:hbox4#pack (),
+        GButton.toggle_button ~packing:hbox4#pack ()
+let _ = GMisc.pixmap (GDraw.pixmap_from_xpm Resources.arrowfile ())
+                     ~packing:buttonarrow#add () |> ignore;
+        GMisc.pixmap (GDraw.pixmap_from_xpm Resources.linefile ())
+                     ~packing:buttonline#add () |> ignore;
+        GMisc.pixmap (GDraw.pixmap_from_xpm Resources.polyfile ())
+                     ~packing:buttonpoly#add () |> ignore;
+        GMisc.pixmap (GDraw.pixmap_from_xpm Resources.fillfile ())
+                     ~packing:buttonfill#add () |> ignore;
+        GMisc.pixmap (GDraw.pixmap_from_xpm Resources.panfile ())
+                     ~packing:buttonpan#add () |> ignore;
+        GMisc.pixmap (GDraw.pixmap_from_xpm Resources.zoomfile ())
+                     ~packing:buttonzoom#add () |> ignore;
+        GMisc.pixmap (GDraw.pixmap_from_xpm Resources.textfile ())
+                     ~packing:buttontext#add () |> ignore;
+        GMisc.pixmap (GDraw.pixmap_from_xpm Resources.objfile ())
+                     ~packing:buttonobj#add () |> ignore
+let buttons = [buttonarrow; buttonline; buttonpoly; buttonfill;
+               buttonpan; buttonzoom; buttontext; buttonobj]
+
+let active_tool () =
+    let rec a_t_aux lst =
+        if (List.hd lst)#active
+            then List.hd lst
+            else a_t_aux (List.tl lst) in
+    a_t_aux buttons
+
+let toolbar_clicked _ =
+    List.iter (fun x -> x#set_active false) buttons;
+    false
+let _ =
+    List.iter (fun obj ->
+            obj#event#connect#button_press ~callback:toolbar_clicked
+        |> ignore) buttons
+
 (* set up the drawing window, try not to pollute the namespace *)
 let menu_bar, orthodrawer, vadj, hadj, status =
     let menu_xml =
@@ -86,11 +138,11 @@ let menu_bar, orthodrawer, vadj, hadj, status =
         </menu>\
       </menubar>\
     </ui>" in
-    let action_group = GAction.action_group ~name:"Global" () in
     let a = GAction.add_action in
     let rg = GAction.group_radio_actions in
     let r = GAction.add_radio_action in
-    GAction.add_actions action_group [
+    let menu_actions = GAction.action_group ~name:"Smithy-menu" () in
+    GAction.add_actions menu_actions [
         a "FileMenu"    ~label:"_File";
         a "ViewMenu"    ~label:"_View";
         a "SpecialMenu" ~label:"_Special";
@@ -151,16 +203,58 @@ let menu_bar, orthodrawer, vadj, hadj, status =
         a "GarbageCollect" ~label:"_Garbage Collect"
                            ~callback:(fun _ -> Gc.full_major ());
     ];
+    let accel_xml =
+   "<ui>\
+      <accelerator action='LineTool'/>\
+      <accelerator action='ArrowTool'/>\
+      <accelerator action='FillTool'/>\
+      <accelerator action='PolyTool'/>\
+      <accelerator action='ZoomTool'/>\
+      <accelerator action='PanTool'/>\
+      <accelerator action='ObjTool'/>\
+      <accelerator action='TextTool'/>\
+      <accelerator action='Delete'/>\
+      <accelerator action='Backspace'/>\
+    </ui>" in
+    let tool_cb button _ =
+        toolbar_clicked ();
+        button#clicked ();
+        () in
+    let vbox = GPack.vbox ~packing:drawmode_window#add () in
+    let hbox = GPack.hbox ~packing:(vbox#pack ~expand:true) () in
+    let orthodrawer = new OrthoDrawer.orthoDrawer (hbox#pack ~expand:true) in
+    let delete_cb _ =
+        (* dispatch for deleting a highlighted map item *)
+        begin match !highlight with
+        |Point n -> List.iter (fun n -> MapFormat.delete_point n) n
+        |Line  n -> List.iter (fun n -> MapFormat.delete_line n)  n
+        |Poly  n -> List.iter (fun n -> MapFormat.delete_poly n)  n
+        |No_Highlight |_ -> ()
+        end;
+        orthodrawer#draw (); () in
+    let accel_actions = GAction.action_group ~name:"Smithy-accels" () in
+    GAction.add_actions accel_actions [
+        a "LineTool"  ~accel:"l" ~callback:(tool_cb buttonline);
+        a "ArrowTool" ~accel:"a" ~callback:(tool_cb buttonarrow);
+        a "FillTool"  ~accel:"f" ~callback:(tool_cb buttonfill);
+        a "PolyTool"  ~accel:"p" ~callback:(tool_cb buttonpoly);
+        a "ZoomTool"  ~accel:"z" ~callback:(tool_cb buttonzoom);
+        a "PanTool"   ~accel:"h" ~callback:(tool_cb buttonpan);
+        a "ObjTool"   ~accel:"o" ~callback:(tool_cb buttonobj);
+        a "TextTool"  ~accel:"t" ~callback:(tool_cb buttontext);
+
+        a "Delete"    ~accel:"Delete"    ~callback:delete_cb;
+        a "Backspace" ~accel:"BackSpace" ~callback:delete_cb;
+    ];
     let ui = GAction.ui_manager () in
-    ui#insert_action_group action_group 0;
+    ui#insert_action_group menu_actions 0;
+    ui#insert_action_group accel_actions 1;
     drawmode_window#add_accel_group ui#get_accel_group;
     ui#add_ui_from_string menu_xml;
-    let vbox = GPack.vbox ~packing:drawmode_window#add () in
-    (* this menu will be controlled in Smithy.ml *)
+    ui#add_ui_from_string accel_xml;
     let menu_bar = ui#get_widget "/MenuBar" in
     vbox#pack menu_bar;
-    let hbox = GPack.hbox ~packing:vbox#add () in
-    let orthodrawer = new OrthoDrawer.orthoDrawer hbox#add in
+    vbox#reorder_child menu_bar 0;
     let vadj = GData.adjustment ~value:0.0
                                 ~lower:(0.0 -. float MapFormat.half_map_width)
                                 ~upper:(float MapFormat.half_map_width)
@@ -177,57 +271,6 @@ let menu_bar, orthodrawer, vadj, hadj, status =
     let sbc = sb#new_context ~name:"Status" in
     menu_bar, orthodrawer, vadj, hadj, sbc
 let set_status x = status#pop (); status#push x
-
-let draw_toolbar = GWindow.window ~title:"Smithy Toolkit" ~show:true
-                                  ~height:120 ~width:60 ()
-let buttonarrow, buttonline, buttonpoly, buttonfill,
-    buttonpan, buttonzoom, buttontext, buttonobj =
-        let vbox = GPack.vbox ~packing:draw_toolbar#add () in
-        let hbox1 = GPack.hbox ~packing:vbox#pack () in
-        let hbox2 = GPack.hbox ~packing:vbox#pack () in
-        let hbox3 = GPack.hbox ~packing:vbox#pack () in
-        let hbox4 = GPack.hbox ~packing:vbox#pack () in
-        GButton.toggle_button ~packing:hbox1#pack ~active:true (),
-        GButton.toggle_button ~packing:hbox1#pack (),
-        GButton.toggle_button ~packing:hbox2#pack (),
-        GButton.toggle_button ~packing:hbox2#pack (),
-        GButton.toggle_button ~packing:hbox3#pack (),
-        GButton.toggle_button ~packing:hbox3#pack (),
-        GButton.toggle_button ~packing:hbox4#pack (),
-        GButton.toggle_button ~packing:hbox4#pack ()
-let _ = GMisc.pixmap (GDraw.pixmap_from_xpm Resources.arrowfile ())
-                     ~packing:buttonarrow#add () |> ignore;
-        GMisc.pixmap (GDraw.pixmap_from_xpm Resources.linefile ())
-                     ~packing:buttonline#add () |> ignore;
-        GMisc.pixmap (GDraw.pixmap_from_xpm Resources.polyfile ())
-                     ~packing:buttonpoly#add () |> ignore;
-        GMisc.pixmap (GDraw.pixmap_from_xpm Resources.fillfile ())
-                     ~packing:buttonfill#add () |> ignore;
-        GMisc.pixmap (GDraw.pixmap_from_xpm Resources.panfile ())
-                     ~packing:buttonpan#add () |> ignore;
-        GMisc.pixmap (GDraw.pixmap_from_xpm Resources.zoomfile ())
-                     ~packing:buttonzoom#add () |> ignore;
-        GMisc.pixmap (GDraw.pixmap_from_xpm Resources.textfile ())
-                     ~packing:buttontext#add () |> ignore;
-        GMisc.pixmap (GDraw.pixmap_from_xpm Resources.objfile ())
-                     ~packing:buttonobj#add () |> ignore
-let buttons = [buttonarrow; buttonline; buttonpoly; buttonfill;
-               buttonpan; buttonzoom; buttontext; buttonobj]
-
-let active_tool () =
-    let rec a_t_aux lst =
-        if (List.hd lst)#active
-            then List.hd lst
-            else a_t_aux (List.tl lst) in
-    a_t_aux buttons
-
-let toolbar_clicked which _ =
-    List.iter (fun x -> x#set_active false) buttons;
-    false
-let _ =
-    List.iter (fun obj ->
-            obj#event#connect#button_press ~callback:(toolbar_clicked obj)
-        |> ignore) buttons
 
 (* and the alternative toolbar *)
 let entry_toolbar = GWindow.window ~type_hint:`TOOLBAR ~title:"Smithy"

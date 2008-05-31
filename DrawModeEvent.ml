@@ -225,35 +225,3 @@ let tool_end_event x0 y0 x y (button: int) _ =
             ignore (GeomEdit.connect_line x y (highlight_distance ())); ()
         end else ()
     |_ -> () end
-
-(* TODO: make this event driven *)
-let send_key keyin =
-    let key = GdkEvent.Key.keyval keyin in
-    let modifier = GdkEvent.Key.state keyin in
-    let choose_button b =
-        toolbar_clicked b ();
-        b#clicked ();
-        false in
-    begin match key, modifier with
-        |97,  []  -> choose_button buttonarrow
-        |108, [] -> choose_button buttonline
-        |112, [] -> choose_button buttonpoly
-        |102, [] -> choose_button buttonfill
-        |104, [] -> choose_button buttonpan (* h is for hand *)
-        |122, [] -> choose_button buttonzoom
-        |116, [] -> choose_button buttontext
-        |111, [] -> choose_button buttonobj
-        (* TODO: does delete really need access to gldrawer? *)
-        |65535, [] | 65288, [] ->
-            (* dispatch for deleting a highlighted map item *)
-            begin match !highlight with
-                |DrawModeWindows.Point n ->
-                    List.iter (fun n -> MapFormat.delete_point n) n
-                |DrawModeWindows.Line n ->
-                    List.iter (fun n -> MapFormat.delete_line n) n
-                |DrawModeWindows.Poly n ->
-                    List.iter (fun n -> MapFormat.delete_poly n) n
-                |DrawModeWindows.No_Highlight |_ -> ()
-            end;
-            orthodrawer#draw (); false
-        |_, _   -> true end;
