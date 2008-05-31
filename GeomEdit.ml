@@ -28,9 +28,19 @@ let vertex_array_is_concave vertices =
 (* while we're drawing a line, this keeps track of the point we selected at the
  * initial click *)
 let start_point = ref 0
+let draw_intermediate = ref false
+let intermediate_x = ref 0
+let intermediate_y = ref 0
+
+(* while we're dragging our line around it would be nice to see it *)
+let intermediate_line x y =
+    intermediate_x := int_of_float x;
+    intermediate_y := int_of_float y
 
 (* this gets called on the mouse down event when drawing a line *)
 let start_line x y choose_distance =
+    draw_intermediate := true;
+    intermediate_line x y;
     let do_new_point () =
         (* spawn a new point, select it *)
         let point = new MapTypes.point in
@@ -69,18 +79,9 @@ let start_line x y choose_distance =
     (* otherwise spawn a new point in the middle of nowhere, use that one *)
     end else do_new_point ()
 
-(* while we're dragging our line around it would be nice to see it *)
-let draw_line x y drawer =
-    drawer#draw ();
-(*GL    let (s, t) = !MapFormat.points.(!start_point)#vertex () in
-    GlDraw.color Colors.line_color;
-    GlDraw.begins `lines;
-    GlDraw.vertex2 (float s, float t);
-    GlDraw.vertex2 (x, y);
-    GlDraw.ends (); *) ()
-
 (* called on mouse up when drawing the line *)
 let connect_line x y choose_distance =
+    draw_intermediate := false;
     (* utility to actually add the line *)
     let do_line target_point =
         let (p0x, p0y) = !MapFormat.points.(!start_point)#vertex () in
