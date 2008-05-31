@@ -20,14 +20,13 @@ let pos_to_theta x y =
     int_of_float (theta /. (twopi) *. (float ticks))
 
 class dialSlider packing_fn = object (self)
-    val mutable eventbox = Obj.magic ()
     val mutable area = Obj.magic ()
     val mutable drawable_onscreen = Obj.magic ()
     val mutable buffer = Obj.magic ()
     val mutable drawable = Obj.magic ()
 
     initializer
-        eventbox <- GBin.event_box ~packing:packing_fn ();
+        let eventbox = GBin.event_box ~packing:packing_fn () in
         area <- GMisc.drawing_area ~packing:eventbox#add ();
         buffer <- GDraw.pixmap ~width ~height ();
         drawable <- new GDraw.drawable (buffer#pixmap);
@@ -37,8 +36,6 @@ class dialSlider packing_fn = object (self)
                         `EXPOSURE; `SCROLL; `POINTER_MOTION_HINT];
         ignore (eventbox#event#connect#motion_notify
                     ~callback:self#mousedrag_callback);
-        ignore (eventbox#event#connect#button_release
-                    ~callback:self#mouseup_callback);
         ignore (eventbox#event#connect#button_press
                     ~callback:self#mousedown_callback);
         ignore (area#event#connect#expose ~callback:self#draw_callback);
@@ -84,19 +81,22 @@ class dialSlider packing_fn = object (self)
         valuechanged_callback theta;
         self#draw_callback (Obj.magic ());
         false
-    method private mouseup_callback mouse_descriptor =
-        valuechanged_callback theta;
-        false
     method private mousedrag_callback mouse_descriptor =
         let x = int_of_float (GdkEvent.Motion.x mouse_descriptor) in
         let y = int_of_float (GdkEvent.Motion.y mouse_descriptor) in
+        let old_theta = theta in
         theta <- pos_to_theta x y;
-        self#draw_callback (Obj.magic ());
+        if theta <> old_theta then
+            (self#draw_callback (Obj.magic ());
+            valuechanged_callback theta);
         false
     method private mousedown_callback mouse_descriptor =
         let x = int_of_float (GdkEvent.Button.x mouse_descriptor) in
         let y = int_of_float (GdkEvent.Button.y mouse_descriptor) in
+        let old_theta = theta in
         theta <- pos_to_theta x y;
-        self#draw_callback (Obj.magic ());
+        if theta <> old_theta then
+            (self#draw_callback (Obj.magic ());
+            valuechanged_callback theta);
         false
 end
