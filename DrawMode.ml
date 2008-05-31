@@ -1,6 +1,9 @@
 open CamlExt
 open DrawModeWindows
 
+(* this is configurable *)
+let highlighted_point_thickness = 5
+
 (* stateful information *)
 let grid_factor = ref 3
 
@@ -33,13 +36,22 @@ let draw_points _ =
                       |> orthodrawer#points
 
 let draw_lines _ =
-    orthodrawer#set_color Colors.line_color;
-    !MapFormat.lines |> Array.map (fun x -> x#endpoints ())
-                     |> Array.to_list
-                     |> List.map (fun (x, y) ->
-                         (!MapFormat.points.(x)#vertex (),
-                          !MapFormat.points.(y)#vertex ()))
-                     |> orthodrawer#segments
+    let draw_these f =
+        !MapFormat.lines |> Array.to_list
+                         |> List.filter f
+                         |> List.map (fun x ->
+                             let x, y = x#endpoints () in
+                             !MapFormat.points.(x)#vertex (),
+                             !MapFormat.points.(y)#vertex ())
+                         |> orthodrawer#segments in
+    orthodrawer#set_color Colors.solid_line_color;
+    draw_these (fun x -> List.mem MapTypes.SOLID (x#flags ()));
+    orthodrawer#set_color Colors.transparent_line_color;
+    draw_these (fun x -> List.mem MapTypes.TRANSPARENT (x#flags ()) &&
+                         not (List.mem MapTypes.SOLID (x#flags ())));
+    orthodrawer#set_color Colors.passable_line_color;
+    draw_these (fun x -> not (List.mem MapTypes.TRANSPARENT (x#flags ())) &&
+                         not (List.mem MapTypes.SOLID (x#flags ())))
 
 (* TODO: this is actually mode dependent, of course *)
 let draw_polygon poly =
@@ -59,7 +71,7 @@ let draw_highlight _ =
     |Point ns ->
         List.iter (fun n ->
             let x, y = !MapFormat.points.(n)#vertex () in
-            orthodrawer#point (x, y)) ns
+            orthodrawer#fat_point (x, y) highlighted_point_thickness) ns
     |Line ns ->
         List.iter (fun n ->
             let p0, p1 = !MapFormat.lines.(n)#endpoints () in
@@ -82,8 +94,9 @@ let draw _ =
     draw_lines ();
     draw_points ();
     draw_highlight ();
+    (* draw the line we're in the middle of laying, if appropriate *)
     if !GeomEdit.draw_intermediate then begin
-        orthodrawer#set_color Colors.line_color;
+        orthodrawer#set_color Colors.solid_line_color;
         let x, y = !MapFormat.points.(!GeomEdit.start_point)#vertex () in
         orthodrawer#line (x, y)
                          (!GeomEdit.intermediate_x, !GeomEdit.intermediate_y)
