@@ -33,6 +33,8 @@ class orthoDrawer packing_fn = object (self)
         (fun x0 y0 x1 y1 x2 y2 -> ())
     val mutable draw_callback =
         (fun _ -> ())
+    val mutable resize_callback =
+        (fun width height -> ())
     val mutable scroll_callback =
         (fun dx dy -> ())
 
@@ -40,6 +42,7 @@ class orthoDrawer packing_fn = object (self)
     method connect_mouseup f = mouseup_callback <- f
     method connect_mousedrag f = mousedrag_callback <- f
     method connect_draw f = draw_callback <- f
+    method connect_resize f = resize_callback <- f
     method connect_scroll f = scroll_callback <- f
 
     method private draw_callback _ =
@@ -80,6 +83,7 @@ class orthoDrawer packing_fn = object (self)
         let height = GdkEvent.Configure.height geom_descriptor in
         buffer <- GDraw.pixmap ~width ~height ();
         drawable <- new GDraw.drawable (buffer#pixmap);
+        resize_callback width height;
         false
     method private scroll_callback scroll_descriptor =
         (match GdkEvent.Scroll.direction scroll_descriptor with

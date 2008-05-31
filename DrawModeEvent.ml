@@ -5,6 +5,14 @@ let highlight_distance () =
     let pixel_epsilon = 8.0 in
     pixel_epsilon /. (orthodrawer#scale ())
 
+let resize_callback width height =
+    let upper = float MapFormat.half_map_width -.
+                float width /. orthodrawer#scale () in
+    hadj#set_bounds ~upper ();
+    let upper = float MapFormat.half_map_width -.
+                float height /. orthodrawer#scale () in
+    vadj#set_bounds ~upper ()
+
 (* this gets called when the scrollbar values change *)
 let slider_callback _ =
     orthodrawer#set_origin (int_of_float hadj#value, int_of_float vadj#value);
