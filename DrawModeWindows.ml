@@ -65,6 +65,21 @@ let _ =
             obj#event#connect#button_press ~callback:toolbar_clicked
         |> ignore) buttons
 
+(* and the alternative toolbar *)
+let entry_toolbar, entry_label, numeric_entry, mediabox, newbutton, editbutton =
+    let entry_toolbar = GWindow.window ~title:"Smithy" ~show:false () in
+    let vbox = GPack.vbox ~packing:entry_toolbar#add () in
+    let hbox = GPack.hbox ~packing:vbox#add () in
+    let entry_label = GMisc.label ~text:"Height: " ~packing:hbox#add () in
+    let numeric_entry = GEdit.entry ~packing:hbox#add () in
+    let mediabox = GPack.hbox ~packing:vbox#add () in
+    let editbutton = GButton.button ~label:"Edit Media..."
+                                    ~packing:mediabox#add () in
+    let newbutton  = GButton.button ~label:"New Media..."
+                                    ~packing:mediabox#add () in
+    entry_toolbar, entry_label, numeric_entry, mediabox, newbutton, editbutton
+
+(* the various editor mode types *)
 type modes = Draw_Mode | Visual_Mode | Elevation_Floor | Elevation_Ceiling |
              Textures_Floor | Textures_Ceiling | Polygon_Types | Lights_Floor |
              Lights_Ceiling | Lights_Liquid | Liquids | Sounds_Ambient |
@@ -74,6 +89,36 @@ let mode_descriptor = 0, [Draw_Mode; Visual_Mode; Polygon_Types;
     Textures_Ceiling; Lights_Floor; Lights_Ceiling; Lights_Liquid;
     Sounds_Ambient; Sounds_Random]
 let mode = ref Draw_Mode
+let change_editor_state state =
+    (* when we change between renderer modes, the GTK toolkits have to be 
+     * modified and hidden/shown appropriately.  change_mode is an abstraction 
+     * of this process, and the to_*_mode functions contain data to pass to 
+     * change_mode *)
+    let set_mode box entry buttons button_text1 button_text2 label_text =
+        if box then draw_toolbar#show ()
+            else draw_toolbar#misc#hide ();
+        if entry then entry_toolbar#show ()
+            else entry_toolbar#misc#hide ();
+        if buttons then mediabox#misc#show ()
+            else mediabox#misc#hide ();
+        entry_label#set_text label_text;
+        newbutton#set_label button_text1;
+        editbutton#set_label button_text2 in
+    mode := of_enum mode_descriptor state;
+    match !mode with
+    |Draw_Mode -> set_mode true false false "" "" ""
+    |Polygon_Types -> set_mode false false false "" "" ""
+    |Elevation_Floor -> set_mode false true false "" "" "Height:"
+    |Elevation_Ceiling -> set_mode false true false "" "" "Height:"
+    |Lights_Liquid ->
+        set_mode false true true "New Light..." "Edit Light..." "Light:"
+    |Lights_Floor ->
+        set_mode false true true "New Light..." "Edit Light..." "Light:"
+    |Lights_Ceiling ->
+        set_mode false true true "New Light..." "Edit Light..." "Light:"
+    |Liquids ->
+        set_mode false true true "New Media..." "Edit Media..." "Media:"
+    |_ -> ()
 
 (* set up the drawing window, try not to pollute the namespace *)
 let menu_bar, orthodrawer, vadj, hadj, status =
@@ -186,7 +231,7 @@ let menu_bar, orthodrawer, vadj, hadj, status =
             r "SoundsAmbient"   11 ~label:"_Ambient Sounds";
             r "SoundsRandom"    12 ~label:"_Random Sounds";
         ] ~callback:(fun state ->
-            mode := of_enum mode_descriptor state;
+            change_editor_state state;
             orthodrawer#draw ());
 
         a "Pave"        ~label:"_Pave Level";
@@ -275,14 +320,3 @@ let menu_bar, orthodrawer, vadj, hadj, status =
     let sbc = sb#new_context ~name:"Status" in
     menu_bar, orthodrawer, vadj, hadj, sbc
 let set_status x = status#pop (); status#push x
-
-(* and the alternative toolbar *)
-let entry_toolbar = GWindow.window ~type_hint:`TOOLBAR ~title:"Smithy"
-                                   ~show:false ()
-let vbox = GPack.vbox ~packing:entry_toolbar#add ()
-let hbox = GPack.hbox ~packing:vbox#add ()
-let entry_label = GMisc.label ~text:"Height: " ~packing:hbox#add ()
-let numeric_entry = GEdit.entry ~packing:hbox#add ()
-let mediabox = GPack.hbox ~packing:vbox#add ()
-let editbutton = GButton.button ~label:"Edit Media..." ~packing:mediabox#add ()
-let newbutton = GButton.button ~label:"New Media..." ~packing:mediabox#add ()
