@@ -23,9 +23,142 @@ let drawmode_window = GWindow.window ~width:500 ~height:300 ~title:"Smithy"
     ~allow_shrink:true ~show:true ()
 (* set up the drawing window, try not to pollute the namespace *)
 let menu_bar, orthodrawer, vadj, hadj, status =
+    let menu_xml =
+   "<ui>\
+      <menubar name='MenuBar'>\
+        <menu action='FileMenu'>\
+          <menuitem action='New'/>\
+          <menuitem action='Open'/>\
+          <menuitem action='Save'/>\
+          <menuitem action='SaveAs'/>\
+          <separator/>\
+          <menuitem action='MergeLevels'/>\
+          <menuitem action='ExportLevel'/>\
+          <separator/>\
+          <menuitem action='Quit'/>\
+        </menu>\
+        <menu action='ViewMenu'>\
+          <menuitem action='DrawMode'/>\
+          <menuitem action='VisualMode'/>\
+          <separator/>\
+          <menu action='ElevationMenu'>\
+            <menuitem action='ElevationFloor'/>\
+            <menuitem action='ElevationCeiling'/>\
+          </menu>\
+          <menu action='TextureMenu'>\
+            <menuitem action='TextureFloor'/>\
+            <menuitem action='TextureCeiling'/>\
+          </menu>\
+          <menuitem action='PolygonTypes'/>\
+          <separator/>\
+          <menu action='LightsMenu'>\
+            <menuitem action='LightsFloor'/>\
+            <menuitem action='LightsCeiling'/>\
+            <menuitem action='LightsLiquid'/>\
+          </menu>\
+          <menuitem action='Liquids'/>\
+          <menu action='SoundsMenu'>\
+            <menuitem action='SoundsAmbient'/>\
+            <menuitem action='SoundsRandom'/>\
+          </menu>\
+        </menu>\
+        <menu action='SpecialMenu'>\
+          <menuitem action='ZoomIn'/>\
+          <menuitem action='ZoomOut'/>\
+          <separator/>\
+          <menuitem action='MapManager'/>\
+          <menuitem action='ViewHeightWindow'/>\
+          <menuitem action='Goto'/>\
+          <separator/>\
+          <menuitem action='SetLevelParams'/>\
+          <menuitem action='SetItemParams'/>\
+          <menuitem action='SetMonsterParams'/>\
+          <menuitem action='EditMapItemParams'/>\
+          <separator/>\
+          <menuitem action='RecenterLevel'/>\
+          <menuitem action='Pave'/>\
+          <menuitem action='Nuke'/>\
+          <menuitem action='NukeAndPave'/>\
+        </menu>\
+        <menu action='SmithyMenu'>\
+          <menuitem action='MergePoints'/>\
+          <menuitem action='GarbageCollect'/>\
+        </menu>\
+      </menubar>\
+    </ui>" in
+    let action_group = GAction.action_group ~name:"Global" () in
+    let a = GAction.add_action in
+    let rg = GAction.group_radio_actions in
+    let r = GAction.add_radio_action in
+    GAction.add_actions action_group [
+        a "FileMenu"    ~label:"_File";
+        a "ViewMenu"    ~label:"_View";
+        a "SpecialMenu" ~label:"_Special";
+        a "SmithyMenu"  ~label:"S_mithy";
+
+        a "New"         ~stock:`NEW;
+        a "Open"        ~stock:`OPEN;
+        a "Save"        ~stock:`SAVE;
+        a "SaveAs"      ~stock:`SAVE_AS;
+        a "MergeLevels" ~label:"_Merge Levels...";
+        a "ExportLevel" ~label:"_Export Level...";
+        a "Quit"        ~stock:`QUIT
+                        ~callback:(fun _ -> GMain.Main.quit ());
+
+        a "ElevationMenu" ~label:"_Elevation";
+        a "TextureMenu"   ~label:"_Textures";
+        a "LightsMenu"    ~label:"_Lights";
+        a "SoundsMenu"    ~label:"_Sounds";
+
+        rg ~init_value:0 [
+            r "DrawMode"         0 ~label:"_Draw Mode";
+            r "VisualMode"       1 ~label:"_Visual Mode";
+            r "PolygonTypes"     2 ~label:"_Polygon Types";
+            r "Liquids"          3 ~label:"Li_quids";
+
+            r "ElevationFloor"   4 ~label:"_Floor";
+            r "ElevationCeiling" 5 ~label:"_Ceiling";
+
+            r "TextureFloor"     6 ~label:"_Floor";
+            r "TextureCeiling"   7 ~label:"_Ceiling";
+
+            r "LightsFloor"      8 ~label:"_Floor";
+            r "LightsCeiling"    9 ~label:"_Ceiling";
+            r "LightsLiquid"    10 ~label:"_Liquid";
+
+            r "SoundsAmbient"   11 ~label:"_Ambient Sounds";
+            r "SoundsRandom"    12 ~label:"_Random Sounds";
+        ];
+
+        a "Pave"        ~label:"_Pave Level";
+        a "Nuke"        ~label:"_Nuke Objects Only...";
+        a "NukeAndPave" ~label:"N_uke and Pave Level...";
+
+        a "ZoomIn"            ~label:"Zoom _In"
+                              ~accel:"<Ctrl>equal";
+        a "ZoomOut"           ~label:"Zoom _Out"
+                              ~accel:"<Ctrl>minus";
+        a "MapManager"        ~label:"M_ap Manager";
+        a "ViewHeightWindow"  ~label:"View _Height Window";
+        a "Goto"              ~label:"_Goto...";
+        a "SetLevelParams"    ~label:"Set _Level Parameters...";
+        a "SetItemParams"     ~label:"Set _Item Parameters...";
+        a "SetMonsterParams"  ~label:"Set _Monster Parameters...";
+        a "EditMapItemParams" ~label:"Edit Map Item _Parameters...";
+        a "RecenterLevel"     ~label:"_Recenter Level";
+
+        a "MergePoints"    ~label:"_Merge Selected Points";
+        a "GarbageCollect" ~label:"_Garbage Collect"
+                           ~callback:(fun _ -> Gc.full_major ());
+    ];
+    let ui = GAction.ui_manager () in
+    ui#insert_action_group action_group 0;
+    drawmode_window#add_accel_group ui#get_accel_group;
+    ui#add_ui_from_string menu_xml;
     let vbox = GPack.vbox ~packing:drawmode_window#add () in
     (* this menu will be controlled in Smithy.ml *)
-    let menu_bar = GMenu.menu_bar ~packing:vbox#pack () in
+    let menu_bar = ui#get_widget "/MenuBar" in
+    vbox#pack menu_bar;
     let hbox = GPack.hbox ~packing:vbox#add () in
     let orthodrawer = new OrthoDrawer.orthoDrawer hbox#add in
     let vadj = GData.adjustment ~value:0.0
@@ -44,71 +177,6 @@ let menu_bar, orthodrawer, vadj, hadj, status =
     let sbc = sb#new_context ~name:"Status" in
     menu_bar, orthodrawer, vadj, hadj, sbc
 let set_status x = status#pop (); status#push x
-
-(* menus, to be passed to GToolkit. *)
-let file_menu_toolkit =
-    [`I ("_New Level...", CamlExt.id);
-     `I ("_Open...", CamlExt.id);
-     `I ("_Save Level", CamlExt.id);
-     `I ("Save Level _As...", CamlExt.id);
-     `S;
-     `I ("_Merge Levels...", CamlExt.id);
-     `I ("_Export Level...", CamlExt.id);
-     `S;
-     `I ("_Quit", GMain.Main.quit)]
-
-let view_menu_toolkit =
-    [`I ("_Draw Mode", CamlExt.id);
-     `I ("_Visual Mode", CamlExt.id);
-     `S;
-     `M ("_Elevation", [`I ("Floor", CamlExt.id);
-                        `I ("Ceiling", CamlExt.id)]);
-     `M ("_Textures",  [`I ("Floor", CamlExt.id); `I ("Ceiling", CamlExt.id);]);
-     `I ("_Polygon Types", CamlExt.id);
-     `S;
-     `M ("_Lights",    [`I ("Floor", CamlExt.id);
-                        `I ("Ceiling", CamlExt.id);
-                        `I ("Liquids", CamlExt.id)]);
-     `I ("Li_quids", CamlExt.id);
-     `M ("_Sounds",    [`I ("Ambient Sounds", CamlExt.id);
-                       `I ("Random Sounds", CamlExt.id)])]
-
-let special_menu_toolkit =
-    [`I ("Zoom In", CamlExt.id);
-     `I ("Zoom Out", CamlExt.id);
-     `S;
-     `I ("Map M_anager", CamlExt.id);
-     `I ("View _Height Window", CamlExt.id);
-     `I ("_Goto...", CamlExt.id);
-     `S;
-     `I ("Set _Level Parameters...", CamlExt.id);
-     `I ("Set _Item Parameters...", CamlExt.id);
-     `I ("Set _Monster Parameters...", CamlExt.id);
-     `I ("Edit Map Item _Parameters...", CamlExt.id);
-     `S;
-     `I ("_Recenter Level", CamlExt.id);
-     `I ("Pave Level", CamlExt.id);
-     `I ("Nuke Objects Only...", CamlExt.id);
-     `I ("Nuke and Pave Level...", CamlExt.id)]
-
-let smithy_menu_toolkit =
-    (* TODO: again, does merge_points really need access to orthodrawer? *)
-    [`I ("Merge Selected Points", CamlExt.id);
-     `I ("Garbage Collect", Gc.full_major)]
-
-(* set up the application menus *)
-let _ =
-    let create_menu label menubar =
-        let item = GMenu.menu_item ~label ~packing:menubar#append () in
-        GMenu.menu ~packing:item#set_submenu () in
-    let file_menu    = create_menu "File"    menu_bar in
-    let view_menu    = create_menu "View"    menu_bar in
-    let special_menu = create_menu "Special" menu_bar in
-    let smithy_menu  = create_menu "Smithy"  menu_bar in
-    GToolbox.build_menu file_menu    ~entries:file_menu_toolkit;
-    GToolbox.build_menu view_menu    ~entries:view_menu_toolkit;
-    GToolbox.build_menu special_menu ~entries:special_menu_toolkit;
-    GToolbox.build_menu smithy_menu  ~entries:smithy_menu_toolkit
 
 let draw_toolbar = GWindow.window ~title:"Smithy Toolkit" ~show:true
                                   ~height:120 ~width:60 ()
