@@ -42,16 +42,37 @@ let draw_lines _ =
                      |> orthodrawer#segments
 
 (* TODO: this is actually mode dependent, of course *)
+let draw_polygon poly =
+    let vertex_array = List.map (fun x -> !MapFormat.points.(x)#vertex())
+        (MapFormat.get_poly_ring poly) in
+    if GeomEdit.vertex_array_is_concave vertex_array then
+        orthodrawer#set_color Colors.invalid_polygon
+    else
+        orthodrawer#set_color Colors.polygon_color;
+    orthodrawer#polygon true vertex_array
 let draw_polygons _ =
-    let draw_polygon poly =
-        let vertex_array = List.map (fun x -> !MapFormat.points.(x)#vertex())
-            (MapFormat.get_poly_ring poly) in
-        if GeomEdit.vertex_array_is_concave vertex_array then
-            orthodrawer#set_color Colors.invalid_polygon
-        else
-            orthodrawer#set_color Colors.polygon_color;
-        orthodrawer#polygon true vertex_array in
     Array.iter draw_polygon !MapFormat.polygons
+
+let draw_highlight _ =
+    orthodrawer#set_color Colors.highlight_color;
+    match !highlight with
+    |Point ns ->
+        List.iter (fun n ->
+            let x, y = !MapFormat.points.(n)#vertex () in
+            orthodrawer#point (x, y)) ns
+    |Line ns ->
+        List.iter (fun n ->
+            let p0, p1 = !MapFormat.lines.(n)#endpoints () in
+            let x0, y0 = !MapFormat.points.(p0)#vertex () in
+            let x1, y1 = !MapFormat.points.(p1)#vertex () in
+            orthodrawer#line (x0, y0) (x1, y1)) ns
+    |Poly ns ->
+        List.iter (fun n ->
+            let vertex_array =
+                List.map (fun x -> !MapFormat.points.(x)#vertex())
+                    (MapFormat.get_poly_ring !MapFormat.polygons.(n)) in
+            orthodrawer#polygon true vertex_array) ns
+    |No_Highlight |_ -> ()
 
 let draw _ =
     orthodrawer#set_color Colors.background_color;
@@ -60,6 +81,7 @@ let draw _ =
     draw_polygons ();
     draw_lines ();
     draw_points ();
+    draw_highlight ();
     if !GeomEdit.draw_intermediate then begin
         orthodrawer#set_color Colors.line_color;
         let x, y = !MapFormat.points.(!GeomEdit.start_point)#vertex () in
