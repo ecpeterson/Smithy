@@ -1,20 +1,23 @@
-let width = 64
-let height = 64
+let ball_radius = 8
+let dial_radius = 32
+let width = (dial_radius + ball_radius) * 2
+let height = width
+let cx = width / 2
+let cy = height / 2
 let ticks = 512
-let radius = width / 2
-let pi = 2.0 *. acos 0.0
-let radians_of_ticks t = ((float t) /. (float ticks)) *. 2.0 *. pi
+let twopi = 4.0 *. acos 0.0
+let radians_of_ticks t = ((float t) /. (float ticks)) *. twopi
 let point_on_circle tick =
-    let r = float radius in
+    let r = float dial_radius in
     let rads = radians_of_ticks tick in
     let x = r *. cos rads in
     let y = r *. sin rads in
-    (radius + (int_of_float x), radius + (int_of_float y))
+    (cx + (int_of_float x), cy + (int_of_float y))
 let pos_to_theta x y =
-    let x, y = (float (x - radius), float (y - radius)) in
+    let x, y = (float (x - cx), float (y - cy)) in
     let theta = atan2 y x in
-    let theta = if theta < 0.0 then theta +. 2.0 *. pi else theta in
-    int_of_float (theta /. (2.0 *. pi) *. (float ticks))
+    let theta = if theta < 0.0 then theta +. twopi else theta in
+    int_of_float (theta /. (twopi) *. (float ticks))
 
 class dialSlider packing_fn = object (self)
     val mutable eventbox = Obj.magic ()
@@ -53,12 +56,22 @@ class dialSlider packing_fn = object (self)
     method private draw_callback _ =
         drawable#set_foreground (`COLOR (area#misc#style#bg `NORMAL));
         drawable#rectangle ~x:0 ~y:0 ~width ~height ~filled:true ();
-        drawable#set_foreground (`RGB (65535, 0, 0));
-        drawable#arc ~x:0 ~y:0 ~width ~height
+        drawable#set_foreground (`COLOR (area#misc#style#dark `NORMAL));
+        drawable#arc ~x:ball_radius ~y:ball_radius
+                     ~width:(2 * dial_radius) ~height:(2 * dial_radius)
                      ~start:0.0 ~angle:360.0 ~filled:true ();
-        drawable#set_foreground (`RGB (0, 65535, 0));
+        drawable#set_foreground (`COLOR (area#misc#style#mid `NORMAL));
+        drawable#arc ~x:(ball_radius + dial_radius / 2)
+                     ~y:(ball_radius + dial_radius / 2)
+                     ~width:dial_radius ~height:dial_radius
+                     ~start:0.0 ~angle:360.0 ~filled:true ();
+        drawable#set_foreground (`RGB (65535, 0, 0));
         let x, y = point_on_circle theta in
-        drawable#line ~x:(width / 2) ~y:(height / 2) ~x ~y;
+        drawable#line ~x:cx ~y:cy ~x ~y;
+        drawable#set_foreground (`COLOR (area#misc#style#light `NORMAL));
+        drawable#arc ~x:(x - ball_radius) ~y:(y - ball_radius)
+                     ~width:(2 * ball_radius) ~height:(2 * ball_radius)
+                     ~start:0.0 ~angle:360.0 ~filled:true ();
 
         drawable_onscreen#put_pixmap ~x:0 ~y:0 buffer#pixmap;
         false
