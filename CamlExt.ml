@@ -238,5 +238,7 @@ let hsv_to_rgb (h, s, v) =
         |_ -> (v, p, q) (* case 5 *)
 let hsv_to_rgb = memoize hsv_to_rgb (*memoize this bitch*)
 
-(* god i hate myself *)
-let rec sleep x = match x with 0 -> () | _ -> sleep (x-1)
+let nub list =
+    List.fold_left (fun x y ->
+            if List.mem y x then x else y :: x) [] list
+        |> List.rev
