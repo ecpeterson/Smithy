@@ -53,16 +53,57 @@ let draw_lines _ =
     draw_these (fun x -> not (List.mem MapTypes.TRANSPARENT (x#flags ())) &&
                          not (List.mem MapTypes.SOLID (x#flags ())))
 
-(* TODO: this is actually mode dependent, of course *)
-let draw_polygon poly =
-    let vertex_array = List.map (fun x -> !MapFormat.points.(x)#vertex())
-        (MapFormat.get_poly_ring poly) in
-    if GeomEdit.vertex_array_is_concave vertex_array then
-        orthodrawer#set_color Colors.invalid_polygon
-    else
-        orthodrawer#set_color Colors.polygon_color;
-    orthodrawer#polygon true vertex_array
 let draw_polygons _ =
+    let max =
+        match !mode with
+        |Polygon_Types ->
+            float (List.length ((fun (_, x)-> x) MapTypes.poly_kind_descriptor))
+        |Liquids ->
+            Array.length !MapFormat.media |> float
+        |Lights_Floor
+        |Lights_Ceiling
+        |Lights_Liquid ->
+            Array.length !MapFormat.lights |> float
+        |_ -> 0.0 in
+    let draw_polygon poly =
+        let vertex_array = List.map (fun x -> !MapFormat.points.(x)#vertex())
+            (MapFormat.get_poly_ring poly) in
+        begin match !mode with
+        |Draw_Mode ->
+            if GeomEdit.vertex_array_is_concave vertex_array then
+                orthodrawer#set_color Colors.invalid_polygon
+            else
+                orthodrawer#set_color Colors.polygon_color;
+        |Elevation_Ceiling ->
+            let n = poly#ceiling_height () /. 18.0 +. 0.5 in
+            orthodrawer#set_color (n, n, n)
+        |Elevation_Floor ->
+            let n = poly#floor_height () /. 18.0 +. 0.5 in
+            orthodrawer#set_color (n, n, n)
+        |Polygon_Types ->
+            let kind = float (CamlExt.to_enum MapTypes.poly_kind_descriptor
+                                              (poly#kind ())) in
+            CamlExt.hsv_to_rgb (kind /. max,
+                                Colors.poly_type_saturation,
+                                Colors.poly_type_value)
+                |> orthodrawer#set_color;
+        |Liquids ->
+            if poly#media_index () = -1 then
+                orthodrawer#set_color (0.5, 0.5, 0.5)
+            else
+                let n = float (poly#media_index ()) /. (max -. 1.0) in
+                orthodrawer#set_color (n, 0.0, 0.0)
+        |Lights_Floor ->
+            orthodrawer#set_color (float (poly#floor_lightsource ()) /. max,
+                                   0.0, 0.0)
+        |Lights_Ceiling ->
+            orthodrawer#set_color (float (poly#ceiling_lightsource ()) /. max,
+                                   0.0, 0.0)
+        |Lights_Liquid ->
+            orthodrawer#set_color (float (poly#media_lightsource ()) /. max,
+                                   0.0, 0.0)
+        |_ -> () end;
+        orthodrawer#polygon true vertex_array in
     Array.iter draw_polygon !MapFormat.polygons
 
 let draw_highlight _ =
