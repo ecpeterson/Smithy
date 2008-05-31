@@ -271,10 +271,10 @@ let light_dialog light =
     |_ -> () end;
     w#destroy ()
 
-let make_light map =
+let make_light () =
     let l = new MapTypes.light in
     light_dialog l;
-    map#add_light l
+    MapFormat.add_light l
 
 let map_manager gl () =
     let w = GWindow.dialog ~title:"Map Manager" () in
