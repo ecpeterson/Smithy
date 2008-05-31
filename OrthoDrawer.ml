@@ -96,6 +96,7 @@ class orthoDrawer packing_fn = object (self)
     val mutable origin = (0, 0)
     val mutable scale = 0.1
 
+    method size = drawable#size
     method origin () = origin
     method scale () = scale
     method set_origin x = origin <- x

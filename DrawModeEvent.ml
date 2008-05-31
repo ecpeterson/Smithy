@@ -209,20 +209,6 @@ let tool_end_event x0 y0 x y (button: int) _ =
                 |_ -> ()
         else if tool = buttonzoom then
             (* if we were using the zoom tool, apply the zoom *)
-            let zoom_at factor xt1 yt1 =
-                let xo, yo = orthodrawer#origin () in
-                let x, y = orthodrawer#to_screen (xt1, yt1) in
-                let original_scale = orthodrawer#scale () in
-                let new_scale = original_scale *. factor in
-                orthodrawer#set_scale new_scale;
-                let xt2, yt2 = orthodrawer#to_map (x, y) in
-                let xnew, ynew =
-                    (float x) /. original_scale -. (float x) /. new_scale +.
-                        (float xo),
-                    (float y) /. original_scale -. (float y) /. new_scale +.
-                        (float yo) in
-                DrawModeWindows.hadj#set_value xnew;
-                DrawModeWindows.vadj#set_value ynew in
             match button with
             |1 -> zoom_at 2.0 (int_of_float x) (int_of_float y)
             |3 -> zoom_at 0.5 (int_of_float x) (int_of_float y)
