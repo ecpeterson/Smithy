@@ -27,8 +27,8 @@ class dialSlider ?packing:(packing = ignore) () = object (self)
     val mutable drawable = Obj.magic ()
 
     initializer
-        eventbox <- GBin.event_box ~packing ();
-        area <- GMisc.drawing_area ~packing:eventbox#add ();
+        eventbox <- GBin.event_box ~width ~height ~packing ();
+        area <- GMisc.drawing_area ~width ~height ~packing:eventbox#add ();
         buffer <- GDraw.pixmap ~width ~height ();
         drawable <- new GDraw.drawable (buffer#pixmap);
         area#event#add [`BUTTON_MOTION; `BUTTON_PRESS; `BUTTON_RELEASE;
