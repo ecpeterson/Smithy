@@ -57,16 +57,20 @@ object (self)
             area <- GMisc.drawing_area ~width ~height ~packing:eventbox#add ()
         end;
         area#event#add [`BUTTON_MOTION; `BUTTON_PRESS; `BUTTON_RELEASE;
-                        `EXPOSURE; `SCROLL; `POINTER_MOTION_HINT];
+                        `STRUCTURE; `EXPOSURE; `SCROLL; `POINTER_MOTION_HINT];
         ignore (eventbox#event#connect#motion_notify
                     ~callback:self#mousedrag_callback);
         ignore (eventbox#event#connect#button_press
                     ~callback:self#mousedown_callback);
+        ignore (area#event#connect#configure ~callback:self#resize_callback);
         ignore (area#event#connect#expose ~callback:self#draw_callback);
         ignore (area#event#connect#scroll ~callback:self#scroll_callback);
         ()
 
     (* event callbacks *)
+    method private resize_callback _ =
+        drawable_onscreen <- None;
+        false
     method private draw_callback _ =
         begin match drawable_onscreen with
         |None ->
