@@ -3,14 +3,14 @@ open DrawModeWindows
 (* an event utility, note that the 8.0 is actually configurable *)
 let highlight_distance () =
     let pixel_epsilon = 8.0 in
-    pixel_epsilon /. (orthodrawer#scale ())
+    pixel_epsilon /. orthodrawer#scale
 
 let resize_callback width height =
     let upper = float MapFormat.half_map_width -.
-                float width /. orthodrawer#scale () in
+                float width /. orthodrawer#scale in
     hadj#set_bounds ~upper ();
     let upper = float MapFormat.half_map_width -.
-                float height /. orthodrawer#scale () in
+                float height /. orthodrawer#scale in
     vadj#set_bounds ~upper ()
 
 (* this gets called when the scrollbar values change *)
@@ -19,8 +19,8 @@ let slider_callback _ =
     orthodrawer#draw ()
 
 let scroll_callback dx dy =
-    hadj#set_value (hadj#value +. (dx *. 20.0 /. orthodrawer#scale ()));
-    vadj#set_value (vadj#value +. (dy *. 20.0 /. orthodrawer#scale ()))
+    hadj#set_value (hadj#value +. (dx *. 20.0 /. orthodrawer#scale));
+    vadj#set_value (vadj#value +. (dy *. 20.0 /. orthodrawer#scale))
 
 (* this gets called when we start applying a tool *)
 let tool_begin_event x y button (state: Gdk.Tags.modifier list) =

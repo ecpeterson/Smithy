@@ -125,7 +125,8 @@ let change_editor_state state =
 let menu_bar, orthodrawer, vadj, hadj, status, zoom_at =
     let vbox = GPack.vbox ~packing:drawmode_window#add () in
     let hbox = GPack.hbox ~packing:(vbox#pack ~expand:true) () in
-    let orthodrawer = new OrthoDrawer.orthoDrawer (hbox#pack ~expand:true) in
+    let orthodrawer =
+        new OrthoDrawer.orthoDrawer ~packing:(hbox#pack ~expand:true) () in
     let vadj = GData.adjustment ~value:0.0
                                 ~lower:(0.0 -. float MapFormat.half_map_width)
                                 ~upper:(float MapFormat.half_map_width)
@@ -141,9 +142,9 @@ let menu_bar, orthodrawer, vadj, hadj, status, zoom_at =
     let sb = GMisc.statusbar ~packing:vbox#pack () in
     let sbc = sb#new_context ~name:"Status" in
     let zoom_at factor xt1 yt1 =
-        let xo, yo = orthodrawer#origin () in
+        let xo, yo = orthodrawer#origin in
         let x, y = orthodrawer#to_screen (xt1, yt1) in
-        let original_scale = orthodrawer#scale () in
+        let original_scale = orthodrawer#scale in
         let new_scale = original_scale *. factor in
         orthodrawer#set_scale new_scale;
         let xt2, yt2 = orthodrawer#to_map (x, y) in
