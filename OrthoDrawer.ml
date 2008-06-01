@@ -1,30 +1,14 @@
-class orthoDrawer packing_fn = object (self)
+class orthoDrawer ?width:explicit_width ?height:explicit_height
+                  ?packing:(packing = ignore) () =
+object (self)
+    (* widgets *)
     val mutable eventbox = Obj.magic ()
     val mutable area = Obj.magic ()
+    val mutable drawable_onscreen = None
     val mutable buffer = Obj.magic ()
     val mutable drawable = Obj.magic ()
-    val mutable drawable_onscreen = Obj.magic ()
 
-    initializer
-        eventbox <- GBin.event_box ~packing:packing_fn ();
-        area <- GMisc.drawing_area ~packing:eventbox#add ();
-        area#misc#realize ();
-        drawable_onscreen <- new GDraw.drawable (area#misc#window);
-        area#event#add [`BUTTON_MOTION; `BUTTON_PRESS; `BUTTON_RELEASE;
-                        `EXPOSURE; `STRUCTURE; `SCROLL; `POINTER_MOTION_HINT];
-        ignore (eventbox#event#connect#button_press
-                    ~callback:self#mousedown_callback);
-        ignore (eventbox#event#connect#motion_notify
-                    ~callback:self#mousedrag_callback);
-        ignore (eventbox#event#connect#button_release
-                    ~callback:self#mouseup_callback);
-        ignore (area#event#connect#expose ~callback:self#draw_callback);
-        ignore (area#event#connect#configure ~callback:self#resize_callback);
-        ignore (area#event#connect#scroll ~callback:self#scroll_callback);
-        ()
-
-    val mutable click0 = 0, 0
-    val mutable click1 = 0, 0
+    (* actual data *)
     val mutable mousedown_callback =
         (fun x y button state -> ())
     val mutable mouseup_callback =
@@ -37,17 +21,104 @@ class orthoDrawer packing_fn = object (self)
         (fun width height -> ())
     val mutable scroll_callback =
         (fun dx dy -> ())
+    val mutable click0 = 0, 0
+    val mutable click1 = 0, 0
+    val mutable origin = 0, 0
+    val mutable scale = 0.1
 
+    (* dimension information *)
+    val mutable width = 0
+    val mutable height = 0
+
+    (* accessors *)
     method connect_mousedown f = mousedown_callback <- f
     method connect_mouseup f = mouseup_callback <- f
     method connect_mousedrag f = mousedrag_callback <- f
     method connect_draw f = draw_callback <- f
     method connect_resize f = resize_callback <- f
     method connect_scroll f = scroll_callback <- f
+    method size = drawable#size
+    method origin = origin
+    method set_origin x = origin <- x
+    method scale = scale
+    method set_scale x = scale <- x
+    method widget = eventbox#coerce
 
+    (* constructor *)
+    initializer
+        begin match explicit_width, explicit_height with
+        |None, None ->
+            eventbox <- GBin.event_box ~packing ();
+            area <- GMisc.drawing_area ~packing:eventbox#add ()
+        |Some width, None ->
+            eventbox <- GBin.event_box ~width ~packing ();
+            area <- GMisc.drawing_area ~width ~packing:eventbox#add ()
+        |None, Some height ->
+            eventbox <- GBin.event_box ~height ~packing ();
+            area <- GMisc.drawing_area ~height ~packing:eventbox#add ()
+        |Some width, Some height ->
+            eventbox <- GBin.event_box ~width ~height ~packing ();
+            area <- GMisc.drawing_area ~width ~height ~packing:eventbox#add ()
+        end;
+        area#event#add [`BUTTON_MOTION; `BUTTON_PRESS; `BUTTON_RELEASE;
+                        `STRUCTURE; `EXPOSURE; `SCROLL; `POINTER_MOTION_HINT];
+        ignore (eventbox#event#connect#motion_notify
+                    ~callback:self#mousedrag_callback);
+        ignore (eventbox#event#connect#button_press
+                    ~callback:self#mousedown_callback);
+        ignore (eventbox#event#connect#button_release
+                    ~callback:self#mouseup_callback);
+        ignore (area#event#connect#configure ~callback:self#resize_callback);
+        ignore (area#event#connect#expose ~callback:self#draw_callback);
+        ignore (area#event#connect#scroll ~callback:self#scroll_callback);
+        ()
+
+    (* event callbacks *)
+    method private resize_callback geom_descriptor =
+        let new_width = GdkEvent.Configure.width geom_descriptor in
+        let new_height = GdkEvent.Configure.height geom_descriptor in
+        resize_callback new_width new_height;
+        drawable_onscreen <- None;
+        false
     method private draw_callback _ =
+        begin match drawable_onscreen with
+        |None ->
+            area#misc#realize ();
+            drawable_onscreen <- Some (new GDraw.drawable (area#misc#window));
+            let Some drawable_onscreen = drawable_onscreen in
+            let explicit_width =
+                (match explicit_width  with None -> 0 | Some n -> n) in
+            let explicit_height =
+                (match explicit_height with None -> 0 | Some n -> n) in
+            let win_width, win_height = drawable_onscreen#size in
+            width <- max win_width explicit_width;
+            height <- max win_height explicit_height;
+            buffer <- GDraw.pixmap ~width ~height ();
+            drawable <- new GDraw.drawable (buffer#pixmap);
+        |Some x -> ()
+        end;
+        let Some drawable_onscreen = drawable_onscreen in
+
         draw_callback ();
         drawable_onscreen#put_pixmap ~x:0 ~y:0 buffer#pixmap;
+        false
+    method private scroll_callback scroll_descriptor =
+        (match GdkEvent.Scroll.direction scroll_descriptor with
+        | `UP    -> scroll_callback   0.0 (-1.0)
+        | `DOWN  -> scroll_callback   0.0   1.0
+        | `LEFT  -> scroll_callback (-1.0)  0.0
+        | `RIGHT -> scroll_callback   1.0   0.0);
+        self#draw ();
+        false
+    method private mousedrag_callback mouse_descriptor =
+        let x = int_of_float (GdkEvent.Motion.x mouse_descriptor) in
+        let y = int_of_float (GdkEvent.Motion.y mouse_descriptor) in
+        let x, y = self#to_map (x, y) in
+        let (oldx, oldy) = click1 in
+        click1 <- x, y;
+        let x0, y0 = click0 in
+        mousedrag_callback x0 y0 oldx oldy x y;
+        self#draw ();
         false
     method private mousedown_callback mouse_descriptor =
         let x = int_of_float (GdkEvent.Button.x mouse_descriptor) in
@@ -58,7 +129,8 @@ class orthoDrawer packing_fn = object (self)
         click0 <- x, y;
         click1 <- x, y;
         mousedown_callback x y button state;
-        self#draw (); false
+        self#draw ();
+        false
     method private mouseup_callback mouse_descriptor =
         let x = int_of_float (GdkEvent.Button.x mouse_descriptor) in
         let y = int_of_float (GdkEvent.Button.y mouse_descriptor) in
@@ -68,40 +140,10 @@ class orthoDrawer packing_fn = object (self)
         let x, y = self#to_map (x, y) in
         click1 <- x, y;
         mouseup_callback x0 y0 x y button state;
-        self#draw (); false
-    method private mousedrag_callback mouse_descriptor =
-        let x = int_of_float (GdkEvent.Motion.x mouse_descriptor) in
-        let y = int_of_float (GdkEvent.Motion.y mouse_descriptor) in
-        let x, y = self#to_map (x, y) in
-        let (oldx, oldy) = click1 in
-        click1 <- x, y;
-        let x0, y0 = click0 in
-        mousedrag_callback x0 y0 oldx oldy x y;
-        self#draw (); false
-    method private resize_callback geom_descriptor =
-        let width = GdkEvent.Configure.width geom_descriptor in
-        let height = GdkEvent.Configure.height geom_descriptor in
-        buffer <- GDraw.pixmap ~width ~height ();
-        drawable <- new GDraw.drawable (buffer#pixmap);
-        resize_callback width height;
+        self#draw ();
         false
-    method private scroll_callback scroll_descriptor =
-        (match GdkEvent.Scroll.direction scroll_descriptor with
-        | `UP    -> scroll_callback   0.0 (-1.0)
-        | `DOWN  -> scroll_callback   0.0   1.0
-        | `LEFT  -> scroll_callback (-1.0)  0.0
-        | `RIGHT -> scroll_callback   1.0   0.0);
-        self#draw (); false
 
-    val mutable origin = (0, 0)
-    val mutable scale = 0.1
-
-    method size = drawable#size
-    method origin () = origin
-    method scale () = scale
-    method set_origin x = origin <- x
-    method set_scale x = scale <- x
-
+    (* other public methods *)
     method to_screen (x, y) =
         let xo, yo = origin in
         (int_of_float (float (x - xo) *. scale),
@@ -153,6 +195,5 @@ class orthoDrawer packing_fn = object (self)
         let width, height = drawable#size in
         drawable#rectangle ~x:0 ~y:0 ~width ~height ~filled:true ()
 
-    (* manual invocation of a redraw *)
     method draw () = ignore (self#draw_callback (Obj.magic ()))
 end
