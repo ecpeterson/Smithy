@@ -19,19 +19,18 @@ let pos_to_theta x y =
     let theta = if theta < 0.0 then theta +. twopi else theta in
     int_of_float (theta /. (twopi) *. (float ticks))
 
-class dialSlider packing_fn = object (self)
+class dialSlider ?packing:(packing = ignore) () = object (self)
+    val mutable eventbox = Obj.magic ()
     val mutable area = Obj.magic ()
-    val mutable drawable_onscreen = Obj.magic ()
+    val mutable drawable_onscreen = None
     val mutable buffer = Obj.magic ()
     val mutable drawable = Obj.magic ()
 
     initializer
-        let eventbox = GBin.event_box ~packing:packing_fn () in
+        eventbox <- GBin.event_box ~packing ();
         area <- GMisc.drawing_area ~packing:eventbox#add ();
         buffer <- GDraw.pixmap ~width ~height ();
         drawable <- new GDraw.drawable (buffer#pixmap);
-        area#misc#realize ();
-        drawable_onscreen <- new GDraw.drawable (area#misc#window);
         area#event#add [`BUTTON_MOTION; `BUTTON_PRESS; `BUTTON_RELEASE;
                         `EXPOSURE; `SCROLL; `POINTER_MOTION_HINT];
         ignore (eventbox#event#connect#motion_notify
@@ -49,8 +48,13 @@ class dialSlider packing_fn = object (self)
     method connect_valuechanged f = valuechanged_callback <- f
     method theta = theta
     method set_theta t = theta <- t
+    method widget = eventbox#coerce
 
     method private draw_callback _ =
+        (match drawable_onscreen with None ->
+            area#misc#realize ();
+            drawable_onscreen <- Some (new GDraw.drawable (area#misc#window)));
+        let Some drawable_onscreen = drawable_onscreen in
         drawable#set_foreground (`COLOR (area#misc#style#bg `NORMAL));
         drawable#rectangle ~x:0 ~y:0 ~width ~height ~filled:true ();
         drawable#set_foreground (`COLOR (area#misc#style#dark `NORMAL));
