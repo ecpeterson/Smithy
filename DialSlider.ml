@@ -1,4 +1,4 @@
-class dialSlider ?size:(size = 64)
+class dialSlider ?size:explicit_size
                  ?ticks:(ticks = 512)
                  ?packing:(packing = ignore) () =
 object (self)
@@ -17,8 +17,12 @@ object (self)
     val mutable theta = 0
 
     (* dimension information *)
+    val mutable size = 0
     method private ball_radius = size / 8
     method private dial_radius = size / 2 - self#ball_radius
+    method private wcenter =
+        let Some drawable_onscreen = drawable_onscreen in
+        let x, y = drawable_onscreen#size in x / 2, y / 2
     method private center = size / 2
     method private radians_of_ticks t =
         ((float t) /. (float ticks)) *. twopi
@@ -29,7 +33,8 @@ object (self)
         let y = r *. sin rads in
         (self#center + (int_of_float x), self#center + (int_of_float y))
     method private pos_to_theta x y =
-        let x, y = (float (x - self#center), float (y - self#center)) in
+        let cx, cy = self#wcenter in
+        let x, y = (float (x - cx), float (y - cy)) in
         let theta = atan2 y x in
         let theta = if theta < 0.0 then theta +. twopi else theta in
         int_of_float (theta /. (twopi) *. (float ticks))
@@ -42,11 +47,15 @@ object (self)
 
     (* constructor *)
     initializer
-        let width, height = size, size in
-        eventbox <- GBin.event_box ~width ~height ~packing ();
-        area <- GMisc.drawing_area ~width ~height ~packing:eventbox#add ();
-        buffer <- GDraw.pixmap ~width ~height ();
-        drawable <- new GDraw.drawable (buffer#pixmap);
+        begin match explicit_size with
+        |None ->
+            eventbox <- GBin.event_box ~packing ();
+            area <- GMisc.drawing_area ~packing:eventbox#add ()
+        |Some size ->
+            let width, height = size, size in
+            eventbox <- GBin.event_box ~width ~height ~packing ();
+            area <- GMisc.drawing_area ~width ~height ~packing:eventbox#add ()
+        end;
         area#event#add [`BUTTON_MOTION; `BUTTON_PRESS; `BUTTON_RELEASE;
                         `EXPOSURE; `SCROLL; `POINTER_MOTION_HINT];
         ignore (eventbox#event#connect#motion_notify
@@ -62,7 +71,15 @@ object (self)
         begin match drawable_onscreen with
         |None ->
             area#misc#realize ();
-            drawable_onscreen <- Some (new GDraw.drawable (area#misc#window))
+            drawable_onscreen <- Some (new GDraw.drawable (area#misc#window));
+            let Some drawable_onscreen = drawable_onscreen in
+            let width, height = drawable_onscreen#size in
+            let explicit_size = (match explicit_size with
+                                 |None -> 0
+                                 |Some size -> size) in
+            size <- max (min width height) explicit_size;
+            buffer <- GDraw.pixmap ~width:size ~height:size ();
+            drawable <- new GDraw.drawable (buffer#pixmap);
         |Some x -> ()
         end;
         let Some drawable_onscreen = drawable_onscreen in
@@ -93,7 +110,9 @@ object (self)
                      ~height:(2 * self#ball_radius)
                      ~filled:true ~start:0.0 ~angle:360.0 ();
 
-        drawable_onscreen#put_pixmap ~x:0 ~y:0 buffer#pixmap;
+        let x, y = self#wcenter in
+        let x, y = x - size / 2, y - size / 2 in
+        drawable_onscreen#put_pixmap ~x ~y buffer#pixmap;
         false
     method private scroll_callback scroll_descriptor =
         (match GdkEvent.Scroll.direction scroll_descriptor with
