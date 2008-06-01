@@ -51,9 +51,12 @@ class dialSlider ?packing:(packing = ignore) () = object (self)
     method widget = eventbox#coerce
 
     method private draw_callback _ =
-        (match drawable_onscreen with None ->
+        begin match drawable_onscreen with
+        |None ->
             area#misc#realize ();
-            drawable_onscreen <- Some (new GDraw.drawable (area#misc#window)));
+            drawable_onscreen <- Some (new GDraw.drawable (area#misc#window))
+        |Some x -> ()
+        end;
         let Some drawable_onscreen = drawable_onscreen in
         drawable#set_foreground (`COLOR (area#misc#style#bg `NORMAL));
         drawable#rectangle ~x:0 ~y:0 ~width ~height ~filled:true ();
@@ -61,6 +64,10 @@ class dialSlider ?packing:(packing = ignore) () = object (self)
         drawable#arc ~x:ball_radius ~y:ball_radius
                      ~width:(2 * dial_radius) ~height:(2 * dial_radius)
                      ~start:0.0 ~angle:360.0 ~filled:true ();
+        drawable#set_foreground (`BLACK);
+        drawable#arc ~x:ball_radius ~y:ball_radius
+                     ~width:(2 * dial_radius) ~height:(2 * dial_radius)
+                     ~start:0.0 ~angle:360.0 ~filled:false ();
         drawable#set_foreground (`COLOR (area#misc#style#mid `NORMAL));
         drawable#arc ~x:(ball_radius + dial_radius / 2)
                      ~y:(ball_radius + dial_radius / 2)
