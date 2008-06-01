@@ -1,32 +1,48 @@
-let ball_radius = 8
-let dial_radius = 32
-let width = (dial_radius + ball_radius) * 2
-let height = width
-let cx = width / 2
-let cy = height / 2
-let ticks = 512
-let twopi = 4.0 *. acos 0.0
-let radians_of_ticks t = ((float t) /. (float ticks)) *. twopi
-let point_on_circle tick =
-    let r = float dial_radius in
-    let rads = radians_of_ticks tick in
-    let x = r *. cos rads in
-    let y = r *. sin rads in
-    (cx + (int_of_float x), cy + (int_of_float y))
-let pos_to_theta x y =
-    let x, y = (float (x - cx), float (y - cy)) in
-    let theta = atan2 y x in
-    let theta = if theta < 0.0 then theta +. twopi else theta in
-    int_of_float (theta /. (twopi) *. (float ticks))
+class dialSlider ?size:(size = 64)
+                 ?ticks:(ticks = 512)
+                 ?packing:(packing = ignore) () =
+object (self)
+    val twopi = 4.0 *. acos 0.0
 
-class dialSlider ?packing:(packing = ignore) () = object (self)
+    (* widgets *)
     val mutable eventbox = Obj.magic ()
     val mutable area = Obj.magic ()
     val mutable drawable_onscreen = None
     val mutable buffer = Obj.magic ()
     val mutable drawable = Obj.magic ()
 
+    (* actual data *)
+    val mutable valuechanged_callback =
+        (fun theta -> print_endline (string_of_int theta); ())
+    val mutable theta = 0
+
+    (* dimension information *)
+    method private ball_radius = size / 8
+    method private dial_radius = size / 2 - self#ball_radius
+    method private center = size / 2
+    method private radians_of_ticks t =
+        ((float t) /. (float ticks)) *. twopi
+    method private point_on_circle tick =
+        let r = float self#dial_radius in
+        let rads = self#radians_of_ticks tick in
+        let x = r *. cos rads in
+        let y = r *. sin rads in
+        (self#center + (int_of_float x), self#center + (int_of_float y))
+    method private pos_to_theta x y =
+        let x, y = (float (x - self#center), float (y - self#center)) in
+        let theta = atan2 y x in
+        let theta = if theta < 0.0 then theta +. twopi else theta in
+        int_of_float (theta /. (twopi) *. (float ticks))
+
+    (* accessors *)
+    method connect_valuechanged f = valuechanged_callback <- f
+    method theta = theta
+    method set_theta t = theta <- t
+    method widget = eventbox#coerce
+
+    (* constructor *)
     initializer
+        let width, height = size, size in
         eventbox <- GBin.event_box ~width ~height ~packing ();
         area <- GMisc.drawing_area ~width ~height ~packing:eventbox#add ();
         buffer <- GDraw.pixmap ~width ~height ();
@@ -41,15 +57,7 @@ class dialSlider ?packing:(packing = ignore) () = object (self)
         ignore (area#event#connect#scroll ~callback:self#scroll_callback);
         ()
 
-    val mutable valuechanged_callback =
-        (fun theta -> print_endline (string_of_int theta); ())
-    val mutable theta = 0
-
-    method connect_valuechanged f = valuechanged_callback <- f
-    method theta = theta
-    method set_theta t = theta <- t
-    method widget = eventbox#coerce
-
+    (* event callbacks *)
     method private draw_callback _ =
         begin match drawable_onscreen with
         |None ->
@@ -58,28 +66,32 @@ class dialSlider ?packing:(packing = ignore) () = object (self)
         |Some x -> ()
         end;
         let Some drawable_onscreen = drawable_onscreen in
+        let width, height = size, size in
         drawable#set_foreground (`COLOR (area#misc#style#bg `NORMAL));
         drawable#rectangle ~x:0 ~y:0 ~width ~height ~filled:true ();
         drawable#set_foreground (`COLOR (area#misc#style#dark `NORMAL));
-        drawable#arc ~x:ball_radius ~y:ball_radius
-                     ~width:(2 * dial_radius) ~height:(2 * dial_radius)
-                     ~start:0.0 ~angle:360.0 ~filled:true ();
+        drawable#arc ~x:self#ball_radius ~y:self#ball_radius
+                     ~width:(2 * self#dial_radius)
+                     ~height:(2 * self#dial_radius)
+                     ~filled:true ~start:0.0 ~angle:360.0 ();
         drawable#set_foreground (`BLACK);
-        drawable#arc ~x:ball_radius ~y:ball_radius
-                     ~width:(2 * dial_radius) ~height:(2 * dial_radius)
-                     ~start:0.0 ~angle:360.0 ~filled:false ();
+        drawable#arc ~x:self#ball_radius ~y:self#ball_radius
+                     ~width:(2 * self#dial_radius)
+                     ~height:(2 * self#dial_radius)
+                     ~filled:false ~start:0.0 ~angle:360.0 ();
         drawable#set_foreground (`COLOR (area#misc#style#mid `NORMAL));
-        drawable#arc ~x:(ball_radius + dial_radius / 2)
-                     ~y:(ball_radius + dial_radius / 2)
-                     ~width:dial_radius ~height:dial_radius
-                     ~start:0.0 ~angle:360.0 ~filled:true ();
+        drawable#arc ~x:(self#ball_radius + self#dial_radius / 2)
+                     ~y:(self#ball_radius + self#dial_radius / 2)
+                     ~width:self#dial_radius ~height:self#dial_radius
+                     ~filled:true ~start:0.0 ~angle:360.0 ();
         drawable#set_foreground (`RGB (65535, 0, 0));
-        let x, y = point_on_circle theta in
-        drawable#line ~x:cx ~y:cy ~x ~y;
+        let x, y = self#point_on_circle theta in
+        drawable#line ~x:self#center ~y:self#center ~x ~y;
         drawable#set_foreground (`COLOR (area#misc#style#light `NORMAL));
-        drawable#arc ~x:(x - ball_radius) ~y:(y - ball_radius)
-                     ~width:(2 * ball_radius) ~height:(2 * ball_radius)
-                     ~start:0.0 ~angle:360.0 ~filled:true ();
+        drawable#arc ~x:(x - self#ball_radius) ~y:(y - self#ball_radius)
+                     ~width:(2 * self#ball_radius)
+                     ~height:(2 * self#ball_radius)
+                     ~filled:true ~start:0.0 ~angle:360.0 ();
 
         drawable_onscreen#put_pixmap ~x:0 ~y:0 buffer#pixmap;
         false
@@ -96,7 +108,7 @@ class dialSlider ?packing:(packing = ignore) () = object (self)
         let x = int_of_float (GdkEvent.Motion.x mouse_descriptor) in
         let y = int_of_float (GdkEvent.Motion.y mouse_descriptor) in
         let old_theta = theta in
-        theta <- pos_to_theta x y;
+        theta <- self#pos_to_theta x y;
         if theta <> old_theta then
             (self#draw_callback (Obj.magic ());
             valuechanged_callback theta);
@@ -105,7 +117,7 @@ class dialSlider ?packing:(packing = ignore) () = object (self)
         let x = int_of_float (GdkEvent.Button.x mouse_descriptor) in
         let y = int_of_float (GdkEvent.Button.y mouse_descriptor) in
         let old_theta = theta in
-        theta <- pos_to_theta x y;
+        theta <- self#pos_to_theta x y;
         if theta <> old_theta then
             (self#draw_callback (Obj.magic ());
             valuechanged_callback theta);
