@@ -2,6 +2,7 @@ OCAMLMAKEFILE = /usr/share/ocamlmakefile/OCamlMakefile
 RESULT = smithy
 SOURCES = CamlExt.ml \
 	  Resources.ml \
+	  ItemStrings.ml \
 	  Colors.ml \
 	  OrthoDrawer.ml \
 	  DialSlider.ml \

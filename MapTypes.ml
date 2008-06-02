@@ -618,13 +618,20 @@ let lite_writer fh light =
     ignore (output_padding fh 8)
 let empty_light = new light
 
+type object_kind = Monster | Scenery | Item | Player | Goal | Sound_Source
+let object_kind_descriptor = 0, [Monster; Scenery; Item; Player; Goal;
+                                 Sound_Source]
+type object_flags = Invisible_Or_Platform | Platform_Sound | Hangs_From_Ceiling|
+                    Blind | Deaf | Floats | Network_Only
+let object_flags_descriptor = [1, Invisible_Or_Platform; 2, Hangs_From_Ceiling;
+                               4, Blind; 8, Deaf; 16, Floats; 32, Network_Only]
 class obj = object
-    val mutable kind = 0
+    val mutable kind = Player
     val mutable index = 0
     val mutable facing = 0
     val mutable polygon = 0
     val mutable point = (0, 0, 0)
-    val mutable flags = 0
+    val mutable flags = ([] : object_flags list)
 
     method set_kind x = kind <- x
     method set_index x = index <- x
@@ -642,26 +649,26 @@ class obj = object
 end
 let objs_reader fh =
     let obj = new obj in
-    obj#set_kind (input_word fh);
+    obj#set_kind (CamlExt.of_enum object_kind_descriptor (input_word fh));
     obj#set_index (input_word fh);
-    obj#set_facing (input_word fh);
+    obj#set_facing (input_signed_word fh);
     obj#set_polygon (input_word fh);
     let px = input_signed_word fh in
     let py = input_signed_word fh in
     let pz = input_signed_word fh in
     obj#set_point (px, py, pz);
-    obj#set_flags (input_word fh);
+    obj#set_flags (CamlExt.of_bitflag object_flags_descriptor (input_word fh));
     obj
 let objs_writer fh obj =
-    output_word fh (obj#kind ());
+    output_word fh (CamlExt.to_enum object_kind_descriptor (obj#kind ()));
     output_word fh (obj#index ());
-    output_word fh (obj#facing ());
+    output_signed_word fh (obj#facing ());
     output_word fh (obj#polygon ());
     let (x, y, z) = obj#point () in
     output_signed_word fh x;
     output_signed_word fh y;
     output_signed_word fh z;
-    output_word fh (obj#flags ())
+    output_word fh (CamlExt.to_bitflag object_flags_descriptor (obj#flags ()))
 let empty_obj = new obj
 
 type media_flags = Liquid_Obstructs_Sounds
