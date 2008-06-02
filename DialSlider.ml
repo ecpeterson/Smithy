@@ -12,8 +12,7 @@ object (self)
     val mutable drawable = Obj.magic ()
 
     (* actual data *)
-    val mutable valuechanged_callback =
-        (fun theta -> print_endline (string_of_int theta); ())
+    val mutable valuechanged_callback = (fun (theta: int) -> ())
     val mutable theta = 0
 
     (* dimension information *)

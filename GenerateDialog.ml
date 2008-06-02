@@ -22,7 +22,7 @@ let rec build_dialog descriptor ~packing ~cleanup () =
             build_dialog descriptor ~packing ~cleanup:(fun _ ->
                 cleanup (); active := b#active) ()
         |`S return :: descriptor ->
-            let spinner = new DialSlider.dialSlider ~packing () in
+            let spinner = new DialSlider.dialSlider ~packing ~size:100 () in
             spinner#set_theta !return;
             build_dialog descriptor ~packing ~cleanup:(fun _ ->
                 cleanup (); return := spinner#theta) ()
