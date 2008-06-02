@@ -373,63 +373,116 @@ let make_media () =
     MapFormat.add_media m
 
 let light_dialog light =
-    let generate_frame () =
-        let frame = GBin.frame ~label:"Becoming Active" () in
-        let vbox = GPack.vbox ~packing:frame#add () in
-        let hbox = GPack.hbox ~packing:vbox#add () in
-        GMisc.label ~text:"Function:" ~packing:hbox#add ();
-        let func = GMenu.option_menu ~packing:hbox#add () in
-        let menu = GMenu.menu ~packing:func#set_menu () in
-        CamlExt.iter_indexed (fun label index ->
-            ignore (GMenu.menu_item ~label ~packing:menu#append ()))
-        ["Constant"; "Linear"; "Smooth"; "Flicker"];
-        let period = labeled_entry ~label:"Period:" ~text:""
-                ~packing:vbox#add in
-        let dperiod = labeled_entry ~label:"D Period:" ~text:""
-                ~packing:vbox#add in
-        let intensity = labeled_entry ~label:"Intensity (%):" ~text:""
-                ~packing:vbox#add in
-        let dintensity = labeled_entry ~label:"D Intensity (%):" ~text:""
-                ~packing:vbox#add in
-        (frame, func, period, dperiod, intensity, dintensity) in
-    let w = GWindow.dialog ~title:"Light Parameters" () in
-    let table = GPack.table ~columns:3 ~rows:3 ~packing:w#vbox#add () in
-    let vbox11 = GPack.vbox () in
-    table#attach ~left:0 ~top:0 (vbox11#coerce);
-    let hbox = GPack.hbox ~packing:vbox11#add () in
-    GMisc.label ~text:"Preset:" ~packing:hbox#add ();
-    let based_on = labeled_entry ~label:"Based On:" ~text:""
-            ~packing:vbox11#add in
-    let phase = labeled_entry ~label:"Phase:" ~text:"" ~packing:vbox11#add in
-    let vbox12 = GPack.vbox () in
-    let stateless = GButton.check_button ~label:"Stateless" ~packing:vbox12#add () in
-    let active = GButton.check_button ~label:"Initially Active"
-                                      ~packing:vbox12#add () in
-    let hbox = GPack.hbox ~packing:vbox12#add () in
-    GMisc.label ~text:"Tag:" ~packing:hbox#add ();
-    table#attach ~left:1 ~top:0 (vbox12#coerce);
-    let (f21, ba_func, ba_period, ba_dperiod, ba_intensity,
-         ba_dintensity) = generate_frame () in
-    table#attach ~left:0 ~top:1 (f21#coerce);
-    let (f22, pa_func, pa_period, pa_dperiod, pa_intensity,
-         pa_dintensity) = generate_frame () in
-    table#attach ~left:1 ~top:1 (f22#coerce);
-    let (f23, sa_func, sa_period, sa_dperiod, sa_intensity,
-         sa_dintensity) = generate_frame () in
-    table#attach ~left:2 ~top:1 (f23#coerce);
-    let (f31, bi_func, bi_period, bi_dperiod, bi_intensity,
-         bi_dintensity) = generate_frame () in
-    table#attach ~left:0 ~top:2 (f31#coerce);
-    let (f32, pi_func, pi_period, pi_dperiod, pi_intensity,
-         pi_dintensity) = generate_frame () in
-    table#attach ~left:1 ~top:2 (f32#coerce);
-    let (f33, si_func, si_period, si_dperiod, si_intensity,
-         si_dintensity) = generate_frame () in
-    table#attach ~left:2 ~top:2 (f33#coerce);
-    w#add_button_stock `OK `OK;
-    begin match w#run () with
-    |_ -> () end;
-    w#destroy ()
+    let preset = ref (CamlExt.to_enum light_kind_descriptor (light#kind ())) in
+    let phase = ref (string_of_int (light#phase ())) in
+    let stateless = ref (List.mem MapTypes.Stateless_Light (light#flags ())) in
+    let active = ref (List.mem MapTypes.Active_Light (light#flags ())) in
+    let (ba_fn, ba_period, ba_dperiod, ba_intensity, ba_dintensity) =
+        light#becoming_active () in
+    let (ba_fn, ba_period, ba_dperiod, ba_intensity, ba_dintensity) =
+        ref ba_fn, ref (string_of_int ba_period),
+        ref (string_of_int ba_dperiod), ref (string_of_float ba_intensity),
+        ref (string_of_float ba_dintensity) in
+    let (pa_fn, pa_period, pa_dperiod, pa_intensity, pa_dintensity) =
+        light#primary_active () in
+    let (pa_fn, pa_period, pa_dperiod, pa_intensity, pa_dintensity) =
+        ref pa_fn, ref (string_of_int pa_period),
+        ref (string_of_int pa_dperiod), ref (string_of_float pa_intensity),
+        ref (string_of_float pa_dintensity) in
+    let (sa_fn, sa_period, sa_dperiod, sa_intensity, sa_dintensity) =
+        light#secondary_active () in
+    let (sa_fn, sa_period, sa_dperiod, sa_intensity, sa_dintensity) =
+        ref sa_fn, ref (string_of_int sa_period),
+        ref (string_of_int sa_dperiod), ref (string_of_float sa_intensity),
+        ref (string_of_float sa_dintensity) in
+    let (bi_fn, bi_period, bi_dperiod, bi_intensity, bi_dintensity) =
+        light#becoming_inactive () in
+    let (bi_fn, bi_period, bi_dperiod, bi_intensity, bi_dintensity) =
+        ref bi_fn, ref (string_of_int bi_period),
+        ref (string_of_int bi_dperiod), ref (string_of_float bi_intensity),
+        ref (string_of_float bi_dintensity) in
+    let (pi_fn, pi_period, pi_dperiod, pi_intensity, pi_dintensity) =
+        light#primary_inactive () in
+    let (pi_fn, pi_period, pi_dperiod, pi_intensity, pi_dintensity) =
+        ref pi_fn, ref (string_of_int pi_period),
+        ref (string_of_int pi_dperiod), ref (string_of_float pi_intensity),
+        ref (string_of_float pi_dintensity) in
+    let (si_fn, si_period, si_dperiod, si_intensity, si_dintensity) =
+        light#secondary_inactive () in
+    let (si_fn, si_period, si_dperiod, si_intensity, si_dintensity) =
+        ref si_fn, ref (string_of_int si_period),
+        ref (string_of_int si_dperiod), ref (string_of_float si_intensity),
+        ref (string_of_float si_dintensity) in
+    let frame_descriptor title fn period dperiod intensity dintensity =
+        `F (title, [
+            `V [
+                `H [
+                    `L "Function:";
+                    `M (["Constant"; "Linear"; "Smooth"; "Flicker"], fn) ];
+                `H [
+                    `L "Period:";
+                    `E period ];
+                `H [
+                    `L "D Period:";
+                    `E dperiod ];
+                `H [
+                    `L "Intensity (%):";
+                    `E intensity ];
+                `H [
+                    `L "D Intensity (%):";
+                    `E dintensity ] ] ] ) in
+    let (descriptor : GenerateDialog.component list) = [
+        `V [
+            `H [
+                `V [
+                    `H [
+                        `L "Preset:";
+                        `M (["Normal"; "Strobe"; "Liquid Tide"], preset) ];
+                    `H [
+                        `L "Phase:";
+                        `E phase ] ];
+                `V [
+                    `C ("Stateless", stateless);
+                    `C ("Initially Active", active) ] ];
+            `H [
+                frame_descriptor "Becoming Active" ba_fn ba_period ba_dperiod
+                                 ba_intensity ba_dintensity;
+                frame_descriptor "Primary Active" pa_fn pa_period pa_dperiod
+                                 pa_intensity pa_dintensity;
+                frame_descriptor "Secondary Active" sa_fn sa_period sa_dperiod
+                                 sa_intensity sa_dintensity ];
+            `H [
+                frame_descriptor "Becoming Inactive" bi_fn bi_period bi_dperiod
+                                 bi_intensity bi_dintensity;
+                frame_descriptor "Primary Inactive" pi_fn pi_period pi_dperiod
+                                 pi_intensity pi_dintensity;
+                frame_descriptor "Secondary Inactive" si_fn si_period si_dperiod
+                                 si_intensity si_dintensity ] ] ] in
+    GenerateDialog.generate_dialog descriptor "Light Parameters";
+    light#set_kind (CamlExt.of_enum light_kind_descriptor !preset);
+    light#set_becoming_active (!ba_fn, int_of_string !ba_period,
+        int_of_string !ba_dperiod, float_of_string !ba_intensity,
+        float_of_string !ba_dintensity);
+    light#set_primary_active (!pa_fn, int_of_string !pa_period,
+        int_of_string !pa_dperiod, float_of_string !pa_intensity,
+        float_of_string !pa_dintensity);
+    light#set_secondary_active (!sa_fn, int_of_string !sa_period,
+        int_of_string !sa_dperiod, float_of_string !sa_intensity,
+        float_of_string !sa_dintensity);
+    light#set_becoming_inactive (!bi_fn, int_of_string !bi_period,
+        int_of_string !bi_dperiod, float_of_string !bi_intensity,
+        float_of_string !bi_dintensity);
+    light#set_primary_inactive (!pi_fn, int_of_string !pi_period,
+        int_of_string !pi_dperiod, float_of_string !pi_intensity,
+        float_of_string !pi_dintensity);
+    light#set_secondary_inactive (!si_fn, int_of_string !si_period,
+        int_of_string !si_dperiod, float_of_string !si_intensity,
+        float_of_string !si_dintensity);
+    List.fold_left2
+        (fun mask (desc, _) flag -> if flag then mask lor desc else mask) 0
+        MapTypes.light_flag_descriptor [!active; false; !stateless]
+        |> CamlExt.of_bitflag MapTypes.light_flag_descriptor
+        |> light#set_flags
 
 let make_light () =
     let l = new MapTypes.light in
