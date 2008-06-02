@@ -146,12 +146,8 @@ let draw _ =
 (* set up draw mode event hooks *)
 let _ =
     orthodrawer#connect_draw draw;
-    ignore (vadj#connect#value_changed DrawModeEvent.slider_callback);
-    ignore (hadj#connect#value_changed DrawModeEvent.slider_callback);
     orthodrawer#connect_mousedown DrawModeEvent.tool_begin_event;
     orthodrawer#connect_mouseup   DrawModeEvent.tool_end_event;
     orthodrawer#connect_mousedrag DrawModeEvent.tool_in_event;
-    orthodrawer#connect_resize DrawModeEvent.resize_callback;
-    orthodrawer#connect_scroll DrawModeEvent.scroll_callback;
     newbutton#connect#clicked DrawModeEvent.make_new_item;
     editbutton#connect#clicked DrawModeEvent.edit_current_item

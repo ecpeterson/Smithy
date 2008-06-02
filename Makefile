@@ -4,11 +4,11 @@ SOURCES = CamlExt.ml \
 	  Resources.ml \
 	  ItemStrings.ml \
 	  Colors.ml \
+	  MapTypes.ml \
+	  MapFormat.ml \
 	  OrthoDrawer.ml \
 	  DialSlider.ml \
 	  GenerateDialog.ml \
-	  MapTypes.ml \
-	  MapFormat.ml \
 	  GeomEdit.ml \
 	  FileDialogs.ml \
 	  DrawModeWindows.ml \
