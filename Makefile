@@ -11,8 +11,8 @@ SOURCES = CamlExt.ml \
 	  GenerateDialog.ml \
 	  GeomEdit.ml \
 	  FileDialogs.ml \
-	  DrawModeWindows.ml \
 	  MapDialogs.ml \
+	  DrawModeWindows.ml \
 	  DrawModeEvent.ml \
 	  DrawMode.ml \
 	  Smithy.ml

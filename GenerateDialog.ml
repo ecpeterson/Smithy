@@ -8,6 +8,7 @@
 type component =
     [ `H of component list
     | `V of component list
+    | `F of string * component list
 (*  | `T of int * int * (int * int * int * int * component) list *)
     | `E of string ref
     | `M of string list * int ref
@@ -26,20 +27,24 @@ let rec build_dialog descriptor ~packing ~cleanup () =
             spinner#set_theta !return;
             build_dialog descriptor ~packing ~cleanup:(fun _ ->
                 cleanup (); return := spinner#theta) ()
+        |`F (label, components) :: descriptor ->
+            let f = GBin.frame ~label ~packing () in
+            let extra_cleanup = build_dialog components ~packing:f#add
+                                                        ~cleanup:ignore () in
+            build_dialog descriptor ~packing ~cleanup:(fun _ ->
+                cleanup (); extra_cleanup ()) ()
         |`V components :: descriptor ->
             let vbox = GPack.vbox ~packing () in
             let extra_cleanup = build_dialog components ~packing:vbox#add
                                                         ~cleanup:ignore () in
             build_dialog descriptor ~packing ~cleanup:(fun _ ->
-                cleanup ();
-                extra_cleanup ()) ()
+                cleanup (); extra_cleanup ()) ()
         |`H components :: descriptor ->
             let hbox = GPack.hbox ~packing () in
             let extra_cleanup = build_dialog components ~packing:hbox#add
                                                         ~cleanup:ignore () in
             build_dialog descriptor ~packing ~cleanup:(fun _ ->
-                cleanup ();
-                extra_cleanup ()) ()
+                cleanup (); extra_cleanup ()) ()
         |`E str :: descriptor ->
             let entry = GEdit.entry ~packing ~text:!str () in
             build_dialog descriptor ~packing ~cleanup:(fun _ ->
