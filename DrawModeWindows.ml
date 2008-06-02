@@ -122,39 +122,17 @@ let change_editor_state state =
     |_ -> ()
 
 (* set up the drawing window, try not to pollute the namespace *)
-let menu_bar, orthodrawer, vadj, hadj, status, zoom_at =
+let menu_bar, orthodrawer, status =
     let vbox = GPack.vbox ~packing:drawmode_window#add () in
     let hbox = GPack.hbox ~packing:(vbox#pack ~expand:true) () in
-    let orthodrawer =
-        new OrthoDrawer.orthoDrawer ~packing:(hbox#pack ~expand:true) () in
-    let vadj = GData.adjustment ~value:0.0
-                                ~lower:(0.0 -. float MapFormat.half_map_width)
-                                ~upper:(float MapFormat.half_map_width)
-                                ~step_incr:16.0 () in
-    let hadj = GData.adjustment ~value:0.0
-                                ~lower:(0.0 -. float MapFormat.half_map_width)
-                                ~upper:(float MapFormat.half_map_width)
-                                ~step_incr:16.0 () in
-    let vscroll = GRange.scrollbar `VERTICAL ~packing:hbox#pack
-                                             ~adjustment:vadj () in
-    let hscroll = GRange.scrollbar `HORIZONTAL ~packing:vbox#pack
-                                               ~adjustment:hadj () in
+    let orthodrawer = new OrthoDrawer.orthoDrawer
+        ~xmin:(0.0 -. float MapFormat.half_map_width)
+        ~xmax:(float MapFormat.half_map_width)
+        ~ymin:(0.0 -. float MapFormat.half_map_width)
+        ~ymax:(float MapFormat.half_map_width)
+        ~packing:(hbox#pack ~expand:true) () in
     let sb = GMisc.statusbar ~packing:vbox#pack () in
     let sbc = sb#new_context ~name:"Status" in
-    let zoom_at factor xt1 yt1 =
-        let xo, yo = orthodrawer#origin in
-        let x, y = orthodrawer#to_screen (xt1, yt1) in
-        let original_scale = orthodrawer#scale in
-        let new_scale = original_scale *. factor in
-        orthodrawer#set_scale new_scale;
-        let xt2, yt2 = orthodrawer#to_map (x, y) in
-        let xnew, ynew =
-            (float x) /. original_scale -. (float x) /. new_scale +.
-            (float xo),
-            (float y) /. original_scale -. (float y) /. new_scale +.
-            (float yo) in
-        hadj#set_value xnew;
-        vadj#set_value ynew in
     let menu_xml =
    "<ui>\
       <menubar name='MenuBar'>\
@@ -274,18 +252,10 @@ let menu_bar, orthodrawer, vadj, hadj, status, zoom_at =
 
         a "ZoomIn"            ~label:"Zoom _In"
                               ~accel:"<Ctrl>equal"
-                              ~callback:(fun _ ->
-                                  let x, y = orthodrawer#size in
-                                  let x, y =
-                                      orthodrawer#to_map (x / 2, y / 2) in
-                                  zoom_at 2.0 x y);
+                              ~callback:(fun _ -> orthodrawer#zoom 2.0);
         a "ZoomOut"           ~label:"Zoom _Out"
                               ~accel:"<Ctrl>minus"
-                              ~callback:(fun _ ->
-                                  let x, y = orthodrawer#size in
-                                  let x, y =
-                                      orthodrawer#to_map (x / 2, y / 2) in
-                                  zoom_at 0.5 x y);
+                              ~callback:(fun _ -> orthodrawer#zoom 0.5);
         a "MapManager"        ~label:"M_ap Manager";
         a "ViewHeightWindow"  ~label:"View _Height Window";
         a "Goto"              ~label:"_Goto...";
@@ -348,5 +318,5 @@ let menu_bar, orthodrawer, vadj, hadj, status, zoom_at =
     let menu_bar = ui#get_widget "/MenuBar" in
     vbox#pack menu_bar;
     vbox#reorder_child menu_bar 0;
-    menu_bar, orthodrawer, vadj, hadj, sbc, zoom_at
+    menu_bar, orthodrawer, sbc
 let set_status x = status#pop (); status#push x
