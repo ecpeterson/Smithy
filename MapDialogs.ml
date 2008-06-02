@@ -489,29 +489,31 @@ let make_light () =
     light_dialog l;
     MapFormat.add_light l
 
-let map_manager gl () =
-    let w = GWindow.dialog ~title:"Map Manager" () in
-    let display_grid = GButton.check_button ~label:"Display Grid"
-                                            ~packing:w#vbox#add () in
-    let constrain_grid = GButton.check_button ~label:"Constrain Grid"
-                                              ~packing:w#vbox#add () in
-    let monsters = GButton.check_button ~label:"Show Monsters"
-                                        ~packing:w#vbox#add () in
-    let objects = GButton.check_button ~label:"Show Objects"
-                                       ~packing:w#vbox#add () in
-    let scenery = GButton.check_button ~label:"Show Scenery"
-                                       ~packing:w#vbox#add () in
-    let players = GButton.check_button ~label:"Show Players"
-                                       ~packing:w#vbox#add () in
-    let goals = GButton.check_button ~label:"Show Goals"
-                                     ~packing:w#vbox#add () in
-    let sounds = GButton.check_button ~label:"Show Sounds"
-                                      ~packing:w#vbox#add () in
-    let annotations = GButton.check_button ~label:"Show Annotations"
-                                        ~packing:w#vbox#add () in
-    let crosshairs = GButton.check_button ~label:"Visual Mode Crosshairs"
-                                          ~packing:w#vbox#add () in
-    w#add_button_stock `OK `OK;
-    (* TODO: make this dialog work *)
-    w#run ();
-    w#destroy ()
+let map_manager _ =
+    let grid_size = ref 3 in
+    let display_grid = ref true in
+    let constrain_to_grid = ref false in
+    let show_monsters = ref true in
+    let show_objects = ref true in
+    let show_scenery = ref true in
+    let show_players = ref true in
+    let show_goals = ref true in
+    let show_sounds = ref true in
+    let show_annotations = ref true in
+    let vm_crosshair = ref true in
+    let descriptor = [
+        `V [
+            `H [
+                `L "Grid Size:";
+                `M (["1 WU"; "1/2 WU"; "1/4 WU"; "1/8 WU"], grid_size) ];
+            `C ("Display Grid", display_grid);
+            `C ("Constrain to Grid", constrain_to_grid);
+            `C ("Show Monsters", show_monsters);
+            `C ("Show Objects", show_objects);
+            `C ("Show Scenery", show_scenery);
+            `C ("Show Players", show_players);
+            `C ("Show Goals", show_goals);
+            `C ("Show Sounds", show_sounds);
+            `C ("Show Annotations", show_annotations);
+            `C ("Visual Mode Crosshairs", vm_crosshair) ] ] in
+    GenerateDialog.generate_dialog descriptor "Map Manager"

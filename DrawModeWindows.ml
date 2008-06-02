@@ -256,7 +256,8 @@ let menu_bar, orthodrawer, status =
         a "ZoomOut"           ~label:"Zoom _Out"
                               ~accel:"<Ctrl>minus"
                               ~callback:(fun _ -> orthodrawer#zoom 0.5);
-        a "MapManager"        ~label:"M_ap Manager";
+        a "MapManager"        ~label:"M_ap Manager"
+                              ~callback:MapDialogs.map_manager;
         a "ViewHeightWindow"  ~label:"View _Height Window";
         a "Goto"              ~label:"_Goto...";
         a "SetLevelParams"    ~label:"Set _Level Parameters..."
