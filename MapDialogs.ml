@@ -8,46 +8,40 @@ let labeled_entry ~label ~text ~packing =
     GEdit.entry ~packing:hbox#add ~text ()
 
 let point_dialog point =
-    let (px, py) = point#vertex () in
-    let w = GWindow.dialog ~title:"Point Parameters" () in
-    let ex = labeled_entry ~label:"X Coordinate:" ~text:(string_of_int px)
-            ~packing:w#vbox#add in
-    let ey = labeled_entry ~label:"Y Coordinate:" ~text:(string_of_int py)
-            ~packing:w#vbox#add in
-    w#add_button_stock `OK `OK;
-    begin match w#run () with
-    |`OK ->
-        let vertex = (int_of_string ex#text, int_of_string ey#text) in
-        point#set_vertex vertex
-    |_ -> () end;
-    w#destroy ()
+    let px, py = point#vertex () in
+    let px, py = ref (string_of_int px), ref (string_of_int py) in
+    let descriptor = [
+        `V [
+            `H [
+                `L "X Coord:";
+                `E px ];
+            `H [
+                `L "Y Coord:";
+                `E py ] ] ] in
+    GenerateDialog.generate_dialog descriptor "Edit Point";
+    point#set_vertex (int_of_string !px, int_of_string !py)
 
 let line_dialog line =
-    let flags = line#flags () in
+    let solid = ref (List.mem SOLID (line#flags ())) in
+    let transparent = ref (List.mem TRANSPARENT (line#flags ())) in
     let (cw, ccw) = line#cw_poly_side_index (), line#ccw_poly_side_index () in
-    let w = GWindow.dialog ~title:"Line Parameters" () in
-    let solid = GButton.check_button ~label:"Solid"
-        ~active:(List.mem SOLID flags) ~packing:w#vbox#add () in
-    let transparent = GButton.check_button ~label:"Transparent"
-        ~active:(List.mem TRANSPARENT flags) ~packing:w#vbox#add () in
-    let empty = GButton.check_button ~label:"Empty"
-        ~active:(cw = -1 && ccw = -1) ~packing:w#vbox#add () in
-    w#add_button_stock `OK `OK;
-    begin match w#run () with
-    |`OK ->
-        let flags = if solid#active then [SOLID] else [] in
-        let flags = if transparent#active then TRANSPARENT :: flags else flags in
-        line#set_flags flags;
-        if empty#active then begin
-            let (cw, ccw) = (max cw ccw, min cw ccw) in
-            if cw <> -1 then MapFormat.delete_side cw;
-            line#set_cw_poly_side_index (-1);
-            if ccw <> -1 then MapFormat.delete_side ccw;
-            line#set_ccw_poly_side_index (-1)
-        end else ()
-    |_ -> () end;
-    w#destroy ();
-    DrawModeWindows.orthodrawer#draw ()
+    let empty = ref (cw = -1 && ccw = -1) in
+    let descriptor = [
+        `V [
+            `C ("Solid", solid);
+            `C ("Transparent", transparent);
+            `C ("Empty", empty) ] ] in
+    GenerateDialog.generate_dialog descriptor "Edit Line";
+    let flags = if !solid then [SOLID] else [] in
+    let flags = if !transparent then TRANSPARENT :: flags else flags in
+    line#set_flags flags;
+    if !empty then begin
+        let (cw, ccw) = (max cw ccw, min cw ccw) in
+        if cw <> -1 then MapFormat.delete_side cw;
+        line#set_cw_poly_side_index (-1);
+        if ccw <> -1 then MapFormat.delete_side ccw;
+        line#set_ccw_poly_side_index (-1)
+    end
 
 let platform_dialog plat =
     ()
