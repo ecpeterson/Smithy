@@ -1,4 +1,5 @@
 open MapTypes
+open CamlExt
 
 (* utility that constructs an edit box with a prefixed caption *)
 let labeled_entry ~label ~text ~packing =
@@ -179,33 +180,53 @@ let info_dialog () =
     w#destroy ()
 
 let media_dialog media =
-    let w = GWindow.dialog ~title:"Liquid Parameters" () in
-    let hbox1 = GPack.hbox ~packing:w#vbox#add () in
-    GMisc.label ~packing:hbox1#add ~text:"Type:" ();
-    let opt = GMenu.option_menu ~packing:hbox1#add () in
-    let menu = GMenu.menu ~packing:opt#set_menu () in
-    CamlExt.iter_indexed (fun label index ->
-        ignore (GMenu.menu_item ~label ~packing:menu#append ()))
-        ["Water"; "Lava"; "Alien Goo"; "Sewage"; "Jjaro Goo"];
-    let based_on = labeled_entry ~label:"Based On:" ~text:""
-            ~packing:w#vbox#add in
-    let tide_parameter = labeled_entry ~label:"Tide Parameter:" ~text:""
-            ~packing:w#vbox#add in
-    let hbox4 = GPack.hbox ~packing:w#vbox#add () in
-    (* facing (subcaptioned Flow Direction) belongs in hbox4 *)
-    let vbox2 = GPack.vbox ~packing:hbox4#add () in
-    let flow_strength = labeled_entry ~label:"Flow Strength:" ~text:""
-            ~packing:vbox2#add in
-    let low_tide = labeled_entry ~label:"Low Tide:" ~text:""
-            ~packing:vbox2#add in
-    let high_tide = labeled_entry ~label:"High Tide:" ~text:""
-            ~packing:vbox2#add in
-    let obstructed = GButton.check_button
-        ~label:"Liquid's sound obstructed by floor" ~packing:w#vbox#add () in
-    w#add_button_stock `OK `OK;
-    begin match w#run () with
-    |_ -> () end;
-    w#destroy ()
+    (* set up the dialog *)
+    let kind = ref (media#kind ()) in
+    let light_parameter = ref (string_of_int (media#light_index ())) in
+    let direction = ref (media#direction ()) in
+    let flow_strength = ref (string_of_int (media#magnitude ())) in
+    let low_tide = ref (string_of_int (media#low ())) in
+    let high_tide = ref (string_of_int (media#high ())) in
+    let obstructed = ref (List.mem MapTypes.Liquid_Obstructs_Sounds
+                                   (media#flags ())) in
+    let descriptor = [
+        `V [
+            `H [
+                `L "Type";
+                `M (["Water";"Lava";"Alien Goo";"Sewage";"Jjaro Goo"], kind) ];
+            `H [
+                `L "Tide Parameter:";
+                `E light_parameter ];
+            `H [
+                `V [
+                    `S direction;
+                    `L "Flow Direction" ];
+                `V [
+                    `H [
+                        `L "Flow Strength:";
+                        `E flow_strength ];
+                    `H [
+                        `L "Low Tide:";
+                        `E low_tide ];
+                    `H [
+                        `L "High Tide:";
+                        `E high_tide ] ] ];
+            `C ("Liquid's sound obstructed by floor", obstructed) ] ] in
+    (* run the dialog *)
+    GenerateDialog.generate_dialog descriptor "Liquid";
+    (* convert all values so we don't have a partial commit *)
+    let low_tide = int_of_string !low_tide in
+    let high_tide = int_of_string !high_tide in
+    let light_parameter = int_of_string !light_parameter in
+    let flow_strength = int_of_string !flow_strength in
+    (* commit to the liquid *)
+    media#set_kind !kind;
+    media#set_light_index light_parameter;
+    media#set_direction !direction;
+    media#set_magnitude flow_strength;
+    media#set_low low_tide;
+    media#set_high high_tide;
+    media#set_flags (if !obstructed then [Liquid_Obstructs_Sounds] else [])
 
 let make_media () =
     let m = new MapTypes.media in

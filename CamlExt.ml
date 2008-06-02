@@ -96,7 +96,7 @@ let to_bitflag descriptor x =
 let to_enum (start, descriptor) x =
     let rec search lst acc =
         match lst with
-            |[] -> raise (Failure "of_enum can't find match!")
+            |[] -> raise (Failure "to_enum can't find match!")
             |y :: ys ->
                 if x = y then acc
                          else search ys (acc+1) in
@@ -242,3 +242,8 @@ let nub list =
     List.fold_left (fun x y ->
             if List.mem y x then x else y :: x) [] list
         |> List.rev
+
+let rec list_pos list target =
+    match list with
+        |x :: xs -> if x = target then 1 else 1 + list_pos xs target
+        |[] -> raise (Failure target)

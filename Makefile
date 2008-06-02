@@ -5,6 +5,7 @@ SOURCES = CamlExt.ml \
 	  Colors.ml \
 	  OrthoDrawer.ml \
 	  DialSlider.ml \
+	  GenerateDialog.ml \
 	  MapTypes.ml \
 	  MapFormat.ml \
 	  GeomEdit.ml \

@@ -664,9 +664,11 @@ let objs_writer fh obj =
     output_word fh (obj#flags ())
 let empty_obj = new obj
 
+type media_flags = Liquid_Obstructs_Sounds
+let media_flags_descriptor = [1, Liquid_Obstructs_Sounds]
 class media = object
     val mutable kind = 0
-    val mutable flags = 0
+    val mutable flags = ([] : media_flags list)
     val mutable light_index = 0
     val mutable direction = 0
     val mutable magnitude = 0
@@ -702,12 +704,12 @@ class media = object
     method set_height x = height <- x
     method set_minimum_light_intensity x = minimum_light_intensity <- x
     method set_texture x = texture <- x
-    method set_transfer_mode x = transfer_mode <- x   
+    method set_transfer_mode x = transfer_mode <- x
 end
 let medi_reader fh =
     let media = new media in
     media#set_kind (input_word fh);
-    media#set_flags (input_word fh);
+    media#set_flags (CamlExt.of_bitflag media_flags_descriptor (input_word fh));
     media#set_light_index (input_word fh);
     media#set_direction (input_word fh); (* not sure if this is right *)
     media#set_magnitude (input_signed_word fh);
@@ -724,7 +726,7 @@ let medi_reader fh =
     media
 let medi_writer fh media =
     output_word fh (media#kind ());
-    output_word fh (media#flags ());
+    output_word fh (CamlExt.to_bitflag media_flags_descriptor (media#flags ()));
     output_word fh (media#light_index ());
     output_word fh (media#direction ());
     output_signed_word fh (media#magnitude ());
