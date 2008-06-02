@@ -540,10 +540,15 @@ let empty_side = new side
 
 type light_spec = int * int * int * float * float
 let empty_ls = 0, 0, 0, 0.0, 0.0
+type light_kind = Normal_Light | Strobe_Light | Media_Light
+let light_kind_descriptor = 0, [Normal_Light; Strobe_Light; Media_Light]
+type light_flag = Active_Light | Slaved_Intensities | Stateless_Light
+let light_flag_descriptor = [1, Active_Light; 2, Slaved_Intensities;
+                             4, Stateless_Light]
 
 class light = object
-    val mutable kind = 0
-    val mutable flags = 0
+    val mutable kind = Normal_Light
+    val mutable flags = ([] : light_flag list)
     val mutable phase = 0
     val mutable primary_active = empty_ls
     val mutable secondary_active = empty_ls
@@ -584,8 +589,8 @@ let lite_reader fh =
         let intensity = input_fixed fh in
         let delta_intensity = input_fixed fh in
         (kind, period, delta_period, intensity, delta_intensity) in
-    light#set_kind (input_word fh);
-    light#set_flags (input_word fh);
+    light#set_kind (CamlExt.of_enum light_kind_descriptor (input_word fh));
+    light#set_flags (CamlExt.of_bitflag light_flag_descriptor (input_word fh));
     light#set_phase (input_word fh);
     light#set_primary_active (input_ls fh);
     light#set_secondary_active (input_ls fh);
@@ -605,8 +610,8 @@ let lite_writer fh light =
         output_word fh z;
         output_fixed fh s;
         output_fixed fh t in
-    output_word fh (light#kind ());
-    output_word fh (light#flags ());
+    output_word fh (CamlExt.to_enum light_kind_descriptor (light#kind ()));
+    output_word fh (CamlExt.to_bitflag light_flag_descriptor (light#flags ()));
     output_word fh (light#phase ());
     output_ls fh (light#primary_active ());
     output_ls fh (light#secondary_active ());
