@@ -259,7 +259,8 @@ let menu_bar, orthodrawer, status =
         a "MapManager"        ~label:"M_ap Manager";
         a "ViewHeightWindow"  ~label:"View _Height Window";
         a "Goto"              ~label:"_Goto...";
-        a "SetLevelParams"    ~label:"Set _Level Parameters...";
+        a "SetLevelParams"    ~label:"Set _Level Parameters..."
+                              ~callback:MapDialogs.info_dialog;
         a "SetItemParams"     ~label:"Set _Item Parameters...";
         a "SetMonsterParams"  ~label:"Set _Monster Parameters...";
         a "EditMapItemParams" ~label:"Edit Map Item _Parameters...";

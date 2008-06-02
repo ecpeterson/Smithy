@@ -236,65 +236,87 @@ let obj_dialog obj =
     obj#set_facing facing
 
 
-let info_dialog () =
-    let w = GWindow.dialog ~title:"Level Parameters" () in
-    let level_name = labeled_entry ~label:"Level Name:"
-        ~text:!MapFormat.level_name ~packing:w#vbox#add in
-    let twobox = GPack.hbox ~packing:w#vbox#add () in
-    let lbox = GPack.vbox ~packing:twobox#add () in
-    let fourbox = GPack.hbox ~packing:lbox#add () in
-    GMisc.label ~packing:fourbox#add ~text:"Environment" ();
-    let opt = GMenu.option_menu ~packing:fourbox#add () in
-    let menu = GMenu.menu ~packing:opt#set_menu () in
-    CamlExt.iter_indexed (fun label index ->
-        ignore (GMenu.menu_item ~label ~packing:menu#append ()))
-        ["Water"; "Lava"; "Sewage"; "Jjaro"; "Pfhor"];
-    let fivebox = GPack.hbox ~packing:lbox#add () in
-    GMisc.label ~packing:fivebox#add ~text:"Landscape" ();
-    let opt = GMenu.option_menu ~packing:fivebox#add () in
-    let menu = GMenu.menu ~packing:opt#set_menu () in
-    CamlExt.iter_indexed (fun label index ->
-        ignore (GMenu.menu_item ~label ~packing:menu#append ()))
-        ["Daytime Lh'owon"; "Nighttime Lh'owon"; "Moon"; "Space"];
-    let f2 = GBin.frame ~label:"Environment Type" ~packing:twobox#add () in
-    let f2box = GPack.vbox ~packing:f2#add () in
-    let vacuum = GButton.check_button ~label:"Vacuum" ~packing:f2box#add () in
-    let rebellion = GButton.check_button ~label:"Rebellion"
-                    ~packing:f2box#add () in
-    let low_grav = GButton.check_button ~label:"Low Gravity"
-                   ~packing:f2box#add () in
-    let magnetic = GButton.check_button ~label:"Magnetic"
-                   ~packing:f2box#add () in
-    let threebox = GPack.hbox ~packing:w#vbox#add () in
-    let f3 = GBin.frame ~label:"Game Type" ~packing:threebox#add () in
-    let f3box = GPack.vbox ~packing:f3#add () in
-    let solo = GButton.check_button ~label:"Single Player"
-               ~packing:f3box#add () in
-    let coop = GButton.check_button ~label:"Multiplayer Cooperative"
-               ~packing:f3box#add () in
-    let emfh = GButton.check_button ~label:"Multiplayer Carnage"
-               ~packing:f3box#add () in
-    let koth = GButton.check_button ~label:"King of the Hill"
-               ~packing:f3box#add () in
-    let ball = GButton.check_button ~label:"Kill the Man with the Ball"
-               ~packing:f3box#add () in
-    let f1 = GBin.frame ~label:"Mission Type" ~packing:threebox#add () in
-    let f1box = GPack.vbox ~packing:f1#add () in
-    let extermination = GButton.check_button ~label:"Extermination"
-                        ~packing:f1box#add () in
-    let exploration = GButton.check_button ~label:"Exploration"
-                      ~packing:f1box#add () in
-    let retrieval = GButton.check_button ~label:"Retrieval"
-                    ~packing:f1box#add () in
-    let repair = GButton.check_button ~label:"Repair" ~packing:f1box#add () in
-    let rescue = GButton.check_button ~label:"Rescue" ~packing:f1box#add () in
-    w#add_button_stock `OK `OK;
-    begin match w#run () with
-    |`OK -> begin
-        MapFormat.level_name := level_name#text
-    end
-    |_ -> () end;
-    w#destroy ()
+let info_dialog _ =
+    let level_name = ref !MapFormat.level_name in
+    let environment_code =
+        ref (CamlExt.to_enum MapFormat.environment_descriptor
+                            !MapFormat.environment_code) in
+    let landscape = ref !MapFormat.landscape in
+    let solo = ref (List.mem MapFormat.Solo !MapFormat.entry_point_flags) in
+    let coop = ref (List.mem MapFormat.Coop !MapFormat.entry_point_flags) in
+    let emfh = ref (List.mem MapFormat.EMFH !MapFormat.entry_point_flags) in
+    let koth = ref (List.mem MapFormat.KOTH !MapFormat.entry_point_flags) in
+    let ktmwtb = ref (List.mem MapFormat.KTMWTB !MapFormat.entry_point_flags) in
+    let vacuum = ref (List.mem MapFormat.Vacuum !MapFormat.environment_flags) in
+    let rebellion = ref (List.mem MapFormat.Rebellion
+                                  !MapFormat.environment_flags) in
+    let low_gravity = ref (List.mem MapFormat.Low_Gravity
+                                    !MapFormat.environment_flags) in
+    let magnetic = ref (List.mem MapFormat.Magnetic
+                                 !MapFormat.environment_flags) in
+    let extermination = ref (List.mem MapFormat.Extermination
+                                      !MapFormat.mission_flags) in
+    let exploration = ref (List.mem MapFormat.Exploration
+                                    !MapFormat.mission_flags) in
+    let retrieval = ref (List.mem MapFormat.Retrieval
+                                  !MapFormat.mission_flags) in
+    let repair = ref (List.mem MapFormat.Repair !MapFormat.mission_flags) in
+    let rescue = ref (List.mem MapFormat.Rescue !MapFormat.mission_flags) in
+    let descriptor = [
+        `V [
+            `H [
+                `L "Level Name:";
+                `E level_name ];
+            `H [
+                `V [
+                    `H [
+                        `L "Environment:";
+                        `M (["Water"; "Lava"; "Sewage"; "Jjaro"; "Pfhor"],
+                            environment_code) ];
+                    `H [
+                        `L "Landscape:";
+                        `M (ItemStrings.landscape_strings, landscape) ];
+                    `F ("Game Type", [
+                        `V [
+                            `C ("Single Player", solo);
+                            `C ("Multiplayer Cooperative", coop);
+                            `C ("Multiplayer Carnage", emfh);
+                            `C ("King of the Hill", koth);
+                            `C ("Kill the Man with the Ball", ktmwtb) ] ] ) ];
+                `V [
+                    `F ("Environment Type", [
+                        `V [
+                            `C ("Vacuum", vacuum);
+                            `C ("Rebellion", rebellion);
+                            `C ("Low Gravity", low_gravity);
+                            `C ("Magnetic", magnetic) ] ] );
+                    `F ("Mission Type", [
+                        `V [
+                            `C ("Extermination", extermination);
+                            `C ("Exploration", exploration);
+                            `C ("Retrieval", retrieval);
+                            `C ("Repair", repair);
+                            `C ("Rescue", rescue) ] ] ) ] ] ] ] in
+    GenerateDialog.generate_dialog descriptor "Level Parameters";
+    MapFormat.level_name := !level_name;
+    MapFormat.environment_code :=
+        CamlExt.of_enum MapFormat.environment_descriptor !environment_code;
+    MapFormat.landscape := !landscape;
+    MapFormat.entry_point_flags := List.fold_left2
+        (fun mask (desc, _) flag -> if flag then mask lor desc else mask) 0
+        MapFormat.entry_point_descriptor
+        [!solo; !coop; !emfh; !ktmwtb; !koth; false; false] |>
+        CamlExt.of_bitflag MapFormat.entry_point_descriptor;
+    MapFormat.environment_flags := List.fold_left2
+        (fun mask (desc, _) flag -> if flag then mask lor desc else mask) 0
+        MapFormat.env_flags_descriptor
+        [!vacuum; !magnetic; !rebellion; !low_gravity] |>
+        CamlExt.of_bitflag MapFormat.env_flags_descriptor;
+    MapFormat.mission_flags := List.fold_left2
+        (fun mask (desc, _) flag -> if flag then mask lor desc else mask) 0
+        MapFormat.mission_descriptor
+        [!extermination; !exploration; !retrieval; !repair; !rescue] |>
+        CamlExt.of_bitflag MapFormat.mission_descriptor
 
 let media_dialog media =
     (* set up the dialog *)

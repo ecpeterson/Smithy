@@ -26,11 +26,15 @@ let optimized_point_length = 16
 (* TODO: is it feasible to move these to MapTypes? *)
 type environment_code = Water | Lava | Sewage | Jjaro | Pfhor
 let environment_descriptor = 0, [Water; Lava; Sewage; Jjaro; Pfhor]
-type environment_flag = Vacuum | Magnetic | Rebellion | Low_Grav
-let env_flags_descriptor = [1, Vacuum; 2, Magnetic; 4, Rebellion; 8, Low_Grav]
+type environment_flag = Vacuum | Magnetic | Rebellion | Low_Gravity
+let env_flags_descriptor = [1, Vacuum; 2, Magnetic; 4, Rebellion;
+                            8, Low_Gravity]
 type mission_type = Extermination | Exploration | Retrieval | Repair | Rescue
 let mission_descriptor = [1, Extermination; 2, Exploration; 4, Retrieval;
                           8, Repair; 16, Rescue]
+type entry_point_type = Solo | Coop| EMFH | KTMWTB | KOTH | Defense | Rugby
+let entry_point_descriptor = [1, Solo; 2, Coop; 4, EMFH; 8, KTMWTB; 16, KOTH;
+                              32, Rugby; 64, Defense]
 
 (* utility to read in all the entries of a chunk, given an entry factory *)
 let read_chunk fh chunk_length entry_length (reader: in_channel -> 'a) =
@@ -68,11 +72,11 @@ let placements = ref (Array.make 0 empty_placement)
 let platforms = ref (Array.make 0 empty_platform)
 let environment_code = ref Water
 let physics_model = ref 0
-let song_index = ref 0
+let landscape = ref 0
 let mission_flags = ref []
 let environment_flags = ref []
 let level_name = ref (String.make 66 '\000')
-let entry_point_flags = ref 0
+let entry_point_flags = ref []
 let filename = ref (String.make 0 '\000')
 
     (* read in various chunks *)
@@ -114,12 +118,13 @@ let write_platforms fh =
 let read_info fh length =
     environment_code := of_enum environment_descriptor (input_word fh);
     physics_model := input_word fh;
-    song_index := input_word fh;
+    landscape := input_word fh;
     mission_flags := of_bitflag mission_descriptor (input_word fh);
     environment_flags := of_bitflag env_flags_descriptor (input_word fh);
     ignore (input_dword fh); ignore (input_dword fh); (* skip 8 bytes *)
     really_input fh !level_name 0 66;
-    entry_point_flags := input_dword fh
+    entry_point_flags := CamlExt.of_bitflag entry_point_descriptor
+                                            (input_dword fh)
 
     (* write out a map info chunk *)
 let write_info fh =
@@ -131,12 +136,13 @@ let write_info fh =
     (* now the actual chunk *)
     output_word fh (to_enum environment_descriptor !environment_code);
     output_word fh !physics_model;
-    output_word fh !song_index;
+    output_word fh !landscape;
     output_word fh (to_bitflag mission_descriptor !mission_flags);
     output_word fh (to_bitflag env_flags_descriptor !environment_flags);
     output_padding fh 8;
     output_string_n fh !level_name 66;
-    output_dword fh !entry_point_flags
+    output_dword fh (CamlExt.to_bitflag entry_point_descriptor
+                                        !entry_point_flags)
 
 (* read in a set of chunks from an initialized file pointer *)
 let rec read_chunks fh =

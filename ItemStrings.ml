@@ -71,3 +71,6 @@ let sound_strings =
      "Sparking Transformer"; "Machine Binder"; "Machine Bookpress";
      "Machine Puncher"; "Electric Hum"; "Siren"; "Night Wind"; "Pfhor Door";
      "Pfhor Platform"; "Pfhor Ship #1"; "Pfhor Ship #2"; "Jjaro Ship"]
+
+let landscape_strings = ["Daytime Lh'owon"; "Nighttime Lh'owon";
+                         "Moon"; "Space"]
