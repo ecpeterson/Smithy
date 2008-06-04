@@ -1,14 +1,15 @@
 OCAMLMAKEFILE = /usr/share/ocamlmakefile/OCamlMakefile
 RESULT = smithy
 SOURCES = CamlExt.ml \
-	  Resources.ml \
-	  ItemStrings.ml \
 	  Colors.ml \
-	  MapTypes.ml \
-	  MapFormat.ml \
-	  OrthoDrawer.ml \
 	  DialSlider.ml \
+	  ItemStrings.ml \
+	  OrthoDrawer.ml \
+	  Resources.ml \
+	  MapTypes.ml \
 	  GenerateDialog.ml \
+	  DrawModeSettings.ml \
+	  MapFormat.ml \
 	  GeomEdit.ml \
 	  FileDialogs.ml \
 	  MapDialogs.ml \

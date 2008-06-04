@@ -127,7 +127,7 @@ let draw_highlight _ =
             orthodrawer#polygon true vertex_array) ns
     |No_Highlight |_ -> ()
 
-let draw _ =
+let draw orthodrawer =
     orthodrawer#set_color Colors.background_color;
     orthodrawer#clear ();
     draw_grid ();
@@ -149,5 +149,7 @@ let _ =
     orthodrawer#connect_mousedown DrawModeEvent.tool_begin_event;
     orthodrawer#connect_mouseup   DrawModeEvent.tool_end_event;
     orthodrawer#connect_mousedrag DrawModeEvent.tool_in_event;
-    newbutton#connect#clicked DrawModeEvent.make_new_item;
-    editbutton#connect#clicked DrawModeEvent.edit_current_item
+    newbutton#connect#clicked
+        (fun _ -> DrawModeEvent.make_new_item orthodrawer);
+    editbutton#connect#clicked
+        (fun _ -> DrawModeEvent.edit_current_item orthodrawer);
