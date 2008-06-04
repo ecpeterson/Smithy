@@ -1,58 +1,58 @@
-+ snap to grid
-+ the dialog code is really ugly, think up a better way to organize them and
-look into packing tables
-+ make the various dialogs actually do something
-+ find / create a facing control for the various dialogs that require it
+important
+=========
+editing:
 + finish the object dialog, which is currently in a half-formed state
 + write the platform dialog
 + finish platform deletion and its editor dialog
-+ replace the object blips with object icons (i.e. finish loading those TGAs)
 + make the light dialog do something
-+ fix the gtk **CRITICAL thing on start-up
-+ add Shapes reading support, at least for wall textures
-+ add ceiling / floor texturing support
-+ add Pfhorte- / Obed-style texturing
-+ add a terminal editor
-+ add light / media library importing / exporting
-+ comment those ridiculous algorithms
-+ read from merged maps
-+ merge maps
-+ VISUAL MODE
-+ map manager window (grid size, etc.)
-+ map height restriction
-+ finish the enumerative / bitmask type conversion in MapTypes.ml
 + write polygon tool
 + write annotation tool
 + write object tool
-+ write single level undo
-+ write multiple level undo
-+ add temporary object highlights until the object glyphs are done
-+ add Goto... function (i.e. add recenter-on-point function)
++ map height restriction
++ add light / media library importing / exporting
 + add placement chunk dialog / functionality
-+ make polygon types view capable of setting types
 + add ambient / random sounds views
+interface:
 + add New Level functionality
-+ refactor files like Smithy.ml, the ones that just have loads of unrelated
-things thrown together
-+ add .mli files!
-+ throw together a sample map that can be used as the default make run argument
++ snap to grid
++ map manager window (grid size, etc.)
++ closing the toolbar windows causes gross behavior, it would be sweet if we
+could somehow avoid that happening (hide instead of close or something)
+
+less important
+=========
+editing:
++ merging points would be sweet, halfway implemented in GeomEdit.ml
++ make polygon types view capable of setting types
++ add Shapes reading support, at least for wall textures
++ add ceiling / floor texturing support
++ add Pfhorte- / Obed-style texturing
++ VISUAL MODE
++ add a terminal editor
++ read from merged maps
++ merge maps
 + read in optimized chunks
 + write out optimized chunks
-+ refactor some of the large match statements in the renderer to at least
-avoid multi-level matching (match over tuples instead)
-+ make render coloring configurable
-+ make the filename string in the map header actually meaningful
-+ push GTK events in handle_keys in Smithy.ml instead of calling choose_button
-directly
+interface:
++ add Goto... function (i.e. add recenter-on-point function)
++ write single level undo
++ write multiple level undo
+code:
++ comment those ridiculous algorithms
++ finish the enumerative / bitmask type conversion in MapTypes.ml
++ add .mli files!
 + change the select_line_loop routine to use all lists instead of the mix of
 lists and arrays, upon second thought using arrays there doesn't actually make
 anything faster or slower, and lists are pretty
-+ closing the toolbar windows causes gross behavior, it would be sweet if we
-could somehow avoid that happening (hide instead of close or something)
-+ put strings into Resources.ml or some similar thing for purposes of i18n
-+ some kind of plugin interface would be pretty sweet
-+ highlighting a highlighted component should remove its highlight
-+ merging points would be sweet, halfway implemented in GeomEdit.ml
+
+not important
+=========
+editing:
++ make the filename string in the map header actually meaningful
+interface:
 + apparently we're leaving locations and sizes of fresh windows up to the wm,
 which causes bad behavior on other machines.  figure it out
-+ anything marked TODO in the source
++ make render coloring configurable
+code:
++ some kind of plugin interface would be pretty sweet
++ put strings into Resources.ml or some similar thing for purposes of i18n
