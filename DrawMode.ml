@@ -32,8 +32,8 @@ let draw_grid _ =
 let draw_points _ =
     orthodrawer#set_color Colors.point_color;
     !MapFormat.points |> Array.map (fun x -> x#vertex ())
-                      |> Array.to_list
-                      |> List.map (fun (x, y) -> orthodrawer#fat_point (x, y) 2)
+                      |> Array.iter (fun (x, y) ->
+                                        orthodrawer#fat_point (x, y) 2)
 
 let draw_lines _ =
     let draw_these f =
