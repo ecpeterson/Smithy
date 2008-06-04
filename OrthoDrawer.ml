@@ -102,8 +102,7 @@ object (self)
         let upper = if upper < lower then lower else upper in
         vadj#set_bounds
             ~lower ~upper ~step_incr ~page_incr ();
-        suppress_draw <- false;
-        self#set_origin_raw (width, height)
+        suppress_draw <- false
 
     (* event callbacks *)
     method private resize_callback geom_descriptor =
