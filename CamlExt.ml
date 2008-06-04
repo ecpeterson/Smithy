@@ -190,6 +190,33 @@ let norm (x, y) =
 let distance (x0, y0) (x1, y1) =
     norm ((x1 -. x0), (y1 -. y0))
 
+(* checks a point ring for concavity *)
+let vertex_array_is_concave vertices =
+    let length = List.length vertices in
+    (* this runs a generic comparison function on the cross products of adjacent
+     * lines, returns true if all the comparisons pass and false otherwise *)
+    let rec loop_compare vertices comp n =
+        if n = length then true else begin
+        let next1 = (if n = length - 1 then 0 else n + 1) in
+        let next2 = (if next1 = length - 1 then 0 else next1 + 1) in
+        let (p0x, p0y) = List.nth vertices n in
+        let (p1x, p1y) = List.nth vertices next1 in
+        let (p2x, p2y) = List.nth vertices next2 in
+        let p0 = (p1x - p0x, p1y - p0y) in
+        let p1 = (p2x - p1x, p2y - p1y) in
+        if comp (cross p0 p1) then
+            loop_compare vertices comp (n+1)
+        else
+            false end in
+    (* if all the crosses are nonpositive, we have a clockwise point loop *)
+    let vertex_array_is_cw vertices =
+        loop_compare vertices (fun x -> x <= 0) 0 in
+    (* if all the crosses are nonnegative, we have a ccw point loop *)
+    let vertex_array_is_ccw vertices =
+        loop_compare vertices (fun x -> x >= 0) 0 in
+    (* and we want to test for loops that are neither completely cw nor ccw *)
+    not (vertex_array_is_cw vertices) && not (vertex_array_is_ccw vertices)
+
 (* replicating a nice idea from Mathematica *)
 let map_indexed f lst =
     let rec m_i_aux f lst acc =
