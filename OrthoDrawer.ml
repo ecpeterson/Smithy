@@ -211,6 +211,10 @@ object (self)
         let points = List.map self#to_screen points in
         drawable#lines points
 
+    method image (im: GMisc.image) x y =
+        let (x, y) = self#to_screen (x, y) in
+        drawable#put_pixmap x y im#pixmap#pixmap
+
     method set_color (r, g, b) =
         let r = int_of_float (r *. 65535.0) in
         let g = int_of_float (g *. 65535.0) in
