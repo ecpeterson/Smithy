@@ -220,8 +220,10 @@ let menu_bar, orthodrawer, status =
         a "SoundsMenu"    ~label:"_Sounds";
 
         rg ~init_value:0 [
-            r "DrawMode"         0 ~label:"_Draw Mode";
-            r "VisualMode"       1 ~label:"_Visual Mode";
+            r "DrawMode"         0 ~label:"_Draw Mode"
+                                   ~accel:"<Ctrl>d";
+            r "VisualMode"       1 ~label:"_Visual Mode"
+                                   ~accel:"<Ctrl>1";
             r "PolygonTypes"     2 ~label:"_Polygon Types";
             r "Liquids"          3 ~label:"Li_quids";
 
@@ -253,11 +255,14 @@ let menu_bar, orthodrawer, status =
                               ~callback:(fun _ -> orthodrawer#zoom 0.5);
         a "MapManager"        ~label:"M_ap Manager"
                               ~callback:MapDialogs.map_manager;
-        a "ViewHeightWindow"  ~label:"View _Height Window";
+        a "ViewHeightWindow"  ~label:"View _Height Window"
+                              ~accel:"<Ctrl>h";
         a "Goto"              ~label:"_Goto...";
         a "SetLevelParams"    ~label:"Set _Level Parameters..."
-                              ~callback:MapDialogs.info_dialog;
-        a "SetItemParams"     ~label:"Set _Item Parameters...";
+                              ~callback:MapDialogs.info_dialog
+                              ~accel:"<Ctrl>m";
+        a "SetItemParams"     ~label:"Set _Item Parameters..."
+                              ~accel:"<Ctrl>i";
         a "SetMonsterParams"  ~label:"Set _Monster Parameters...";
         a "EditMapItemParams" ~label:"Edit Map Item _Parameters...";
         a "RecenterLevel"     ~label:"_Recenter Level";
