@@ -213,7 +213,11 @@ object (self)
 
     method image (im: GMisc.image) x y =
         let (x, y) = self#to_screen (x, y) in
-        drawable#put_pixbuf x y im#pixbuf
+        let pixbuf = im#pixbuf in
+        let width = GdkPixbuf.get_width pixbuf in
+        let height = GdkPixbuf.get_height pixbuf in
+        let (x, y) = (x - width / 2, y - height / 2) in
+        drawable#put_pixbuf x y pixbuf
 
     method set_color (r, g, b) =
         let r = int_of_float (r *. 65535.0) in
