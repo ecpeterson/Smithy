@@ -25,6 +25,9 @@ object (self)
     val mutable click1 = 0, 0
     val mutable scale = 0.1
     val mutable suppress_draw = false
+    (* XXX: if someone could tell me how to get the record fields out of
+     * Gdk.GC.values, that would be a great help *)
+    val mutable current_color = (`RGB (0, 0, 0))
 
     (* accessors *)
     method connect_mousedown f = mousedown_callback <- f
@@ -103,6 +106,14 @@ object (self)
         vadj#set_bounds
             ~lower ~upper ~step_incr ~page_incr ();
         suppress_draw <- false
+    method private to_screen (x, y) =
+        let xo, yo = self#origin in
+        (int_of_float (float (x - xo) *. scale),
+            int_of_float (float (y - yo) *. scale))
+    method private to_map (x, y) =
+        let xo, yo = self#origin in
+        (int_of_float (float x /. scale) + xo,
+            int_of_float (float y /. scale) + yo)
 
     (* event callbacks *)
     method private resize_callback geom_descriptor =
@@ -170,16 +181,6 @@ object (self)
         false
 
     (* other public methods *)
-    method to_screen (x, y) =
-        let xo, yo = self#origin in
-        (int_of_float (float (x - xo) *. scale),
-            int_of_float (float (y - yo) *. scale))
-
-    method to_map (x, y) =
-        let xo, yo = self#origin in
-        (int_of_float (float x /. scale) + xo,
-            int_of_float (float y /. scale) + yo)
-
     method point (x, y) =
         let (x, y) = self#to_screen (x, y) in
         drawable#point ~x ~y
@@ -219,11 +220,30 @@ object (self)
         let (x, y) = (x - width / 2, y - height / 2) in
         drawable#put_pixbuf x y pixbuf
 
+    method arrow x y facing =
+        let (x, y) = self#to_screen (x, y) in
+        let twopi = 4.0 *. acos 0.0 in
+        let rads_of_ticks t = (float t) /. 512.0 *. twopi in
+        let r = 8.0 in
+        let p1x = x + int_of_float (r *. cos (rads_of_ticks facing)) in
+        let p1y = y + int_of_float (r *. sin (rads_of_ticks facing)) in
+        let r = 10.0 in
+        let p2x = x + int_of_float (r *. cos (rads_of_ticks (facing + 205))) in
+        let p2y = y + int_of_float (r *. sin (rads_of_ticks (facing + 205))) in
+        let p3x = x + int_of_float (r *. cos (rads_of_ticks (facing - 205))) in
+        let p3y = y + int_of_float (r *. sin (rads_of_ticks (facing - 205))) in
+        let poly = [(p1x, p1y); (p2x, p2y); (p3x, p3y)] in
+        drawable#polygon ~filled:true poly;
+        drawable#set_foreground `BLACK;
+        drawable#polygon ~filled:false poly;
+        drawable#set_foreground current_color
+
     method set_color (r, g, b) =
         let r = int_of_float (r *. 65535.0) in
         let g = int_of_float (g *. 65535.0) in
         let b = int_of_float (b *. 65535.0) in
-        drawable#set_foreground (`RGB (r, g, b))
+        current_color <- (`RGB (r, g, b));
+        drawable#set_foreground current_color
 
     method clear () =
         let width, height = drawable#size in

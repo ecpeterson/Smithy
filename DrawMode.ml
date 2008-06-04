@@ -104,14 +104,21 @@ let draw_polygons _ =
 
 let draw_objects _ =
     let draw_obj obj =
-        let x, y, z = obj#point () in
         let draw_filename name x y =
             orthodrawer#image (GMisc.image ~file:name ()) x y in
+        let draw_arrow x y color facing =
+            orthodrawer#set_color color;
+            orthodrawer#arrow x y facing in
+        let draw_item index x y =
+            let name = List.nth ItemStrings.item_strings index in
+            let filename = Hashtbl.find Resources.item_hash name in
+            draw_filename filename x y in
+        let x, y, z = obj#point () in
         match obj#kind () with
-        |Monster -> draw_filename Resources.monsterfile x y
+        |Monster -> draw_arrow x y (1.0, 0.0, 0.0) (obj#facing ())
         |Scenery -> draw_filename Resources.sceneryfile x y
-        |Item    -> draw_filename Resources.itemfile    x y
-        |Player  -> draw_filename Resources.playerfile  x y
+        |Item    -> draw_item (obj#index ()) x y
+        |Player  -> draw_arrow x y (1.0, 1.0, 0.0) (obj#facing ())
         |Goal    -> draw_filename Resources.goalfile    x y
         |Sound_Source -> draw_filename Resources.sound_sourcefile x y
     in
