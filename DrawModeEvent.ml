@@ -1,6 +1,18 @@
 open DrawModeWindows
 open DrawModeSettings
 
+(* while we're drawing a line, this keeps track of the point we selected at the
+ * initial click *)
+let start_point = ref 0
+let draw_intermediate = ref false
+let intermediate_x = ref 0
+let intermediate_y = ref 0
+
+(* while we're dragging our line around it would be nice to see it *)
+let intermediate_line x y =
+    intermediate_x := int_of_float x;
+    intermediate_y := int_of_float y
+
 (* an event utility, note that the 8.0 is actually configurable *)
 let highlight_distance orthodrawer =
     let pixel_epsilon = 8.0 in
@@ -98,8 +110,11 @@ let tool_begin_event orthodrawer x y button (state: Gdk.Tags.modifier list) =
             end;
             orthodrawer#draw () end
         (* the line tool draws lines *)
-        else if tool = LineTool then
-            GeomEdit.start_line x y (highlight_distance orthodrawer)
+        else if tool = LineTool then begin
+            draw_intermediate := true;
+            intermediate_line x y;
+            start_point :=
+                GeomEdit.start_line x y (highlight_distance orthodrawer) end
         (* and the fill tool fills line loops with polygons *)
         else if tool = FillTool then begin
             GeomEdit.fill_poly (int_of_float x) (int_of_float y);
@@ -168,7 +183,7 @@ let tool_in_event orthodrawer x0 y0 old_x old_y x y =
             |_ -> () end;
             orthodrawer#draw () end
         else if tool = LineTool then begin
-            GeomEdit.intermediate_line x y;
+            intermediate_line x y;
             orthodrawer#draw () end
         else ()
     |_ -> () end
@@ -202,7 +217,9 @@ let tool_end_event orthodrawer x0 y0 x y (button: int) _ =
             |_ -> ()
         else if tool = LineTool then begin
             (* if we were drawing a line, finalize it *)
-            ignore (GeomEdit.connect_line x y (highlight_distance orthodrawer));
+            draw_intermediate := false;
+            ignore (GeomEdit.connect_line !start_point x y
+                                          (highlight_distance orthodrawer));
             orthodrawer#draw ()
         end else ()
     |_ -> () end

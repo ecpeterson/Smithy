@@ -70,7 +70,7 @@ let draw_polygons _ =
             (MapFormat.get_poly_ring poly) in
         begin match !mode with
         |Draw_Mode ->
-            if GeomEdit.vertex_array_is_concave vertex_array then
+            if CamlExt.vertex_array_is_concave vertex_array then
                 orthodrawer#set_color Colors.invalid_polygon
             else
                 orthodrawer#set_color Colors.polygon_color;
@@ -136,11 +136,12 @@ let draw orthodrawer =
     draw_points ();
     draw_highlight ();
     (* draw the line we're in the middle of laying, if appropriate *)
-    if !GeomEdit.draw_intermediate then begin
+    if !DrawModeEvent.draw_intermediate then begin
         orthodrawer#set_color Colors.solid_line_color;
-        let x, y = !MapFormat.points.(!GeomEdit.start_point)#vertex () in
+        let x, y = !MapFormat.points.(!DrawModeEvent.start_point)#vertex () in
         orthodrawer#line (x, y)
-                         (!GeomEdit.intermediate_x, !GeomEdit.intermediate_y)
+                         (!DrawModeEvent.intermediate_x,
+                          !DrawModeEvent.intermediate_y)
     end
 
 (* set up draw mode event hooks *)

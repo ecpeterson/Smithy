@@ -1,59 +1,17 @@
-(* checks a point ring for concavity *)
-let vertex_array_is_concave vertices =
-    let length = List.length vertices in
-    (* this runs a generic comparison function on the cross products of adjacent
-     * lines, returns true if all the comparisons pass and false otherwise *)
-    let rec loop_compare vertices comp n =
-        if n = length then true else begin
-        let next1 = (if n = length - 1 then 0 else n + 1) in
-        let next2 = (if next1 = length - 1 then 0 else next1 + 1) in
-        let (p0x, p0y) = List.nth vertices n in
-        let (p1x, p1y) = List.nth vertices next1 in
-        let (p2x, p2y) = List.nth vertices next2 in
-        let p0 = (p1x - p0x, p1y - p0y) in
-        let p1 = (p2x - p1x, p2y - p1y) in
-        if comp (CamlExt.cross p0 p1) then
-            loop_compare vertices comp (n+1)
-        else
-            false end in
-    (* if all the crosses are nonpositive, we have a clockwise point loop *)
-    let vertex_array_is_cw vertices =
-        loop_compare vertices (fun x -> x <= 0) 0 in
-    (* if all the crosses are nonnegative, we have a ccw point loop *)
-    let vertex_array_is_ccw vertices =
-        loop_compare vertices (fun x -> x >= 0) 0 in
-    (* and we want to test for loops that are neither completely cw nor ccw *)
-    not (vertex_array_is_cw vertices) && not (vertex_array_is_ccw vertices)
-
-(* while we're drawing a line, this keeps track of the point we selected at the
- * initial click *)
-let start_point = ref 0
-let draw_intermediate = ref false
-let intermediate_x = ref 0
-let intermediate_y = ref 0
-
-(* while we're dragging our line around it would be nice to see it *)
-let intermediate_line x y =
-    intermediate_x := int_of_float x;
-    intermediate_y := int_of_float y
-
 (* this gets called on the mouse down event when drawing a line *)
 let start_line x y choose_distance =
-    draw_intermediate := true;
-    intermediate_line x y;
     let do_new_point () =
         (* spawn a new point, select it *)
         let point = new MapTypes.point in
         point#set_vertex (int_of_float x, int_of_float y);
-        let point_id = MapFormat.add_point point in
-        start_point := point_id in
+        MapFormat.add_point point in
     (* are we near a point? *)
     let (point_distance, nearest_point) = MapFormat.get_closest_point x y in
     (* how about a line? *)
     let (line_distance, nearest_line) = MapFormat.get_closest_line x y in
     (* if we're close enough, just use this point *)
     if point_distance < choose_distance && nearest_point >= 0 then
-        start_point := nearest_point
+        nearest_point
     (* and if we're close enough to the line, just split it and use that
      * resultant point *)
     else if line_distance < choose_distance && nearest_line >= 0 then begin
@@ -73,23 +31,22 @@ let start_line x y choose_distance =
             line2#set_endpoints (pi, p1);
             ignore (MapFormat.add_line line1);
             ignore (MapFormat.add_line line2);
-            start_point := pi
+            pi
         (* if it is owned by a poly, behave like we didn't have a line near *)
         end else do_new_point ()
     (* otherwise spawn a new point in the middle of nowhere, use that one *)
     end else do_new_point ()
 
 (* called on mouse up when drawing the line *)
-let connect_line x y choose_distance =
-    draw_intermediate := false;
+let connect_line start_point x y choose_distance =
     (* utility to actually add the line *)
     let do_line target_point =
-        let (p0x, p0y) = !MapFormat.points.(!start_point)#vertex () in
+        let (p0x, p0y) = !MapFormat.points.(start_point)#vertex () in
         let (p1x, p1y) = !MapFormat.points.(target_point)#vertex () in
         let length = int_of_float (((float p0x -. (float p1x))**2.0 +.
                                     (float p0y -. (float p1y))**2.0)**0.5) in
         let line = new MapTypes.line in
-        line#set_endpoints (!start_point, target_point);
+        line#set_endpoints (start_point, target_point);
         line#set_length length;
         MapFormat.add_line line in
     (* utility to add a new point and connect the line up to it *)
