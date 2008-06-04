@@ -14,13 +14,13 @@ object (self)
 
     (* actual data *)
     val mutable mousedown_callback =
-        (fun x y button state -> ())
+        (fun self x y button state -> ())
     val mutable mouseup_callback =
-        (fun x0 y0 x1 y1 button state -> ())
+        (fun self x0 y0 x1 y1 button state -> ())
     val mutable mousedrag_callback =
-        (fun x0 y0 x1 y1 x2 y2 -> ())
+        (fun self x0 y0 x1 y1 x2 y2 -> ())
     val mutable draw_callback =
-        (fun _ -> ())
+        (fun self -> ())
     val mutable click0 = 0, 0
     val mutable click1 = 0, 0
     val mutable scale = 0.1
@@ -123,7 +123,7 @@ object (self)
             drawable <- new GDraw.drawable (buffer#pixmap);
         |Some x -> ()
         end;
-        draw_callback ();
+        draw_callback self;
         let Some drawable_onscreen = drawable_onscreen in
         drawable_onscreen#put_pixmap ~x:0 ~y:0 buffer#pixmap;
         end;
@@ -147,7 +147,7 @@ object (self)
         let (oldx, oldy) = click1 in
         click1 <- x, y;
         let x0, y0 = click0 in
-        mousedrag_callback x0 y0 oldx oldy x y;
+        mousedrag_callback self x0 y0 oldx oldy x y;
         false
     method private mousedown_callback mouse_descriptor =
         let x = int_of_float (GdkEvent.Button.x mouse_descriptor) in
@@ -157,7 +157,7 @@ object (self)
         let x, y = self#to_map (x, y) in
         click0 <- x, y;
         click1 <- x, y;
-        mousedown_callback x y button state;
+        mousedown_callback self x y button state;
         false
     method private mouseup_callback mouse_descriptor =
         let x = int_of_float (GdkEvent.Button.x mouse_descriptor) in
@@ -167,7 +167,7 @@ object (self)
         let (x0, y0) = click0 in
         let x, y = self#to_map (x, y) in
         click1 <- x, y;
-        mouseup_callback x0 y0 x y button state;
+        mouseup_callback self x0 y0 x y button state;
         false
 
     (* other public methods *)

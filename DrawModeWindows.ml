@@ -1,4 +1,5 @@
 open CamlExt
+open DrawModeSettings
 
 (* we keep track of what item is highlighted as part of the drawing / interface
  * object, and we have an enumerative type to match across *)
@@ -48,22 +49,23 @@ let _ = GMisc.pixmap (GDraw.pixmap_from_xpm Resources.arrowfile ())
                      ~packing:buttontext#add () |> ignore;
         GMisc.pixmap (GDraw.pixmap_from_xpm Resources.objfile ())
                      ~packing:buttonobj#add () |> ignore
-let buttons = [buttonarrow; buttonline; buttonpoly; buttonfill;
-               buttonpan; buttonzoom; buttontext; buttonobj]
+let buttons = [(buttonarrow, ArrowTool);
+               (buttonline,  LineTool);
+               (buttonpoly,  PolyTool);
+               (buttonfill,  FillTool);
+               (buttonpan,   PanTool);
+               (buttonzoom,  ZoomTool);
+               (buttontext,  TextTool);
+               (buttonobj,   ObjTool)]
 
-let active_tool () =
-    let rec a_t_aux lst =
-        if (List.hd lst)#active
-            then List.hd lst
-            else a_t_aux (List.tl lst) in
-    a_t_aux buttons
-
-let toolbar_clicked _ =
-    List.iter (fun x -> x#set_active false) buttons;
+let toolbar_clicked tool =
+    List.iter (fun x -> (fst x)#set_active false) buttons;
+    active_tool := tool;
     false
 let _ =
-    List.iter (fun obj ->
-            obj#event#connect#button_press ~callback:toolbar_clicked
+    List.iter (fun obj -> match obj with (button, tool) ->
+            button#event#connect#button_press ~callback:(fun _ ->
+                toolbar_clicked tool)
         |> ignore) buttons
 
 (* and the alternative toolbar *)
@@ -285,7 +287,7 @@ let menu_bar, orthodrawer, status =
       <accelerator action='Backspace'/>\
     </ui>" in
     let tool_cb button _ =
-        toolbar_clicked ();
+        toolbar_clicked (List.assoc button buttons);
         button#clicked ();
         () in
     let delete_cb _ =

@@ -1,15 +1,16 @@
 open DrawModeWindows
+open DrawModeSettings
 
 (* an event utility, note that the 8.0 is actually configurable *)
-let highlight_distance () =
+let highlight_distance orthodrawer =
     let pixel_epsilon = 8.0 in
     pixel_epsilon /. orthodrawer#scale
 
 (* this gets called when we start applying a tool *)
-let tool_begin_event x y button (state: Gdk.Tags.modifier list) =
+let tool_begin_event orthodrawer x y button (state: Gdk.Tags.modifier list) =
     let x, y = float x, float y in
     (* unwrap values actually useful to us *)
-    let tool = active_tool () in
+    let tool = !active_tool in
     (* get nearby objects, since tools frequently need them *)
     let (point_d, point_i) = MapFormat.get_closest_point x y in
     let (line_d, line_i) = MapFormat.get_closest_line x y in
@@ -68,23 +69,23 @@ let tool_begin_event x y button (state: Gdk.Tags.modifier list) =
         numeric_entry#set_text (string_of_int v)
     |Draw_Mode, 1, _, _, _ ->
         (* in draw mode, we have to deal with what kind of tool to apply *)
-        if tool = buttonarrow then begin
+        if tool = ArrowTool then begin
             (* see TODO list about things pertaining to this that need to be
              * fixed; there are quite a few. *)
             begin match List.mem `SHIFT state, !highlight with
             (* the arrow tool selects things on mouse down, and multiple things
              * when shift is being held *)
-            |true, Point n when point_d < highlight_distance () ->
+            |true, Point n when point_d < highlight_distance orthodrawer ->
                     highlight := Point (point_i :: n)
-            |_ when point_d < highlight_distance () ->
+            |_ when point_d < highlight_distance orthodrawer ->
                     highlight := Point [point_i]
-            |true, Object n when obj_d < highlight_distance () ->
+            |true, Object n when obj_d < highlight_distance orthodrawer ->
                     highlight := Object (obj_i :: n)
-            |_ when obj_d < highlight_distance () ->
+            |_ when obj_d < highlight_distance orthodrawer ->
                     highlight := Object [obj_i]
-            |true, Line n when line_d < highlight_distance () ->
+            |true, Line n when line_d < highlight_distance orthodrawer ->
                     highlight := Line (line_i :: n)
-            |_ when line_d < highlight_distance () ->
+            |_ when line_d < highlight_distance orthodrawer ->
                     highlight := Line [line_i]
             |true, Poly m when poly <> None ->
                     let Some n = poly in
@@ -97,22 +98,22 @@ let tool_begin_event x y button (state: Gdk.Tags.modifier list) =
             end;
             orthodrawer#draw () end
         (* the line tool draws lines *)
-        else if tool = buttonline then
-            GeomEdit.start_line x y (highlight_distance ())
+        else if tool = LineTool then
+            GeomEdit.start_line x y (highlight_distance orthodrawer)
         (* and the fill tool fills line loops with polygons *)
-        else if tool = buttonfill then begin
+        else if tool = FillTool then begin
             GeomEdit.fill_poly (int_of_float x) (int_of_float y);
             orthodrawer#draw () end
         else ()
     |Draw_Mode, 3, _, _, _ ->
-        if tool = buttonarrow then
+        if tool = ArrowTool then
             (* a right-click in draw mode with the arrow tool means we want to
              * inspect a map element *)
-            if point_d < highlight_distance () then
+            if point_d < highlight_distance orthodrawer then
                 MapDialogs.point_dialog !MapFormat.points.(point_i)
-            else if obj_d < highlight_distance () then
+            else if obj_d < highlight_distance orthodrawer then
                 MapDialogs.obj_dialog !MapFormat.objs.(obj_i)
-            else if line_d < highlight_distance () then (
+            else if line_d < highlight_distance orthodrawer then (
                 MapDialogs.line_dialog !MapFormat.lines.(line_i)
             ) else if poly <> None then let Some n = poly in (
                 MapDialogs.poly_dialog !MapFormat.polygons.(n))
@@ -120,20 +121,20 @@ let tool_begin_event x y button (state: Gdk.Tags.modifier list) =
     |_ -> () end
 
 (* this gets called when we're dragging a tool around *)
-let tool_in_event x0 y0 old_x old_y x y =
+let tool_in_event orthodrawer x0 y0 old_x old_y x y =
     let x0, y0, old_x, old_y, x, y = float x0, float y0, float old_x,
                                      float old_y, float x, float y in
     (* extract values actually useful to us *)
-    let tool = active_tool () in
+    let tool = !active_tool in
     begin match !mode with
     |Draw_Mode ->
         (* if we're panning, then pan *)
-        if tool = buttonpan then
+        if tool = PanTool then
             let xo, yo = orthodrawer#origin in
             orthodrawer#set_origin ((int_of_float (float xo +. x0 -. x)),
                                     (int_of_float (float yo +. y0 -. y)))
         (* if we're using the arrow, drag *)
-        else if tool = buttonarrow then begin
+        else if tool = ArrowTool then begin
             let delta_x = (x -. old_x) in
             let delta_y = (y -. old_y) in
             (* utilities for easy dragging *)
@@ -166,19 +167,19 @@ let tool_in_event x0 y0 old_x old_y x y =
                 List.iter (fun n -> shift_obj !MapFormat.objs.(n)) ns
             |_ -> () end;
             orthodrawer#draw () end
-        else if tool = buttonline then begin
+        else if tool = LineTool then begin
             GeomEdit.intermediate_line x y;
             orthodrawer#draw () end
         else ()
     |_ -> () end
 
 (* and this gets called when we release the mouse button and apply the tool *)
-let tool_end_event x0 y0 x y (button: int) _ =
+let tool_end_event orthodrawer x0 y0 x y (button: int) _ =
     let x0, y0, x, y = float x0, float y0, float x, float y in
-    let tool = active_tool () in
+    let tool = !active_tool in
     begin match !mode with
     |Draw_Mode ->
-        if tool = buttonarrow then
+        if tool = ArrowTool then
             (* if we were dragging around objects, be sure to place them in the
              * appropriate polygon! *)
             begin match !highlight with
@@ -193,21 +194,21 @@ let tool_end_event x0 y0 x y (button: int) _ =
                     |Some a -> obj#set_polygon a) n
             |_ -> ()
             end
-        else if tool = buttonzoom then
+        else if tool = ZoomTool then
             (* if we were using the zoom tool, apply the zoom *)
             match button with
             |1 -> orthodrawer#zoom_at 2.0 (int_of_float x) (int_of_float y)
             |3 -> orthodrawer#zoom_at 0.5 (int_of_float x) (int_of_float y)
             |_ -> ()
-        else if tool = buttonline then begin
+        else if tool = LineTool then begin
             (* if we were drawing a line, finalize it *)
-            ignore (GeomEdit.connect_line x y (highlight_distance ()));
+            ignore (GeomEdit.connect_line x y (highlight_distance orthodrawer));
             orthodrawer#draw ()
         end else ()
     |_ -> () end
 
 (* depending upon what mode we're in, launch the appropriate dialog *)
-let edit_current_item () =
+let edit_current_item orthodrawer =
     try match (int_of_string numeric_entry#text, !mode) with
     |(-1, _) -> ()
     |(index, Liquids) ->
@@ -221,7 +222,7 @@ let edit_current_item () =
 
 (* depending upon what mode we're in, spawn in a new light/media/whatever and
  * open the editor so that we can customize it *)
-let make_new_item () =
+let make_new_item orthodrawer =
     begin match !mode with
     |Liquids ->
         let n = MapDialogs.make_media () in
