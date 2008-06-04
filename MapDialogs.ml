@@ -1,5 +1,6 @@
 open MapTypes
 open CamlExt
+open DrawModeSettings
 
 (* utility that constructs an edit box with a prefixed caption *)
 let labeled_entry ~label ~text ~packing =
@@ -490,17 +491,6 @@ let make_light () =
     MapFormat.add_light l
 
 let map_manager _ =
-    let grid_size = ref 3 in
-    let display_grid = ref true in
-    let constrain_to_grid = ref false in
-    let show_monsters = ref true in
-    let show_objects = ref true in
-    let show_scenery = ref true in
-    let show_players = ref true in
-    let show_goals = ref true in
-    let show_sounds = ref true in
-    let show_annotations = ref true in
-    let vm_crosshair = ref true in
     let descriptor = [
         `V [
             `H [
