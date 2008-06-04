@@ -1,6 +1,7 @@
 open CamlExt
 open DrawModeWindows
 open DrawModeSettings
+open MapTypes
 
 (* module methods *)
 let draw_grid _ =
@@ -40,19 +41,19 @@ let draw_lines _ =
                              !MapFormat.points.(y)#vertex ())
                          |> orthodrawer#segments in
     orthodrawer#set_color Colors.solid_line_color;
-    draw_these (fun x -> List.mem MapTypes.SOLID (x#flags ()));
+    draw_these (fun x -> List.mem SOLID (x#flags ()));
     orthodrawer#set_color Colors.transparent_line_color;
-    draw_these (fun x -> List.mem MapTypes.TRANSPARENT (x#flags ()) &&
-                         not (List.mem MapTypes.SOLID (x#flags ())));
+    draw_these (fun x -> List.mem TRANSPARENT (x#flags ()) &&
+                         not (List.mem SOLID (x#flags ())));
     orthodrawer#set_color Colors.passable_line_color;
-    draw_these (fun x -> not (List.mem MapTypes.TRANSPARENT (x#flags ())) &&
-                         not (List.mem MapTypes.SOLID (x#flags ())))
+    draw_these (fun x -> not (List.mem TRANSPARENT (x#flags ())) &&
+                         not (List.mem SOLID (x#flags ())))
 
 let draw_polygons _ =
     let max =
         match !mode with
         |Polygon_Types ->
-            float (List.length ((fun (_, x)-> x) MapTypes.poly_kind_descriptor))
+            float (List.length ((fun (_, x)-> x) poly_kind_descriptor))
         |Liquids ->
             Array.length !MapFormat.media |> float
         |Lights_Floor
@@ -76,7 +77,7 @@ let draw_polygons _ =
             let n = poly#floor_height () /. 18.0 +. 0.5 in
             orthodrawer#set_color (n, n, n)
         |Polygon_Types ->
-            let kind = float (CamlExt.to_enum MapTypes.poly_kind_descriptor
+            let kind = float (CamlExt.to_enum poly_kind_descriptor
                                               (poly#kind ())) in
             CamlExt.hsv_to_rgb (kind /. max,
                                 Colors.poly_type_saturation,
@@ -100,6 +101,21 @@ let draw_polygons _ =
         |_ -> () end;
         orthodrawer#polygon true vertex_array in
     Array.iter draw_polygon !MapFormat.polygons
+
+let draw_objects _ =
+    let draw_obj obj =
+        let x, y, z = obj#point () in
+        let draw_filename name x y =
+            orthodrawer#image (GMisc.image ~file:name ()) x y in
+        match obj#kind () with
+        |Monster -> draw_filename Resources.monsterfile x y
+        |Scenery -> draw_filename Resources.sceneryfile x y
+        |Item    -> draw_filename Resources.itemfile    x y
+        |Player  -> draw_filename Resources.playerfile  x y
+        |Goal    -> draw_filename Resources.goalfile    x y
+        |Sound_Source -> draw_filename Resources.sound_sourcefile x y
+    in
+    !MapFormat.objs |> Array.iter draw_obj
 
 let draw_highlight _ =
     orthodrawer#set_color Colors.highlight_color;
@@ -130,6 +146,7 @@ let draw orthodrawer =
     draw_lines ();
     draw_points ();
     draw_highlight ();
+    draw_objects ();
     (* draw the line we're in the middle of laying, if appropriate *)
     if !DrawModeEvent.draw_intermediate then begin
         orthodrawer#set_color Colors.solid_line_color;
