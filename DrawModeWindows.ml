@@ -33,22 +33,15 @@ let buttonline, buttonarrow, buttonfill, buttonpoly,
         GButton.toggle_button ~packing:hbox3#pack (),
         GButton.toggle_button ~packing:hbox4#pack (),
         GButton.toggle_button ~packing:hbox4#pack ()
-let _ = GMisc.pixmap (GDraw.pixmap_from_xpm Resources.arrowfile ())
-                     ~packing:buttonarrow#add () |> ignore;
-        GMisc.pixmap (GDraw.pixmap_from_xpm Resources.linefile ())
-                     ~packing:buttonline#add () |> ignore;
-        GMisc.pixmap (GDraw.pixmap_from_xpm Resources.polyfile ())
-                     ~packing:buttonpoly#add () |> ignore;
-        GMisc.pixmap (GDraw.pixmap_from_xpm Resources.fillfile ())
-                     ~packing:buttonfill#add () |> ignore;
-        GMisc.pixmap (GDraw.pixmap_from_xpm Resources.panfile ())
-                     ~packing:buttonpan#add () |> ignore;
-        GMisc.pixmap (GDraw.pixmap_from_xpm Resources.zoomfile ())
-                     ~packing:buttonzoom#add () |> ignore;
-        GMisc.pixmap (GDraw.pixmap_from_xpm Resources.textfile ())
-                     ~packing:buttontext#add () |> ignore;
-        GMisc.pixmap (GDraw.pixmap_from_xpm Resources.objfile ())
-                     ~packing:buttonobj#add () |> ignore
+let _ =
+    GMisc.image ~file:Resources.arrowfile ~packing:buttonarrow#add ();
+    GMisc.image ~file:Resources.linefile  ~packing:buttonline#add  ();
+    GMisc.image ~file:Resources.polyfile  ~packing:buttonpoly#add  ();
+    GMisc.image ~file:Resources.fillfile  ~packing:buttonfill#add  ();
+    GMisc.image ~file:Resources.panfile   ~packing:buttonpan#add   ();
+    GMisc.image ~file:Resources.zoomfile  ~packing:buttonzoom#add  ();
+    GMisc.image ~file:Resources.textfile  ~packing:buttontext#add  ();
+    GMisc.image ~file:Resources.objfile   ~packing:buttonobj#add   ()
 let buttons = [(buttonarrow, ArrowTool);
                (buttonline,  LineTool);
                (buttonpoly,  PolyTool);
