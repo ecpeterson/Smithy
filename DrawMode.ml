@@ -1,11 +1,6 @@
 open CamlExt
 open DrawModeWindows
-
-(* this is configurable *)
-let highlighted_point_thickness = 5
-
-(* stateful information *)
-let grid_factor = ref 3
+open DrawModeSettings
 
 (* module methods *)
 let draw_grid _ =
@@ -112,7 +107,7 @@ let draw_highlight _ =
     |Point ns ->
         List.iter (fun n ->
             let x, y = !MapFormat.points.(n)#vertex () in
-            orthodrawer#fat_point (x, y) highlighted_point_thickness) ns
+            orthodrawer#fat_point (x, y) !highlighted_point_thickness) ns
     |Line ns ->
         List.iter (fun n ->
             let p0, p1 = !MapFormat.lines.(n)#endpoints () in
