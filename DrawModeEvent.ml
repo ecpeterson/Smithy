@@ -121,17 +121,20 @@ let tool_begin_event orthodrawer x y button (state: Gdk.Tags.modifier list) =
             orthodrawer#draw () end
         else ()
     |Draw_Mode, 3, _, _, _ ->
-        if tool = ArrowTool then
+        if tool = ArrowTool then begin
             (* a right-click in draw mode with the arrow tool means we want to
              * inspect a map element *)
-            if point_d < highlight_distance orthodrawer then
+            (if point_d < highlight_distance orthodrawer then
                 MapDialogs.point_dialog !MapFormat.points.(point_i)
             else if obj_d < highlight_distance orthodrawer then
                 MapDialogs.obj_dialog !MapFormat.objs.(obj_i)
-            else if line_d < highlight_distance orthodrawer then (
+            else if line_d < highlight_distance orthodrawer then
                 MapDialogs.line_dialog !MapFormat.lines.(line_i)
-            ) else if poly <> None then let Some n = poly in (
-                MapDialogs.poly_dialog !MapFormat.polygons.(n))
+            else if poly <> None then
+                let Some n = poly in
+                MapDialogs.poly_dialog !MapFormat.polygons.(n));
+            orthodrawer#draw ();
+        end
         else ()
     |_ -> () end
 
