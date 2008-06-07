@@ -99,6 +99,21 @@ let obj_dialog obj =
             `M (["Monster"; "Scenery"; "Object"; "Player"; "Goal"; "Sound"],
                 group) ] ] in
     GenerateDialog.generate_dialog descriptor "Edit Object";
+    (* we also need to decrement the obj's old placement chunk! *)
+    begin match obj#kind () with
+        |Monster ->
+            (* update plac + (MapFormat.number_of_placements / 2) *)
+            let plac = !MapFormat.placements.(obj#index () +
+                                    MapFormat.number_of_placements / 2) in
+            if plac#initial_count () > 0 then
+                plac#set_initial_count (plac#initial_count () - 1)
+        |Item ->
+            (* update plac *)
+            let plac = !MapFormat.placements.(obj#index ()) in
+            if plac#initial_count () > 0 then
+                plac#set_initial_count (plac#initial_count () - 1)
+        |_ -> ()
+    end;
     let group = CamlExt.of_enum MapTypes.object_kind_descriptor !group in
     obj#set_kind group;
     (* launch secondary dialog *)
@@ -234,8 +249,19 @@ let obj_dialog obj =
     let (x, y, z) = obj#point () in
     obj#set_point (x, y, int_of_string !height);
     obj#set_flags (CamlExt.of_bitflag MapTypes.object_flags_descriptor flags);
-    obj#set_facing facing
-
+    obj#set_facing facing;
+    begin match obj#kind () with
+        |Monster ->
+            (* update plac + (MapFormat.number_of_placements / 2) *)
+            let plac = !MapFormat.placements.(obj#index () +
+                                    MapFormat.number_of_placements / 2) in
+            plac#set_initial_count (plac#initial_count () + 1)
+        |Item ->
+            (* update plac *)
+            let plac = !MapFormat.placements.(obj#index ()) in
+            plac#set_initial_count (plac#initial_count () + 1)
+        |_ -> ()
+    end
 
 let info_dialog _ =
     let level_name = ref !MapFormat.level_name in

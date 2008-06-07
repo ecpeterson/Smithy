@@ -259,3 +259,10 @@ let fill_poly x y =
             line#set_ccw_poly_owner poly_idx;
         if cw <> -1 || ccw <> -1 then
             line#set_flags [MapTypes.TRANSPARENT]) line_loop
+
+let make_object x y poly =
+    let obj = new MapTypes.obj in
+    obj#set_polygon poly;
+    obj#set_point (x, y, 0);
+    (* do we need to update the container polygon's information? *)
+    MapFormat.add_object obj

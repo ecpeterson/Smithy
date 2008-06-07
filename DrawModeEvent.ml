@@ -119,6 +119,14 @@ let tool_begin_event orthodrawer x y button (state: Gdk.Tags.modifier list) =
         else if tool = FillTool then begin
             GeomEdit.fill_poly (int_of_float x) (int_of_float y);
             orthodrawer#draw () end
+        else if tool = ObjTool then begin
+            begin match poly with
+                |Some poly ->
+                    let objidx = GeomEdit.make_object (int_of_float x)
+                                                      (int_of_float y) poly in
+                    MapDialogs.obj_dialog !MapFormat.objs.(objidx)
+                |_ -> () end;
+            orthodrawer#draw () end
         else ()
     |Draw_Mode, 3, _, _, _ ->
         if tool = ArrowTool then begin
