@@ -4,7 +4,6 @@ editing:
 + finish the object dialog, which is currently in a half-formed state
 + write the platform dialog
 + finish platform deletion and its editor dialog
-+ make the light dialog do something
 + write polygon tool
 + write annotation tool
 + write object tool

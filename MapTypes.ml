@@ -760,21 +760,21 @@ class placement = object
     val mutable minimum_count = 0
     val mutable maximum_count = 0
     val mutable random_count = 0
-    val mutable random_change = 0
+    val mutable random_chance = 0
 
     method flags () = flags
     method initial_count () = initial_count
     method minimum_count () = minimum_count
     method maximum_count () = maximum_count
     method random_count () = random_count
-    method random_change () = random_change
+    method random_chance () = random_chance
 
     method set_flags x = flags <- x
     method set_initial_count x = initial_count <- x
     method set_minimum_count x = minimum_count <- x
     method set_maximum_count x = maximum_count <- x
     method set_random_count x = random_count <- x
-    method set_random_change x = random_change <- x
+    method set_random_chance x = random_chance <- x
 end
 let plac_reader fh =
     let plac = new placement in
@@ -783,7 +783,7 @@ let plac_reader fh =
     plac#set_minimum_count (input_word fh);
     plac#set_maximum_count (input_word fh);
     plac#set_random_count (input_word fh);
-    plac#set_random_change (input_word fh);
+    plac#set_random_chance (input_word fh);
     plac
 
 let plac_writer fh plac =
@@ -792,5 +792,5 @@ let plac_writer fh plac =
     output_word fh (plac#minimum_count ());
     output_word fh (plac#maximum_count ());
     output_word fh (plac#random_count ());
-    output_word fh (plac#random_change ())
+    output_word fh (plac#random_chance ())
 let empty_placement = new placement

@@ -22,6 +22,7 @@ let media_length = 32
 let placement_length = 12
 let platform_length = 32
 let optimized_point_length = 16
+let number_of_placements = 128
 
 (* TODO: is it feasible to move these to MapTypes? *)
 type environment_code = Water | Lava | Sewage | Jjaro | Pfhor
@@ -68,7 +69,7 @@ let sides = ref (Array.make 0 empty_side)
 let lights = ref (Array.make 0 empty_light)
 let objs = ref (Array.make 0 empty_obj)
 let media = ref (Array.make 0 empty_media)
-let placements = ref (Array.make 0 empty_placement)
+let placements = ref (Array.make number_of_placements empty_placement)
 let platforms = ref (Array.make 0 empty_platform)
 let environment_code = ref Water
 let physics_model = ref 0
@@ -261,6 +262,11 @@ let add_platform plat =
     let append_array = Array.make 1 plat in
     platforms := Array.append !platforms append_array;
     Array.length !platforms - 1
+
+let add_object obj =
+    let append_array = Array.make 1 obj in
+    objs := Array.append !objs append_array;
+    Array.length !objs - 1
 
 (** geometry selection functions **)
 (* gets the closest object to the point (x0, y0) *)
