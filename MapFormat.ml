@@ -22,7 +22,7 @@ let media_length = 32
 let placement_length = 12
 let platform_length = 32
 let optimized_point_length = 16
-let number_of_placements = 128
+let number_of_placements = 128 (* 64 items, 64 monsters *)
 
 (* TODO: is it feasible to move these to MapTypes? *)
 type environment_code = Water | Lava | Sewage | Jjaro | Pfhor

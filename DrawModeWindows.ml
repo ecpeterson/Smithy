@@ -296,6 +296,7 @@ let menu_bar, orthodrawer, status =
         |Poly  n -> List.iter (fun n -> MapFormat.delete_poly n)  n
         |No_Highlight |_ -> ()
         end;
+        highlight := No_Highlight;
         orthodrawer#draw (); () in
     let accel_actions = GAction.action_group ~name:"Smithy-accels" () in
     GAction.add_actions accel_actions [
