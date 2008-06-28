@@ -68,6 +68,5 @@ let silent_save set_title _ =
         MapFormat.write_to_file !MapFormat.filename
 
 let new_map drawer _ =
-    path := None;
     MapFormat.reset_structures ();
     drawer#draw ()
