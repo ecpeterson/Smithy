@@ -249,16 +249,18 @@ let fill_poly x y =
                                    (Array.make (8 - List.length point_loop) 0));
     (* push it onto the big poly array *)
     let poly_idx = MapFormat.add_polygon poly in
-    (* add this poly as a parent to the child lines, note that we don't make a
-     * CW/CCW distinction here and i have no idea if that's sound.  i'll put a
-     * TODO here just so i see it later *)
-    List.iter (fun x ->
+    (* now we attach this polygon as a line parent.  if the line endpoints
+     * are of the same order as they polygon's vertex loop (which is stored
+     * in CW order), then we attach to the CW parent, otherwise to the CCW
+     * parent.  we also automatically set the transparent flag if we share
+     * this line with some other polygon. *)
+    List.iter2 (fun x y ->
         let line = !MapFormat.lines.(x) in
-        let (cw, ccw) = line#cw_poly_owner(), line#ccw_poly_owner () in
-        if cw = -1 then line#set_cw_poly_owner poly_idx else
-            line#set_ccw_poly_owner poly_idx;
-        if cw <> -1 || ccw <> -1 then
-            line#set_flags [MapTypes.TRANSPARENT]) line_loop
+        let (p0, p1) = line#endpoints () in
+        if p1 = y then line#set_cw_poly_owner poly_idx else
+                       line#set_ccw_poly_owner poly_idx;
+        if line#cw_poly_owner () <> -1 && line#ccw_poly_owner () <> -1 then
+            line#set_flags [MapTypes.TRANSPARENT]) line_loop point_loop
 
 let make_object x y poly =
     let obj = new MapTypes.obj in

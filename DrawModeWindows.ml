@@ -202,7 +202,9 @@ let menu_bar, orthodrawer, status =
         a "SmithyMenu"  ~label:"S_mithy";
 
         a "New"         ~stock:`NEW
-                        ~callback:(FileDialogs.new_map orthodrawer);
+                        ~callback:(fun _ ->
+                                   MapFormat.reset_structures ();
+                                   orthodrawer#draw ());
         a "Open"        ~stock:`OPEN
                         ~callback:(FileDialogs.open_file_dialog set_title
                                                                 orthodrawer);
