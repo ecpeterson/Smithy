@@ -201,7 +201,8 @@ let menu_bar, orthodrawer, status =
         a "SpecialMenu" ~label:"_Special";
         a "SmithyMenu"  ~label:"S_mithy";
 
-        a "New"         ~stock:`NEW;
+        a "New"         ~stock:`NEW
+                        ~callback:(FileDialogs.new_map orthodrawer);
         a "Open"        ~stock:`OPEN
                         ~callback:(FileDialogs.open_file_dialog set_title
                                                                 orthodrawer);
