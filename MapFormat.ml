@@ -80,6 +80,19 @@ let level_name = ref (String.make 66 '\000')
 let entry_point_flags = ref []
 let filename = ref (String.make 0 '\000')
 
+let reset_structures _ =
+    points := Array.make 0 empty_point;
+    lines := Array.make 0 empty_line;
+    polygons := Array.make 0 empty_polygon;
+    sides := Array.make 0 empty_side;
+    lights := Array.make 0 empty_light;
+    objs := Array.make 0 empty_obj;
+    media := Array.make 0 empty_media;
+    placements := Array.make number_of_placements empty_placement;
+    platforms := Array.make 0 empty_platform;
+    level_name := String.make 66 '\000';
+    filename := String.make 66 '\000'
+
     (* read in various chunks *)
 let read_points fh length =
     points := read_chunk fh length point_length pnts_reader
