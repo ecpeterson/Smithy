@@ -21,7 +21,7 @@ let draw_grid _ =
         for j = -32 to 32 do
             let it, jt = i * (MapFormat.half_map_width/32),
                          j * (MapFormat.half_map_width/32) in
-            orthodrawer#point (it, jt)
+            orthodrawer#fat_point (it, jt) 2
         done;
     done
 

@@ -69,7 +69,11 @@ let sides = ref (Array.make 0 empty_side)
 let lights = ref (Array.make 0 empty_light)
 let objs = ref (Array.make 0 empty_obj)
 let media = ref (Array.make 0 empty_media)
-let placements = ref (Array.make number_of_placements empty_placement)
+let placements =
+    let arr = Array.make number_of_placements empty_placement in
+    for i = 0 to number_of_placements - 1 do
+        arr.(i) <- new MapTypes.placement
+    done; ref arr
 let platforms = ref (Array.make 0 empty_platform)
 let environment_code = ref Water
 let physics_model = ref 0
@@ -88,7 +92,11 @@ let reset_structures _ =
     lights := Array.make 0 empty_light;
     objs := Array.make 0 empty_obj;
     media := Array.make 0 empty_media;
-    placements := Array.make number_of_placements empty_placement;
+    placements := begin
+        let arr = Array.make number_of_placements empty_placement in
+        for i = 0 to number_of_placements - 1 do
+            arr.(i) <- new MapTypes.placement
+        done; arr end;
     platforms := Array.make 0 empty_platform;
     level_name := String.make 66 '\000';
     filename := String.make 66 '\000'

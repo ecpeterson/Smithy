@@ -262,9 +262,48 @@ let fill_poly x y =
         if line#cw_poly_owner () <> -1 && line#ccw_poly_owner () <> -1 then
             line#set_flags [MapTypes.TRANSPARENT]) line_loop point_loop
 
+let decrement_obj obj =
+    begin match obj#kind () with
+        |MapTypes.Monster ->
+            (* update plac + (MapFormat.number_of_placements / 2) *)
+            let plac = !MapFormat.placements.(obj#index () +
+                                    MapFormat.number_of_placements / 2) in
+            if plac#initial_count () > 0 then
+                plac#set_initial_count (plac#initial_count () - 1)
+        |MapTypes.Item ->
+            (* update plac *)
+            let plac = !MapFormat.placements.(obj#index ()) in
+            if plac#initial_count () > 0 then
+                plac#set_initial_count (plac#initial_count () - 1)
+        |_ -> ()
+    end
+
+let increment_obj obj =
+    begin match obj#kind () with
+        |MapTypes.Monster ->
+            (* update plac + (MapFormat.number_of_placements / 2) *)
+            let plac = !MapFormat.placements.(obj#index () +
+                                    MapFormat.number_of_placements / 2) in
+            plac#set_initial_count (plac#initial_count () + 1)
+        |MapTypes.Item ->
+            (* update plac *)
+            let plac = !MapFormat.placements.(obj#index ()) in
+            plac#set_initial_count (plac#initial_count () + 1)
+        |_ -> ()
+    end
+
+let clone_idx = ref 0
 let make_object x y poly =
     let obj = new MapTypes.obj in
+    begin try let clone_obj = !MapFormat.objs.(!clone_idx) in
+        obj#set_kind (clone_obj#kind ());
+        obj#set_index (clone_obj#index ());
+        obj#set_facing (clone_obj#facing ());
+        obj#set_flags (clone_obj#flags ())
+    with _ -> () end;
+    increment_obj obj;
     obj#set_polygon poly;
     obj#set_point (x, y, 0);
     (* do we need to update the container polygon's information? *)
-    MapFormat.add_object obj
+    clone_idx := MapFormat.add_object obj;
+    !clone_idx
