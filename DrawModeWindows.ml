@@ -257,7 +257,7 @@ let menu_bar, orthodrawer, status =
                               ~accel:"<Ctrl>minus"
                               ~callback:(fun _ -> orthodrawer#zoom 0.5);
         a "MapManager"        ~label:"M_ap Manager"
-                              ~callback:MapDialogs.map_manager;
+                              ~callback:(MapDialogs.map_manager orthodrawer);
         a "ViewHeightWindow"  ~label:"View _Height Window"
                               ~accel:"<Ctrl>h";
         a "Goto"              ~label:"_Goto...";

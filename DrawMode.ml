@@ -111,16 +111,24 @@ let draw_objects _ =
             orthodrawer#arrow x y facing in
         let draw_item index x y =
             let name = List.nth ItemStrings.item_strings index in
-            let filename = Hashtbl.find Resources.item_hash name in
-            draw_filename filename x y in
+            try
+                let filename = Hashtbl.find Resources.item_hash name in
+                draw_filename filename x y
+            with Not_found -> print_endline ("failed to find" ^ name) in
         let x, y, z = obj#point () in
         match obj#kind () with
-        |Monster -> draw_arrow x y (1.0, 0.0, 0.0) (obj#facing ())
-        |Scenery -> draw_filename Resources.sceneryfile x y
-        |Item    -> draw_item (obj#index ()) x y
-        |Player  -> draw_arrow x y (1.0, 1.0, 0.0) (obj#facing ())
-        |Goal    -> draw_filename Resources.goalfile    x y
-        |Sound_Source -> draw_filename Resources.sound_sourcefile x y
+        |Monster -> if !DrawModeSettings.show_monsters then
+                       draw_arrow x y (1.0, 0.0, 0.0) (obj#facing ())
+        |Scenery -> if !DrawModeSettings.show_scenery then
+                       draw_filename Resources.sceneryfile x y
+        |Item    -> if !DrawModeSettings.show_objects then
+                       draw_item (obj#index ()) x y
+        |Player  -> if !DrawModeSettings.show_players then
+                       draw_arrow x y (1.0, 1.0, 0.0) (obj#facing ())
+        |Goal    -> if !DrawModeSettings.show_goals then
+                       draw_filename Resources.goalfile    x y
+        |Sound_Source -> if !DrawModeSettings.show_sounds then
+                       draw_filename Resources.sound_sourcefile x y
     in
     !MapFormat.objs |> Array.iter draw_obj
 
@@ -148,7 +156,7 @@ let draw_highlight _ =
 let draw orthodrawer =
     orthodrawer#set_color Colors.background_color;
     orthodrawer#clear ();
-    draw_grid ();
+    if !DrawModeSettings.display_grid then draw_grid ();
     draw_polygons ();
     draw_lines ();
     draw_points ();
