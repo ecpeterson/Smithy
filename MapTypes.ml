@@ -539,7 +539,7 @@ let sids_writer fh side =
 let empty_side = new side
 
 type light_spec = int * int * int * float * float
-let empty_ls = 0, 0, 0, 0.0, 0.0
+let empty_ls = 0, 30, 0, 0.0, 0.0
 type light_kind = Normal_Light | Strobe_Light | Media_Light
 let light_kind_descriptor = 0, [Normal_Light; Strobe_Light; Media_Light]
 type light_flag = Active_Light | Slaved_Intensities | Stateless_Light

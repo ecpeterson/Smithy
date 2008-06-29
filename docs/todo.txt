@@ -11,8 +11,6 @@ editing:
 + add placement chunk dialog / functionality
 + add ambient / random sounds views
 interface:
-+ snap to grid
-+ map manager window (grid size, etc.)
 + closing the toolbar windows causes gross behavior, it would be sweet if we
 could somehow avoid that happening (hide instead of close or something)
 
