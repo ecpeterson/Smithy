@@ -21,7 +21,7 @@ Tools
  + Pan tool: the pan tool scrolls the map surface around the map view window.
  + Zoom tool: the zoom tool zooms in on the position under the mouse on a left-click and zooms out over the position under the mouse on a right-click.
  + Text tool: the text tool adds a map annotation. (not currently implemented)
- + Object tool: the object tool adds an object to the map. (not currently implemented)
+ + Object tool: the object tool adds an object to the map.
 
 View Modes
 ==========
@@ -31,4 +31,6 @@ Features
 ========
  + Load and save unmerged map files
  + Edit point / line / polygon geometry
- + Display and move objects
+ + Display, move, alter, add, and remove objects
+ + Assign polygon types and attributes (lights, elevations, liquids)
+ + Alter light and liquid attributes
