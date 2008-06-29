@@ -33,9 +33,9 @@ let env_flags_descriptor = [1, Vacuum; 2, Magnetic; 4, Rebellion;
 type mission_type = Extermination | Exploration | Retrieval | Repair | Rescue
 let mission_descriptor = [1, Extermination; 2, Exploration; 4, Retrieval;
                           8, Repair; 16, Rescue]
-type entry_point_type = Solo | Coop| EMFH | KTMWTB | KOTH | Defense | Rugby
+type entry_point_type = Solo | Coop| EMFH | KTMWTB | KOTH | Defense | Rugby |CTF
 let entry_point_descriptor = [1, Solo; 2, Coop; 4, EMFH; 8, KTMWTB; 16, KOTH;
-                              32, Rugby; 64, Defense]
+                              32, Rugby; 64, Defense; 128, CTF]
 
 (* utility to read in all the entries of a chunk, given an entry factory *)
 let read_chunk fh chunk_length entry_length (reader: in_channel -> 'a) =

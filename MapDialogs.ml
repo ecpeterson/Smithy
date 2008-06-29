@@ -481,6 +481,7 @@ let light_dialog light =
     light#set_secondary_inactive (!si_fn, int_of_string !si_period,
         int_of_string !si_dperiod, float_of_string !si_intensity,
         float_of_string !si_dintensity);
+    light#set_phase (int_of_string !phase);
     List.fold_left2
         (fun mask (desc, _) flag -> if flag then mask lor desc else mask) 0
         MapTypes.light_flag_descriptor [!active; false; !stateless]
