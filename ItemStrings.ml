@@ -55,7 +55,7 @@ let item_strings =
      "Infravision Powerup"; "Alien Weapon"; "Alien Weapon Ammunition";
      "Napalm Launcher"; "Napalm Canister"; "Extravision Powerup";
      "Oxygen Powerup"; "Energy Powerup x1"; "Energy Powerup x2";
-     "Energy Powerup x3"; "Shotgun"; "Shotgun Catridge"; "S'pht Door Key";
+     "Energy Powerup x3"; "Shotgun"; "Shotgun Cartridge"; "S'pht Door Key";
      "Uplink Chip"; "Slate Ball"; "Red Ball (the skull)"; "Violet Ball";
      "Yellow Ball"; "White Ball"; "Orange Ball"; "Blue Ball"; "Green Ball";
      "Sub-Machine Gun"; "SMG Ammo"]

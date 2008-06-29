@@ -492,7 +492,7 @@ let make_light () =
     light_dialog l;
     MapFormat.add_light l
 
-let map_manager _ =
+let map_manager drawer _ =
     let descriptor = [
         `V [
             `H [
@@ -508,4 +508,5 @@ let map_manager _ =
             `C ("Show Sounds", show_sounds);
             `C ("Show Annotations", show_annotations);
             `C ("Visual Mode Crosshairs", vm_crosshair) ] ] in
-    GenerateDialog.generate_dialog descriptor "Map Manager"
+    GenerateDialog.generate_dialog descriptor "Map Manager";
+    drawer#draw ()

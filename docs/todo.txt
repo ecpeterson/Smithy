@@ -6,13 +6,11 @@ editing:
 + finish platform deletion and its editor dialog
 + write polygon tool
 + write annotation tool
-+ write object tool
 + map height restriction
 + add light / media library importing / exporting
 + add placement chunk dialog / functionality
 + add ambient / random sounds views
 interface:
-+ add New Level functionality
 + snap to grid
 + map manager window (grid size, etc.)
 + closing the toolbar windows causes gross behavior, it would be sweet if we
