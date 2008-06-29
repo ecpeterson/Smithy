@@ -274,3 +274,8 @@ let rec list_pos list target =
     match list with
         |x :: xs -> if x = target then 1 else 1 + list_pos xs target
         |[] -> raise (Failure target)
+
+let round float =
+    let mantissa = float -. floor float in
+    if mantissa >= 0.5 then int_of_float (ceil float)
+                       else int_of_float (floor float)

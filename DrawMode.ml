@@ -166,9 +166,9 @@ let draw orthodrawer =
     if !DrawModeEvent.draw_intermediate then begin
         orthodrawer#set_color Colors.solid_line_color;
         let x, y = !MapFormat.points.(!DrawModeEvent.start_point)#vertex () in
-        orthodrawer#line (x, y)
-                         (!DrawModeEvent.intermediate_x,
-                          !DrawModeEvent.intermediate_y)
+        let xe, ye = GeomEdit.point_filter (!DrawModeEvent.intermediate_x,
+                                            !DrawModeEvent.intermediate_y) in
+        orthodrawer#line (x, y) (xe, ye)
     end
 
 (* set up draw mode event hooks *)
