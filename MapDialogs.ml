@@ -462,6 +462,17 @@ let light_dialog light =
                 frame_descriptor "Secondary Inactive" si_fn si_period si_dperiod
                                  si_intensity si_dintensity ] ] ] in
     GenerateDialog.generate_dialog descriptor "Light Parameters";
+    if ((int_of_string !pa_period) = 0 &&
+        (int_of_string !sa_period) = 0) ||
+       ((int_of_string !pi_period) = 0 &&
+        (int_of_string !si_period) = 0) then begin
+        let dialog = GWindow.message_dialog
+                                ~message:"Can't set both periods to zero!"
+                                ~message_type:`ERROR
+                                ~buttons:GWindow.Buttons.close
+                                ~modal:true ~title:Resources.warning () in
+        dialog#run ();
+        dialog#destroy () end else begin
     light#set_kind (CamlExt.of_enum light_kind_descriptor !preset);
     light#set_becoming_active (!ba_fn, int_of_string !ba_period,
         int_of_string !ba_dperiod, float_of_string !ba_intensity,
@@ -487,6 +498,7 @@ let light_dialog light =
         MapTypes.light_flag_descriptor [!active; false; !stateless]
         |> CamlExt.of_bitflag MapTypes.light_flag_descriptor
         |> light#set_flags
+    end
 
 let make_light () =
     let l = new MapTypes.light in
