@@ -14,10 +14,25 @@ type component =
     | `M of string list * int ref
     | `C of string * bool ref
     | `S of int ref
+    | `O of (float * float * float) ref
     | `L of string ]
 
 let rec build_dialog descriptor ~packing ~cleanup () =
     match descriptor with
+        |`O rgb :: descriptor ->
+            let (r, g, b) = !rgb in
+            let color = Gdk.Color.alloc (Gdk.Color.get_system_colormap ())
+                       (`RGB (int_of_float (r *. 65535.0),
+                              int_of_float (g *. 65535.0),
+                              int_of_float (b *. 65535.0))) in
+            let b = GButton.color_button ~color ~packing () in
+            build_dialog descriptor ~packing ~cleanup:(fun _ ->
+                cleanup ();
+                let (r, g, b) = Gdk.Color.red b#color,
+                                Gdk.Color.green b#color,
+                                Gdk.Color.blue b#color in
+                rgb := float r /. 65535.0, float g /. 65535.0,
+                       float b /. 65535.0) ()
         |`C (label, active) :: descriptor ->
             let b = GButton.check_button ~label ~active:!active ~packing () in
             build_dialog descriptor ~packing ~cleanup:(fun _ ->

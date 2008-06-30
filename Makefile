@@ -9,6 +9,7 @@ SOURCES = CamlExt.ml \
 	  MapTypes.ml \
 	  GenerateDialog.ml \
 	  DrawModeSettings.ml \
+	  Preferences.ml \
 	  MapFormat.ml \
 	  GeomEdit.ml \
 	  FileDialogs.ml \
