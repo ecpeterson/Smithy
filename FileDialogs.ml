@@ -10,9 +10,11 @@ let path = ref None
 (* this throws up a pretty useless failure dialog. TODO: could easily be
  * enhanced by allowing varying error messages :) *)
 let fail_dialog () =
-    let dialog = GWindow.dialog ~title:Resources.warning ~modal:true () in
-    GMisc.label ~text:"Failed to perform file operation." ~packing:dialog#vbox#add ();
-    dialog#add_button_stock `OK `OK;
+    let dialog = GWindow.message_dialog ~message:"Failed to perform file op."
+                                        ~message_type:`ERROR
+                                        ~buttons:GWindow.Buttons.close
+                                        ~modal:true
+                                        ~title:Resources.warning () in
     dialog#run (); (* don't care about the result *)
     dialog#destroy ()
 
