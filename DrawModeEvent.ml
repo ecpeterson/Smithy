@@ -38,42 +38,48 @@ let tool_begin_event orthodrawer x y button (state: Gdk.Tags.modifier list) =
     (* a bunch of these get and set media/light/height/whatever attributes *)
     |Lights_Liquid, 1, Some v, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
-        poly#set_media_lightsource v
+        poly#set_media_lightsource v;
+        orthodrawer#draw ()
     |Lights_Liquid, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         let v = poly#media_lightsource () in
         numeric_entry#set_text (string_of_int v)
     |Lights_Ceiling, 1, Some v, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
-        poly#set_ceiling_lightsource v
+        poly#set_ceiling_lightsource v;
+        orthodrawer#draw ()
     |Lights_Ceiling, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         let v = poly#ceiling_lightsource () in
         numeric_entry#set_text (string_of_int v)
     |Lights_Floor, 1, Some v, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
-        poly#set_floor_lightsource v
+        poly#set_floor_lightsource v;
+        orthodrawer#draw ()
     |Lights_Floor, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         let v = poly#floor_lightsource () in
         numeric_entry#set_text (string_of_int v)
     |Elevation_Ceiling, 1, _, Some v, Some p ->
         let poly = !MapFormat.polygons.(p) in
-        poly#set_ceiling_height v
+        poly#set_ceiling_height v;
+        orthodrawer#draw ()
     |Elevation_Ceiling, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         let v = poly#ceiling_height () in
         numeric_entry#set_text (string_of_float v)
     |Elevation_Floor, 1, _, Some v, Some p ->
         let poly = !MapFormat.polygons.(p) in
-        poly#set_floor_height v
+        poly#set_floor_height v;
+        orthodrawer#draw ()
     |Elevation_Floor, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         let v = poly#floor_height () in
         numeric_entry#set_text (string_of_float v)
     |Liquids, 1, Some v, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
-        poly#set_media_index v
+        poly#set_media_index v;
+        orthodrawer#draw ()
     |Liquids, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         let v = poly#media_index () in
