@@ -15,8 +15,7 @@ let intermediate_line x y =
 
 (* an event utility, note that the 8.0 is actually configurable *)
 let highlight_distance orthodrawer =
-    let pixel_epsilon = 8.0 in
-    pixel_epsilon /. orthodrawer#scale
+    !pixel_epsilon /. orthodrawer#scale
 
 (* this gets called when we start applying a tool *)
 let tool_begin_event orthodrawer x y button (state: Gdk.Tags.modifier list) =

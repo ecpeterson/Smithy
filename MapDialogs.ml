@@ -308,7 +308,7 @@ let info_dialog _ =
     MapFormat.entry_point_flags := List.fold_left2
         (fun mask (desc, _) flag -> if flag then mask lor desc else mask) 0
         MapFormat.entry_point_descriptor
-        [!solo; !coop; !emfh; !ktmwtb; !koth; false; false] |>
+        [!solo; !coop; !emfh; !ktmwtb; !koth; false; false; false] |>
         CamlExt.of_bitflag MapFormat.entry_point_descriptor;
     MapFormat.environment_flags := List.fold_left2
         (fun mask (desc, _) flag -> if flag then mask lor desc else mask) 0
