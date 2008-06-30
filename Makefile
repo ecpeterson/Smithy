@@ -9,12 +9,12 @@ SOURCES = CamlExt.ml \
 	  MapTypes.ml \
 	  GenerateDialog.ml \
 	  DrawModeSettings.ml \
-	  Preferences.ml \
 	  MapFormat.ml \
 	  GeomEdit.ml \
 	  FileDialogs.ml \
 	  MapDialogs.ml \
 	  DrawModeWindows.ml \
+	  Preferences.ml \
 	  DrawModeEvent.ml \
 	  DrawMode.ml \
 	  Smithy.ml

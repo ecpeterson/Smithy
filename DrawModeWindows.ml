@@ -1,6 +1,49 @@
 open CamlExt
 open DrawModeSettings
 
+let color_prefs_dialog drawer _ =
+    let thickness = ref (string_of_int
+                        !DrawModeSettings.highlighted_point_thickness) in
+    let looseness = ref (string_of_float !DrawModeSettings.pixel_epsilon) in
+    let saturation = ref (string_of_float !Colors.poly_type_saturation) in
+    let value = ref (string_of_float !Colors.poly_type_value) in
+    let descriptor = [
+        `V [
+            `H [`L "Background color: ";
+                `O Colors.background_color ];
+            `H [`L "Grid color: ";
+                `O Colors.grid_color ];
+            `H [`L "Anchor point color: ";
+                `O Colors.anchor_point_color ];
+            `H [`L "Point color: ";
+                `O Colors.point_color ];
+            `H [`L "Solid line color: ";
+                `O Colors.solid_line_color ];
+            `H [`L "Transparent line color: ";
+                `O Colors.transparent_line_color ];
+            `H [`L "Passable line color: ";
+                `O Colors.passable_line_color ];
+            `H [`L "Polygon color: ";
+                `O Colors.polygon_color ];
+            `H [`L "Invalid polygon color: ";
+                `O Colors.invalid_polygon ];
+            `H [`L "Highlight color: ";
+                `O Colors.highlight_color ];
+            `H [`L "Highlight thickness: ";
+                `E thickness ];
+            `H [`L "Click looseness: ";
+                `E looseness ];
+            `H [`L "Polygon Type Saturation: ";
+                `E saturation ];
+            `H [`L "Polygon Type Value: ";
+                `E value ] ] ] in
+    GenerateDialog.generate_dialog descriptor "Color Preferences";
+    DrawModeSettings.highlighted_point_thickness := int_of_string !thickness;
+    DrawModeSettings.pixel_epsilon := float_of_string !looseness;
+    Colors.poly_type_saturation := float_of_string !saturation;
+    Colors.poly_type_value := float_of_string !value;
+    drawer#draw ()
+
 (* we keep track of what item is highlighted as part of the drawing / interface
  * object, and we have an enumerative type to match across *)
 type highlighted_component =  No_Highlight       |
@@ -275,8 +318,7 @@ let menu_bar, orthodrawer, status =
         a "GarbageCollect"   ~label:"_Garbage Collect"
                              ~callback:(fun _ -> Gc.full_major ());
         a "ColorPreferences" ~label:"Color _Preferences"
-                             ~callback:(Preferences.color_prefs_dialog
-                                            orthodrawer);
+                             ~callback:(color_prefs_dialog orthodrawer);
     ];
     let accel_xml =
    "<ui>\

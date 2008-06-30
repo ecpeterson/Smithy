@@ -16,3 +16,4 @@ let show_sounds = ref true
 let show_annotations = ref true
 let vm_crosshair = ref true
 let highlighted_point_thickness = ref 5
+let pixel_epsilon = ref 8.0
