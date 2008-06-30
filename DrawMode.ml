@@ -6,7 +6,7 @@ open MapTypes
 (* module methods *)
 let draw_grid _ =
     (* draw grid lines *)
-    orthodrawer#set_color Colors.grid_color;
+    orthodrawer#set_color !Colors.grid_color;
     let grid_factor = 32 * (pow 2 !grid_factor) in
     for i = -grid_factor to grid_factor do
         let it = i * (MapFormat.half_map_width/grid_factor) in
@@ -16,7 +16,7 @@ let draw_grid _ =
                          (it,  MapFormat.half_map_width);
     done;
     (* draw grid points *)
-    orthodrawer#set_color Colors.anchor_point_color;
+    orthodrawer#set_color !Colors.anchor_point_color;
     for i = -32 to 32 do
         for j = -32 to 32 do
             let it, jt = i * (MapFormat.half_map_width/32),
@@ -26,7 +26,7 @@ let draw_grid _ =
     done
 
 let draw_points _ =
-    orthodrawer#set_color Colors.point_color;
+    orthodrawer#set_color !Colors.point_color;
     !MapFormat.points |> Array.map (fun x -> x#vertex ())
                       |> Array.iter (fun (x, y) ->
                                         orthodrawer#fat_point (x, y) 2)
@@ -40,12 +40,12 @@ let draw_lines _ =
                              !MapFormat.points.(x)#vertex (),
                              !MapFormat.points.(y)#vertex ())
                          |> orthodrawer#segments in
-    orthodrawer#set_color Colors.solid_line_color;
+    orthodrawer#set_color !Colors.solid_line_color;
     draw_these (fun x -> List.mem SOLID (x#flags ()));
-    orthodrawer#set_color Colors.transparent_line_color;
+    orthodrawer#set_color !Colors.transparent_line_color;
     draw_these (fun x -> List.mem TRANSPARENT (x#flags ()) &&
                          not (List.mem SOLID (x#flags ())));
-    orthodrawer#set_color Colors.passable_line_color;
+    orthodrawer#set_color !Colors.passable_line_color;
     draw_these (fun x -> not (List.mem TRANSPARENT (x#flags ())) &&
                          not (List.mem SOLID (x#flags ())))
 
@@ -67,9 +67,9 @@ let draw_polygons _ =
         begin match !mode with
         |Draw_Mode ->
             if CamlExt.vertex_array_is_concave vertex_array then
-                orthodrawer#set_color Colors.invalid_polygon
+                orthodrawer#set_color !Colors.invalid_polygon
             else
-                orthodrawer#set_color Colors.polygon_color;
+                orthodrawer#set_color !Colors.polygon_color;
         |Elevation_Ceiling ->
             let n = poly#ceiling_height () /. 18.0 +. 0.5 in
             orthodrawer#set_color (n, n, n)
@@ -80,8 +80,8 @@ let draw_polygons _ =
             let kind = float (CamlExt.to_enum poly_kind_descriptor
                                               (poly#kind ())) in
             CamlExt.hsv_to_rgb (kind /. max,
-                                Colors.poly_type_saturation,
-                                Colors.poly_type_value)
+                                !Colors.poly_type_saturation,
+                                !Colors.poly_type_value)
                 |> orthodrawer#set_color;
         |Liquids ->
             if poly#media_index () = -1 then
@@ -133,7 +133,7 @@ let draw_objects _ =
     !MapFormat.objs |> Array.iter draw_obj
 
 let draw_highlight _ =
-    orthodrawer#set_color Colors.highlight_color;
+    orthodrawer#set_color !Colors.highlight_color;
     match !highlight with
     |Point ns ->
         List.iter (fun n ->
@@ -154,7 +154,7 @@ let draw_highlight _ =
     |No_Highlight |_ -> ()
 
 let draw orthodrawer =
-    orthodrawer#set_color Colors.background_color;
+    orthodrawer#set_color !Colors.background_color;
     orthodrawer#clear ();
     if !DrawModeSettings.display_grid then draw_grid ();
     draw_polygons ();
@@ -164,7 +164,7 @@ let draw orthodrawer =
     draw_objects ();
     (* draw the line we're in the middle of laying, if appropriate *)
     if !DrawModeEvent.draw_intermediate then begin
-        orthodrawer#set_color Colors.solid_line_color;
+        orthodrawer#set_color !Colors.solid_line_color;
         let x, y = !MapFormat.points.(!DrawModeEvent.start_point)#vertex () in
         let xe, ye = GeomEdit.point_filter (!DrawModeEvent.intermediate_x,
                                             !DrawModeEvent.intermediate_y) in

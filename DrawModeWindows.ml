@@ -188,6 +188,7 @@ let menu_bar, orthodrawer, status =
         <menu action='SmithyMenu'>\
           <menuitem action='MergePoints'/>\
           <menuitem action='GarbageCollect'/>\
+          <menuitem action='ColorPreferences'/>\
         </menu>\
       </menubar>\
     </ui>" in
@@ -270,9 +271,12 @@ let menu_bar, orthodrawer, status =
         a "EditMapItemParams" ~label:"Edit Map Item _Parameters...";
         a "RecenterLevel"     ~label:"_Recenter Level";
 
-        a "MergePoints"    ~label:"_Merge Selected Points";
-        a "GarbageCollect" ~label:"_Garbage Collect"
-                           ~callback:(fun _ -> Gc.full_major ());
+        a "MergePoints"      ~label:"_Merge Selected Points";
+        a "GarbageCollect"   ~label:"_Garbage Collect"
+                             ~callback:(fun _ -> Gc.full_major ());
+        a "ColorPreferences" ~label:"Color _Preferences"
+                             ~callback:(Preferences.color_prefs_dialog
+                                            orthodrawer);
     ];
     let accel_xml =
    "<ui>\
