@@ -21,7 +21,7 @@ let load_prefs _ =
         DrawModeWindows.orthodrawer#set_scale (Marshal.from_channel fh);
         FileDialogs.path := Marshal.from_channel fh;
         close_in fh
-    with _ -> ()
+    with _ -> print_endline "Failed to load preferences!"
 
 let save_prefs _ =
     try
@@ -46,4 +46,4 @@ let save_prefs _ =
         Marshal.to_channel fh (DrawModeWindows.orthodrawer#scale) [];
         Marshal.to_channel fh !FileDialogs.path [];
         close_out fh
-    with _ -> ()
+    with _ -> print_endline "Failed to write preferences!"

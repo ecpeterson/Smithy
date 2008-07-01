@@ -290,9 +290,12 @@ let menu_bar, orthodrawer, status =
             change_editor_state state;
             orthodrawer#draw ());
 
-        a "Pave"        ~label:"_Pave Level";
-        a "Nuke"        ~label:"_Nuke Objects Only...";
-        a "NukeAndPave" ~label:"N_uke and Pave Level...";
+        a "Pave"        ~label:"_Pave Level"
+                        ~callback:MapFormat.pave;
+        a "Nuke"        ~label:"_Nuke Objects Only..."
+                        ~callback:MapFormat.nuke;
+        a "NukeAndPave" ~label:"N_uke and Pave Level..."
+                        ~callback:MapFormat.nuke_and_pave;
 
         a "ZoomIn"            ~label:"Zoom _In"
                               ~accel:"<Ctrl>equal"
@@ -340,9 +343,10 @@ let menu_bar, orthodrawer, status =
     let delete_cb _ =
         (* dispatch for deleting a highlighted map item *)
         begin match !highlight with
-        |Point n -> List.iter (fun n -> MapFormat.delete_point n) n
-        |Line  n -> List.iter (fun n -> MapFormat.delete_line n)  n
-        |Poly  n -> List.iter (fun n -> MapFormat.delete_poly n)  n
+        |Point  n -> List.iter (fun n -> MapFormat.delete_point n) n
+        |Line   n -> List.iter (fun n -> MapFormat.delete_line n)  n
+        |Poly   n -> List.iter (fun n -> MapFormat.delete_poly n)  n
+        |Object n -> List.iter (fun n -> MapFormat.delete_obj n)   n
         |No_Highlight |_ -> ()
         end;
         highlight := No_Highlight;
