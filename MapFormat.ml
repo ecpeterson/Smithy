@@ -254,40 +254,18 @@ let write_to_file filename =
     close_out fh
 
 (* allow others to add objects *)
-let add_point point =
-    let append_array = Array.make 1 point in
-    points := Array.append !points append_array;
-    Array.length !points - 1
-
-let add_line line =
-    let append_array = Array.make 1 line in
-    lines := Array.append !lines append_array;
-    Array.length !lines - 1
-
-let add_polygon poly =
-    let append_array = Array.make 1 poly in
-    polygons := Array.append !polygons append_array;
-    Array.length !polygons - 1
-
-let add_media m =
-    let append_array = Array.make 1 m in
-    media := Array.append !media append_array;
-    Array.length !media - 1
-
-let add_light light =
-    let append_array = Array.make 1 light in
-    lights := Array.append !lights append_array;
-    Array.length !lights - 1
-
-let add_platform plat =
-    let append_array = Array.make 1 plat in
-    platforms := Array.append !platforms append_array;
-    Array.length !platforms - 1
-
-let add_object obj =
-    let append_array = Array.make 1 obj in
-    objs := Array.append !objs append_array;
-    Array.length !objs - 1
+let add_builder a o =
+    let append_array = Array.make 1 o in
+    a := Array.append !a append_array;
+    Array.length !a - 1
+let add_point    = add_builder points
+let add_line     = add_builder lines
+let add_polygon  = add_builder polygons
+let add_media    = add_builder media
+let add_light    = add_builder lights
+let add_platform = add_builder platforms
+let add_object   = add_builder objs
+let add_side     = add_builder sides
 
 (** geometry selection functions **)
 (* gets the closest object to the point (x0, y0) *)
@@ -553,20 +531,57 @@ let delete_platform n =
         if y = n then x#set_permutation (-1)) !polygons
 
 (* safely deletes all the objects in a map *)
-let rec nuke () =
-    if !objs = [||] then () else begin
-        delete_obj 0;
-        nuke ()
-    end
+let nuke _ =
+    (* this looks unnecessary, but ocaml typing made me do it *)
+    let rec obj_loop _ =
+        if !objs = [||] then () else begin
+            delete_obj 0;
+            obj_loop ()
+        end in
+    obj_loop ()
 
 (* safely deletes all the sides in a map *)
 (* TODO: wipe floor/ceiling textures too *)
-let rec pave () =
-    if !sides = [||] then () else begin
-        delete_side 0;
-        pave ()
-    end
+let pave _ =
+    let default_sd =
+        match !environment_code with
+            |Water  -> (0, 17, 5) |Lava   -> (0, 18, 5) |Sewage -> (0, 19, 5)
+            |Jjaro  -> (0, 20, 5) |Pfhor  -> (0, 21, 5) in
+    (* first delete all existing sides *)
+    let rec trash_sides _ =
+        if !sides = [||] then () else begin
+            delete_side 0;
+            trash_sides ()
+        end in
+    trash_sides ();
+    (* now add in blank sides everywhere *)
+    let make_side line line_index this_poly adjacent_poly =
+        if this_poly = -1 then -1 else begin
+        let side = new MapTypes.side in
+        side#set_line_index line_index;
+        side#set_polygon_index this_poly;
+        side#set_primary_texture ((0, 0), default_sd);
+        side#set_kind (
+            if adjacent_poly = -1 then MapTypes.Full_Side else
+            let tp, ap = !polygons.(this_poly), !polygons.(adjacent_poly) in
+            let tpc, apc = tp#ceiling_height (), ap#ceiling_height () in
+            let tpf, apf = tp#floor_height (), ap#floor_height () in
+            if tpc > apc && tpf < apf then MapTypes.Split_Side else
+            if tpc > apc then MapTypes.High_Side else
+            if tpf < apf then MapTypes.Low_Side else
+            (* if we get here that means this side isn't visible, but for
+             * purposes of Lua Visual Mode we want it anyway *)
+            MapTypes.High_Side);
+        add_side side end in
+    CamlExt.array_fold_left_indexed (fun () line idx ->
+        let cw_poly, ccw_poly = line#cw_poly_owner (), line#ccw_poly_owner () in
+        line#set_cw_poly_side_index (make_side line idx cw_poly ccw_poly);
+        line#set_ccw_poly_side_index (make_side line idx ccw_poly cw_poly))
+            () !lines;
+    Array.iter (fun x ->
+        x#set_floor_texture default_sd;
+        x#set_ceiling_texture default_sd) !polygons
 
 (* hee hee *)
-let nuke_and_pave () =
+let nuke_and_pave _ =
     nuke (); pave ()
