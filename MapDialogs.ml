@@ -44,8 +44,142 @@ let line_dialog line =
         line#set_ccw_poly_side_index (-1)
     end
 
+open MapTypes
 let platform_dialog plat =
-    print_endline "Missing platform dialog!"
+    let kind = ref (plat#kind ()) in
+    let speed = ref (plat#speed () |> string_of_int) in
+    let delay = ref (plat#delay () |> string_of_int) in
+    let automin = ref (plat#minimum_height () = -1) in
+    let minheight = ref (plat#minimum_height () |> string_of_int) in
+    let automax = ref (plat#maximum_height () = -1) in
+    let maxheight = ref (plat#maximum_height () |> string_of_int) in
+    let flags = plat#flags () in
+    let is_door = ref (List.mem Plat_Door flags) in
+    let initially_active = ref(List.mem Plat_Initially_Active flags) in
+    let initially_extended = ref (List.mem Plat_Initially_Extended flags) in
+    let player_control = ref (List.mem Plat_Controlled_By_Player flags) in
+    let alien_control = ref (List.mem Plat_Controlled_By_Aliens flags) in
+    let damaging = ref (List.mem Plat_Damages flags) in
+    let reverse_on_bump = ref (List.mem Plat_Reverses_On_Bump flags) in
+    let extends_from_floor = ref (List.mem Plat_From_Floor flags &&
+                                  not (List.mem Plat_From_Ceiling flags)) in
+    let extends_from_ceiling = ref (List.mem Plat_From_Ceiling flags &&
+                                    not (List.mem Plat_From_Floor flags)) in
+    let extends_from_both = ref (List.mem Plat_From_Ceiling flags &&
+                                 List.mem Plat_From_Floor flags) in
+    let floor_to_ceiling = ref (List.mem Plat_Floor_To_Ceiling flags) in
+    let one_shot = ref (List.mem Plat_One_Shot flags) in
+    let a_to_a_lights = ref (List.mem Plat_Activates_Light flags) in
+    let a_to_a_adj_plats =
+        ref (List.mem Plat_Activates_Adj_Plats_On_Activation flags) in
+    let a_to_d_adj_plats =
+        ref (List.mem Plat_Deactivates_Adj_Plats_On_Activation flags) in
+    let adjacent_at_each_level =
+        ref (List.mem Plat_Activates_Adj_Plats_At_Each_Level flags) in
+    let tag = ref (plat#tag () |> string_of_int) in
+    let deactivates_at_each_level =
+        ref (List.mem Plat_Deactivates_At_Each_Level flags) in
+    let deactivates_at_initial_level =
+        ref (List.mem Plat_Deactivates_At_Initial_Level flags) in
+    let deactivates_never = ref (not !deactivates_at_initial_level &&
+                                 not !deactivates_at_each_level) in
+    let d_to_d_lights = ref (List.mem Plat_Deactivates_Light flags) in
+    let d_to_d_adj_plats =
+        ref (List.mem Plat_Deactivates_Adj_Plats_On_Deactivation flags) in
+    let d_to_a_adj_plats =
+        ref (List.mem Plat_Activates_Adj_Plats_On_Deactivation flags) in
+    let cant_deactivate = ref (List.mem Plat_Cant_Be_Activated flags) in
+    let uses_native_heights = ref (List.mem Plat_Uses_Native_Heights flags) in
+    let delay_before_active = ref (List.mem Plat_Delay_Before_Active flags) in
+    let doesnt_activate_parent =
+        ref (List.mem Plat_Does_Not_Activate_Parent flags) in
+    let contracts_slower = ref (List.mem Plat_Contracts_Slowly flags) in
+    let locked = ref (List.mem Plat_Locked flags) in
+    let secret = ref (List.mem Plat_Secret flags) in
+    let descriptor = [
+        `V [
+            `H [
+                `V [
+                    `H [`L "Type: ";
+                        `M (["S'pht Door"; "S'pht Door Split";
+                             "S'pht Door Locked"; "S'pht Platform Silent";
+                             "S'pht Platform"; "S'pht Door Heavy"; "Pfhor Door";
+                             "S'pht Platform Heavy"; "Pfhor Platform"], kind) ];
+                    `H [`L "Speed: ";
+                        `E speed ];
+                    `H [`L "Delay: ";
+                        `E delay ] ];
+                `V [`C ("Autocalculate Minimum Height", automin);
+                    `H [`L "Minimum Height";
+                        `E minheight ];
+                    `C ("Autocalculate Maximum Height", automax);
+                    `H [`L "Maximum Height";
+                        `E maxheight ] ];
+                `V [`C ("Platform is a Door", is_door)]];
+            `H [
+                `F ("Initially", [
+                    `C ("Active", initially_active);
+                    `C ("Extended", initially_extended) ]);
+                `F ("Controllable By:", [
+                    `C ("Players", player_control);
+                    `C ("Aliens", alien_control); ]);
+                `F ("When It Hits An Obstruction It:", [
+                    `C ("Causes Damage", damaging);
+                    `C ("Reverses Direction", reverse_on_bump) ]);
+                `F ("Extends:", [
+                    `R ["From Floor", extends_from_floor;
+                        "From Ceiling", extends_from_ceiling;
+                        "From Both", extends_from_both];
+                        `C ("Floor to Ceiling", floor_to_ceiling)])];
+            `H [
+                `V [
+                    `F ("Activates:", [
+                        `C ("Only Once", one_shot);
+                        `C ("Activates Polygon Lights", a_to_a_lights);
+                        `C ("Activates Adjacent Platform", a_to_a_adj_plats);
+                        `C ("Deactivates Adjacent Platform", a_to_d_adj_plats);
+                        `C ("Adjacent at Each Level", adjacent_at_each_level)]);
+                    `H [`L "Tags: ";
+                        `E tag] ];
+                `F ("Deactivates:", [
+                    `R ["Never", deactivates_never;
+                        "At Each Level", deactivates_at_each_level;
+                        "At Initial Level", deactivates_at_initial_level];
+                    `C ("Deactivates Polygon Lights", d_to_d_lights);
+                    `C ("Deactivates Adjacent Platform", d_to_d_adj_plats);
+                    `C ("Activates Adjacent Platform", d_to_a_adj_plats)]);
+                `F ("Miscellaneous:", [
+                    `C ("Can't Deactivate Externally", cant_deactivate);
+                    `C ("Uses Native Polygon Heights", uses_native_heights);
+                    `C ("Delay Before Activation", delay_before_active);
+                    `C ("Doesn't Activate Parent", doesnt_activate_parent);
+                    `C ("Contracts Slower", contracts_slower);
+                    `C ("Locked Door", locked);
+                    `C ("Secret", secret) ]) ] ] ] in
+    GenerateDialog.generate_dialog descriptor "Platform Properties";
+    let speed = int_of_string !speed in
+    let delay = int_of_string !delay in
+    let minheight = int_of_string !minheight in
+    let maxheight = int_of_string !maxheight in
+    let tag = int_of_string !tag in
+    plat#set_kind !kind;
+    plat#set_speed speed;
+    plat#set_delay delay;
+    plat#set_maximum_height (if !automax then -1 else maxheight);
+    plat#set_minimum_height (if !automin then -1 else minheight);
+    plat#set_tag tag;
+    plat#set_flags (List.fold_left2 (fun build_mask (_, new_mask) flag ->
+        if flag then new_mask :: build_mask else build_mask)
+        [] platform_flags_descriptor
+        [!initially_active; !initially_extended; !deactivates_at_each_level;
+         !deactivates_at_initial_level; !d_to_a_adj_plats; !floor_to_ceiling;
+         !extends_from_floor || !extends_from_both;
+         !extends_from_ceiling || !extends_from_both; !damaging;
+         !doesnt_activate_parent; !one_shot; !a_to_a_lights; !d_to_d_lights;
+         !player_control; !alien_control; !reverse_on_bump; !cant_deactivate;
+         !uses_native_heights; !delay_before_active; !a_to_a_adj_plats;
+         !a_to_d_adj_plats; !d_to_d_adj_plats; !contracts_slower;
+         !adjacent_at_each_level; !locked; !secret; !is_door])
 
 let poly_dialog poly =
     let old_kind = poly#kind () in
