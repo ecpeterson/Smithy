@@ -15,6 +15,7 @@ type component =
     | `C of string * bool ref
     | `S of int ref
     | `O of (float * float * float) ref
+    | `R of (string * bool ref) list
     | `L of string ]
 
 let rec build_dialog descriptor ~packing ~cleanup () =
@@ -44,10 +45,23 @@ let rec build_dialog descriptor ~packing ~cleanup () =
                 cleanup (); return := spinner#theta) ()
         |`F (label, components) :: descriptor ->
             let f = GBin.frame ~label ~packing () in
-            let extra_cleanup = build_dialog components ~packing:f#add
+            let v = GPack.vbox ~packing:f#add () in
+            let extra_cleanup = build_dialog components ~packing:v#add
                                                         ~cleanup:ignore () in
             build_dialog descriptor ~packing ~cleanup:(fun _ ->
                 cleanup (); extra_cleanup ()) ()
+        |`R ((first_label, first_setting) :: bdesc) :: descriptor ->
+            let vbox = GPack.vbox ~packing () in
+            let first_button = GButton.radio_button ~label:first_label
+                                ~active:!first_setting ~packing:vbox#add () in
+            let buttons = List.map (fun (label, setting) ->
+                GButton.radio_button ~label ~active:!setting
+                    ~group:first_button#group ~packing:vbox#add ()) bdesc in
+            build_dialog descriptor ~packing ~cleanup:(fun _ ->
+                cleanup ();
+                List.iter2 (fun (_, setting) button -> setting:= button#active)
+                    ((first_label, first_setting) :: bdesc)
+                    (first_button :: buttons)) ()
         |`V components :: descriptor ->
             let vbox = GPack.vbox ~packing () in
             let extra_cleanup = build_dialog components ~packing:vbox#add

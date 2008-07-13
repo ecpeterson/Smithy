@@ -22,6 +22,7 @@ let media_length = 32
 let placement_length = 12
 let platform_length = 32
 let optimized_point_length = 16
+let optimized_platform_length = 140
 let number_of_placements = 128 (* 64 items, 64 monsters *)
 
 (* TODO: is it feasible to move these to MapTypes? *)
@@ -122,6 +123,8 @@ let read_platforms fh length =
     platforms := read_chunk fh length platform_length plat_reader
 let read_optimized_points fh length =
     points := read_chunk fh length optimized_point_length epnt_reader
+let read_optimized_platforms fh length =
+    platforms := read_chunk fh length optimized_platform_length opt_plat_reader
 
     (* write out various chunks *)
 let write_points fh = write_chunk fh !points point_length "PNTS" pnts_writer
@@ -189,6 +192,7 @@ let rec read_chunks fh =
         |"medi" -> read_media fh length
         (* and now support for optimized chunks *)
         |"EPNT" -> read_optimized_points fh length
+        |"PLAT" -> read_optimized_platforms fh length
         |_ -> print_endline ("epic fail: " ^ chunk_name)
     end;
     seek_in fh (next_offset + offset_of_first_chunk);

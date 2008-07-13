@@ -127,13 +127,59 @@ let lins_writer fh line =
     output_signed_word fh (line#ccw_poly_owner ());
     ignore (output_padding fh 12)
 
+type platform_flags = Plat_Initially_Active | Plat_Initially_Extended |
+                      Plat_Deactivates_At_Each_Level |
+                      Plat_Deactivates_At_Initial_Level |
+                      Plat_Activates_Adj_Plats_On_Deactivation |
+                      Plat_Floor_To_Ceiling | Plat_From_Floor |
+                      Plat_From_Ceiling | Plat_Damages |
+                      Plat_Does_Not_Activate_Parent | Plat_One_Shot |
+                      Plat_Activates_Light | Plat_Deactivates_Light |
+                      Plat_Controlled_By_Player | Plat_Controlled_By_Aliens |
+                      Plat_Reverses_On_Bump | Plat_Cant_Be_Activated |
+                      Plat_Uses_Native_Heights | Plat_Delay_Before_Active |
+                      Plat_Activates_Adj_Plats_On_Activation |
+                      Plat_Deactivates_Adj_Plats_On_Activation |
+                      Plat_Deactivates_Adj_Plats_On_Deactivation |
+                      Plat_Contracts_Slowly |
+                      Plat_Activates_Adj_Plats_At_Each_Level | Plat_Locked |
+                      Plat_Secret | Plat_Door
+let platform_flags_descriptor =
+   [0x00000001, Plat_Initially_Active;
+    0x00000002, Plat_Initially_Extended;
+    0x00000004, Plat_Deactivates_At_Each_Level;
+    0x00000008, Plat_Deactivates_At_Initial_Level;
+    0x00000010, Plat_Activates_Adj_Plats_On_Deactivation;
+    0x00000020, Plat_Floor_To_Ceiling;
+    0x00000040, Plat_From_Floor;
+    0x00000080, Plat_From_Ceiling;
+    0x00000100, Plat_Damages;
+    0x00000200, Plat_Does_Not_Activate_Parent;
+    0x00000400, Plat_One_Shot;
+    0x00000800, Plat_Activates_Light;
+    0x00001000, Plat_Deactivates_Light;
+    0x00002000, Plat_Controlled_By_Player;
+    0x00004000, Plat_Controlled_By_Aliens;
+    0x00008000, Plat_Reverses_On_Bump;
+    0x00010000, Plat_Cant_Be_Activated;
+    0x00020000, Plat_Uses_Native_Heights;
+    0x00040000, Plat_Delay_Before_Active;
+    0x00080000, Plat_Activates_Adj_Plats_On_Activation;
+    0x00100000, Plat_Deactivates_Adj_Plats_On_Activation;
+    0x00200000, Plat_Deactivates_Adj_Plats_On_Deactivation;
+    0x00400000, Plat_Contracts_Slowly;
+    0x00800000, Plat_Activates_Adj_Plats_At_Each_Level;
+    0x01000000, Plat_Locked;
+    0x02000000, Plat_Secret;
+    0x04000000, Plat_Door]
 class platform = object
     val mutable kind = 0
     val mutable speed = 0
     val mutable delay = 0
     val mutable maximum_height = 0
     val mutable minimum_height = 0
-    val mutable static_flags = 0
+    val mutable flags = [Plat_Initially_Active; Plat_Initially_Extended;
+                         Plat_From_Floor]
     val mutable polygon_index = 0
     val mutable tag = 0
 
@@ -142,7 +188,7 @@ class platform = object
     method delay () = delay
     method maximum_height () = maximum_height
     method minimum_height () = minimum_height
-    method static_flags () = static_flags
+    method flags () = flags
     method polygon_index () = polygon_index
     method tag () = tag
 
@@ -151,7 +197,7 @@ class platform = object
     method set_delay x = delay <- x
     method set_maximum_height x = maximum_height <- x
     method set_minimum_height x = minimum_height <- x
-    method set_static_flags x = static_flags <- x
+    method set_flags x = flags <- x
     method set_polygon_index x = polygon_index <- x
     method set_tag x = tag <- x
 end
@@ -162,7 +208,8 @@ let plat_reader fh =
     plat#set_delay (input_word fh);
     plat#set_maximum_height (input_signed_word fh);
     plat#set_minimum_height (input_signed_word fh);
-    plat#set_static_flags (input_dword fh);
+    plat#set_flags
+        (CamlExt.of_bitflag platform_flags_descriptor (input_dword fh));
     plat#set_polygon_index (input_word fh);
     plat#set_tag (input_word fh);
     ignore (input_dword fh);
@@ -176,27 +223,52 @@ let plat_writer fh plat =
     output_word fh (plat#delay ());
     output_signed_word fh (plat#maximum_height ());
     output_signed_word fh (plat#minimum_height ());
-    output_dword fh (plat#static_flags ());
+    output_dword fh
+        (CamlExt.to_bitflag platform_flags_descriptor (plat#flags ()));
     output_word fh (plat#polygon_index ());
     output_word fh (plat#tag ());
     ignore (output_padding fh 14)
 let empty_platform = new platform
+let opt_plat_reader fh =
+    let plat = new platform in
+    plat#set_kind (input_word fh);
+    plat#set_flags
+        (CamlExt.of_bitflag platform_flags_descriptor (input_dword fh));
+    plat#set_speed (input_word fh);
+    plat#set_delay (input_word fh);
+    let min_floor_height = input_signed_word fh in
+    let max_floor_height = input_signed_word fh in
+    let min_ceiling_height = input_signed_word fh in
+    let max_ceiling_height = input_signed_word fh in
+    (* TODO: i'm not sure this is right *)
+    plat#set_minimum_height
+        (List.fold_left min ( 0xffff) [min_floor_height; max_floor_height;
+                                       min_ceiling_height; max_ceiling_height]);
+    plat#set_maximum_height
+        (List.fold_left max (-0xffff) [min_floor_height; max_floor_height;
+                                       min_ceiling_height; max_ceiling_height]);
+    plat#set_polygon_index (input_word fh);
+    seek_in fh (pos_in fh + 74); (* dynamic data we don't care about *)
+    plat#set_tag (input_word fh);
+    seek_in fh (pos_in fh + 44); (* genuine padding *)
+    plat
 
 type poly_kind = Normal | Item_Impassable | Monster_and_Item_Impassable | Hill |
                  Base | Platform | Light_On_Trigger | Platform_On_Trigger |
                  Light_Off_Trigger | Platform_Off_Trigger | Teleporter |
                  Zone_Border | Goal | Visible_Monster_Trigger |
-                 Invisible_Monster_Trigger | Dual_Monster_Trigger | Item_Trigger |
-                 Must_Be_Explored | Automatic_Exit | Minor_Ouch | Major_Ouch |
-                 Glue | Glue_Trigger | Superglue
-let poly_kind_descriptor = 0, [Normal; Item_Impassable; Monster_and_Item_Impassable;
-                            Hill; Base; Platform; Light_On_Trigger;
-                            Platform_On_Trigger; Light_Off_Trigger;
-                            Platform_Off_Trigger; Teleporter; Zone_Border; Goal;
-                            Visible_Monster_Trigger; Invisible_Monster_Trigger;
-                            Dual_Monster_Trigger; Item_Trigger;
-                            Must_Be_Explored; Automatic_Exit; Minor_Ouch;
-                            Major_Ouch; Glue; Glue_Trigger; Superglue]
+                 Invisible_Monster_Trigger | Dual_Monster_Trigger |
+                 Item_Trigger | Must_Be_Explored | Automatic_Exit |
+                 Minor_Ouch | Major_Ouch | Glue | Glue_Trigger | Superglue
+let poly_kind_descriptor = 0, [Normal; Item_Impassable;
+                            Monster_and_Item_Impassable; Hill; Base; Platform;
+                            Light_On_Trigger; Platform_On_Trigger;
+                            Light_Off_Trigger; Platform_Off_Trigger; Teleporter;
+                            Zone_Border; Goal; Visible_Monster_Trigger;
+                            Invisible_Monster_Trigger; Dual_Monster_Trigger;
+                            Item_Trigger; Must_Be_Explored; Automatic_Exit;
+                            Minor_Ouch; Major_Ouch; Glue; Glue_Trigger;
+                            Superglue]
 (* a polygon object *)
 class polygon = object
     val mutable kind = Normal
