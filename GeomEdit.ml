@@ -1,3 +1,6 @@
+(*** GeomEdit.ml contains lengthy algorithms that correspond to geometric
+ * manipulations of map data. ***)
+
 let point_filter (x, y) =
     if !DrawModeSettings.constrain_to_grid then begin
         let granularity= 1024 / (CamlExt.pow 2 !DrawModeSettings.grid_factor) in

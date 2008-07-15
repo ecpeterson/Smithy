@@ -1,12 +1,9 @@
+(*** MapDialogs.ml contains all the GTK user interfaces for map geometry
+ * property editing. ***)
+
 open MapTypes
 open CamlExt
 open DrawModeSettings
-
-(* utility that constructs an edit box with a prefixed caption *)
-let labeled_entry ~label ~text ~packing =
-    let hbox = GPack.hbox ~packing () in
-    GMisc.label ~packing:hbox#add ~text:label ();
-    GEdit.entry ~packing:hbox#add ~text ()
 
 let point_dialog point =
     let px, py = point#vertex () in

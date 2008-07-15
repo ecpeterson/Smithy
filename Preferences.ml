@@ -1,3 +1,6 @@
+(*** Preferences.ml contains routines that load and save the cross-execution
+ * state, like colors or file dialog paths. ***)
+
 let load_prefs _ =
     try
         let fh = open_in_bin Resources.preferences_file in

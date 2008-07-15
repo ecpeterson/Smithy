@@ -1,3 +1,7 @@
+(*** DrawModeSettings.ml contains near-global mutables that correspond to state
+ * of the application while in draw mode that multiple modules may need to
+ * modify. ***)
+
 type tool = ArrowTool | LineTool |
             PolyTool  | FillTool |
             PanTool   | ZoomTool |

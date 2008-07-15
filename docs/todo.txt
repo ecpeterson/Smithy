@@ -10,6 +10,7 @@ editing:
 interface:
 + closing the toolbar windows causes gross behavior, it would be sweet if we
 could somehow avoid that happening (hide instead of close or something)
++ /definitely/ stop using internal units in dialogs, ideally just write fixed-point readers and writers and stop using internal units in the program itself
 
 less important
 =========

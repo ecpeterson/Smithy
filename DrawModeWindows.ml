@@ -1,3 +1,5 @@
+(*** DrawModeWindows.ml contains the definitions of the actual GTK interface
+ * and hooks used while in draw mode. ***)
 open CamlExt
 open DrawModeSettings
 

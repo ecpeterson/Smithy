@@ -1,4 +1,5 @@
-(** colors!  TODO: make configurable **)
+(*** Colors.ml contains color settings.  TODO: these could probably be moved to
+ * DrawModeSettings.ml. ***)
 (* these define what color things get painted while in draw mode *)
 let background_color       = ref (0.3, 0.3, 0.3)
 let grid_color             = ref (0.5, 0.5, 0.5)

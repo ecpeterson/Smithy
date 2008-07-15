@@ -1,3 +1,6 @@
+(*** DialSlider.ml contains a GTK widget class used to pick directional
+ * headings similar to the widgets employed by Forge. ***)
+
 class dialSlider ?size:explicit_size
                  ?ticks:(ticks = 512)
                  ?packing:(packing = ignore) () =

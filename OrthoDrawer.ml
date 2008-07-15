@@ -1,3 +1,7 @@
+(*** OrthoDrawer.ml contains a GTK widget class that allows 2D drawing of
+ * points, lines, polygons, and bitmaps under scaling and translation
+ * transformations. ***)
+
 class orthoDrawer ?width:explicit_width ?height:explicit_height
                   ?packing:(packing = ignore)
                   ~xmin ~xmax ~ymin ~ymax

@@ -1,3 +1,5 @@
+(*** DrawMode.ml contains routines that handle the actual drawing of the
+ * overhead map while in draw mode. ***)
 open CamlExt
 open DrawModeWindows
 open DrawModeSettings

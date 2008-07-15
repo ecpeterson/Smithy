@@ -1,9 +1,5 @@
-(* descriptor format: list of components
- * `T of int * int * component list
- * `H of component list
- * `V of component list
- * `E of string ref
- * *)
+(*** GenerateDialog.ml contains routines that allow automatic dialog
+ * generation, execution, and result storage. ***)
 
 type component =
     [ `H of component list
