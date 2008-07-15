@@ -657,3 +657,81 @@ let map_manager drawer _ =
             `C ("Visual Mode Crosshairs", vm_crosshair) ] ] in
     GenerateDialog.generate_dialog descriptor "Map Manager";
     drawer#draw ()
+
+let random_dialog random =
+    let index = ref (random#index ()) in
+    let volume = ref (random#volume () |> string_of_int) in
+    let dvolume = ref (random#dvolume () |> string_of_int) in
+    let period = ref (random#period () |> string_of_int) in
+    let dperiod = ref (random#dperiod () |> string_of_int) in
+    let pitch = ref (random#pitch () |> string_of_int) in
+    let dpitch = ref (random#dpitch () |> string_of_int) in
+    let nondirectional = ref (random#direction () = -1) in
+    let direction = ref (random#direction ()) in
+    let ddirection = ref (random#ddirection ()) in
+    let descriptor = [
+        `V [
+            `H [`L "Type: ";
+                `M (ItemStrings.random_sound_strings, index) ];
+            `H [
+                `V [
+                    `H [`L "Volume: ";
+                        `E volume];
+                    `H [`L "D Volume: ";
+                        `E dvolume];
+                    `H [`L "Period: ";
+                        `E period];
+                    `H [`L "D Period: ";
+                        `E dperiod];
+                    `H [`L "Pitch: ";
+                        `E pitch];
+                    `H [`L "D Pitch: ";
+                        `E dpitch]];
+                `V [
+                    `C ("Non-Directional", nondirectional);
+                    `S direction;
+                    `L "Direction";
+                    `S ddirection;
+                    `L "D Direction" ] ] ] ] in
+    GenerateDialog.generate_dialog descriptor "Random Sound Parameters";
+    let volume = int_of_string !volume in
+    let dvolume = int_of_string !dvolume in
+    let period = int_of_string !period in
+    let dperiod = int_of_string !dperiod in
+    let pitch = int_of_string !pitch in
+    let dpitch = int_of_string !dpitch in
+    random#set_volume volume;
+    random#set_dvolume dvolume;
+    random#set_period period;
+    random#set_dperiod dperiod;
+    random#set_pitch pitch;
+    random#set_dpitch dpitch;
+    if !nondirectional then
+        random#set_direction (-1)
+    else
+        random#set_direction !direction;
+    random#set_ddirection !ddirection
+    (* TODO: this dialog doesn't have a spot for pitch.  hmm. *)
+
+let make_random () =
+    let random = new MapTypes.random in
+    random_dialog random;
+    MapFormat.add_random random
+
+let ambient_dialog ambient =
+    let index = ref (ambient#index ()) in
+    let volume = ref (ambient#volume () |> string_of_int) in
+    let descriptor = [
+        `V [
+            `H [`L "Type: ";
+                `M (ItemStrings.sound_strings, index) ];
+            `H [`L "Volume: ";
+                `E volume ] ] ] in
+    GenerateDialog.generate_dialog descriptor "Ambient Sound Parameters";
+    ambient#set_volume (int_of_string !volume);
+    ambient#set_index !index
+
+let make_ambient () =
+    let ambient = new MapTypes.ambient in
+    ambient_dialog ambient;
+    MapFormat.add_ambient ambient

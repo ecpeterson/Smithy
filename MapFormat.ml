@@ -23,6 +23,8 @@ let placement_length = 12
 let platform_length = 32
 let optimized_point_length = 16
 let optimized_platform_length = 140
+let ambient_length = 16
+let random_length = 32
 let number_of_placements = 128 (* 64 items, 64 monsters *)
 
 (* TODO: is it feasible to move these to MapTypes? *)
@@ -76,6 +78,8 @@ let placements =
         arr.(i) <- new MapTypes.placement
     done; ref arr
 let platforms = ref (Array.make 0 empty_platform)
+let ambients = ref (Array.make 0 empty_ambient)
+let randoms = ref (Array.make 0 empty_random)
 let environment_code = ref Water
 let physics_model = ref 0
 let landscape = ref 0
@@ -93,6 +97,8 @@ let reset_structures _ =
     lights := Array.make 1 (new MapTypes.light);
     objs := Array.make 0 empty_obj;
     media := Array.make 0 empty_media;
+    ambients := Array.make 0 empty_ambient;
+    randoms := Array.make 0 empty_random;
     placements := begin
         let arr = Array.make number_of_placements empty_placement in
         for i = 0 to number_of_placements - 1 do
@@ -125,6 +131,10 @@ let read_optimized_points fh length =
     points := read_chunk fh length optimized_point_length epnt_reader
 let read_optimized_platforms fh length =
     platforms := read_chunk fh length optimized_platform_length opt_plat_reader
+let read_ambients fh length =
+    ambients := read_chunk fh length ambient_length ambi_reader
+let read_randoms fh length =
+    randoms := read_chunk fh length random_length bonk_reader
 
     (* write out various chunks *)
 let write_points fh = write_chunk fh !points point_length "PNTS" pnts_writer
@@ -138,6 +148,9 @@ let write_placements fh =
                 write_chunk fh !placements placement_length "plac" plac_writer
 let write_platforms fh =
                 write_chunk fh !platforms platform_length "plat" plat_writer
+let write_ambients fh =
+                write_chunk fh !ambients ambient_length "ambi" ambi_writer
+let write_randoms fh = write_chunk fh !randoms random_length "bonk" bonk_writer
 
 (* read in a map info chunk *)
 let read_info fh length =
@@ -190,6 +203,8 @@ let rec read_chunks fh =
         |"plac" -> read_placements fh length
         |"plat" -> read_platforms fh length
         |"medi" -> read_media fh length
+        |"ambi" -> read_ambients fh length
+        |"bonk" -> read_randoms fh length
         (* and now support for optimized chunks *)
         |"EPNT" -> read_optimized_points fh length
         |"PLAT" -> read_optimized_platforms fh length
@@ -239,6 +254,8 @@ let write_to_file filename =
     write_placements fh;
     write_platforms fh;
     write_media fh;
+    write_ambients fh;
+    write_randoms fh;
     (* this let block and the code that follows it must wrap the last chunk
      * to be written out, to make sure we crimp the end of the file.  note:
      * we obviously must guarantee that this chunk gets written to disk,
@@ -270,6 +287,8 @@ let add_light    = add_builder lights
 let add_platform = add_builder platforms
 let add_object   = add_builder objs
 let add_side     = add_builder sides
+let add_ambient  = add_builder ambients
+let add_random   = add_builder randoms
 
 (** geometry selection functions **)
 (* gets the closest object to the point (x0, y0) *)
@@ -533,6 +552,20 @@ let delete_platform n =
         if x#kind () <> Platform then () else
         if y > n then x#set_permutation (y - 1) else
         if y = n then x#set_permutation (-1)) !polygons
+
+let delete_ambient n =
+    ambients := delete_from_array_and_resize !ambients n;
+    Array.iter (fun x ->
+        let i = x#ambient_sound_image_index () in
+        if i > n then x#set_ambient_sound_image_index (i - 1)
+        else if i = n then x#set_ambient_sound_image_index (-1)) !polygons
+
+let delete_random n =
+    randoms := delete_from_array_and_resize !randoms n;
+    Array.iter (fun x ->
+        let i = x#random_sound_image_index () in
+        if i > n then x#set_random_sound_image_index (i - 1)
+        else if i = n then x#set_random_sound_image_index (-1)) !polygons
 
 (* safely deletes all the objects in a map *)
 let nuke _ =

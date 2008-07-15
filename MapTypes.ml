@@ -412,8 +412,8 @@ let poly_reader fh =
     poly#set_media_index (input_signed_word fh);
     poly#set_media_lightsource (input_signed_word fh);
     poly#set_sound_source_indices (input_word fh);
-    poly#set_ambient_sound_image_index (input_word fh);
-    poly#set_random_sound_image_index (input_word fh);
+    poly#set_ambient_sound_image_index (input_signed_word fh);
+    poly#set_random_sound_image_index (input_signed_word fh);
     ignore (input_word fh); (* toss two bytes *)
     poly
 
@@ -453,8 +453,8 @@ let poly_writer fh poly =
     output_signed_word fh (poly#media_index ());
     output_signed_word fh (poly#media_lightsource ());
     output_word fh (poly#sound_source_indices ());
-    output_word fh (poly#ambient_sound_image_index ());
-    output_word fh (poly#random_sound_image_index ());
+    output_signed_word fh (poly#ambient_sound_image_index ());
+    output_signed_word fh (poly#random_sound_image_index ());
     ignore (output_padding fh 2)
 let empty_polygon = new polygon
 
@@ -866,3 +866,98 @@ let plac_writer fh plac =
     output_word fh (plac#random_count ());
     output_word fh (plac#random_chance ())
 let empty_placement = new placement
+
+class ambient = object
+    val mutable flags = 0
+    val mutable index = 0
+    val mutable volume = 0
+
+    method flags () = flags
+    method index () = index
+    method volume () = volume
+
+    method set_flags x = flags <- x
+    method set_index x = index <- x
+    method set_volume x = volume <- x
+end
+let ambi_reader fh =
+    let ambient = new ambient in
+    ambient#set_flags (input_word fh);
+    ambient#set_index (input_word fh);
+    ambient#set_volume (input_word fh);
+    seek_in fh (pos_in fh + 10); (* ignore 5 words *)
+    ambient
+let ambi_writer fh ambient =
+    output_word fh (ambient#flags ());
+    output_word fh (ambient#index ());
+    output_word fh (ambient#volume ());
+    output_padding fh 10
+let empty_ambient = new ambient
+
+class random = object
+    val mutable flags = 0
+    val mutable index = 0
+    val mutable volume = 0
+    val mutable dvolume = 0
+    val mutable period = 0
+    val mutable dperiod = 0
+    val mutable direction = 0
+    val mutable ddirection = 0
+    val mutable pitch = 0
+    val mutable dpitch = 0
+    val mutable phase = 0
+
+    method flags () = flags
+    method index () = index
+    method volume () = volume
+    method dvolume () = dvolume
+    method period () = period
+    method dperiod () = dperiod
+    method direction () = direction
+    method ddirection () = ddirection
+    method pitch () = pitch
+    method dpitch () = dpitch
+    method phase () = phase
+
+    method set_flags x = flags <- x
+    method set_index x = index <- x
+    method set_volume x = volume <- x
+    method set_dvolume x = dvolume <- x
+    method set_period x = period <- x
+    method set_dperiod x = dperiod <- x
+    method set_direction x = direction <- x
+    method set_ddirection x = ddirection <- x
+    method set_pitch x = pitch <- x
+    method set_dpitch x = dpitch <- x
+    method set_phase x = phase <- x
+end
+let bonk_reader fh =
+    let random = new random in
+    random#set_flags (input_word fh);
+    random#set_index (input_word fh);
+    random#set_volume (input_word fh);
+    random#set_dvolume (input_word fh);
+    random#set_period (input_word fh);
+    random#set_dperiod (input_word fh);
+    random#set_direction (input_word fh);
+    random#set_ddirection (input_word fh);
+    random#set_pitch (input_dword fh);
+    random#set_dpitch (input_dword fh);
+    random#set_phase (input_word fh);
+    ignore (input_dword fh); (* kill six bytes *)
+    ignore (input_word fh);
+    random
+let bonk_writer fh random =
+    output_word fh (random#flags ());
+    output_word fh (random#index ());
+    output_word fh (random#volume ());
+    output_word fh (random#dvolume ());
+    output_word fh (random#period ());
+    output_word fh (random#dperiod ());
+    output_word fh (random#direction ());
+    output_word fh (random#ddirection ());
+    output_dword fh (random#pitch ());
+    output_dword fh (random#dpitch ());
+    output_word fh (random#phase ());
+    output_padding fh 6
+let empty_random = new random
