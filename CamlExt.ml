@@ -2,7 +2,8 @@
  * functionality of OCaml itself, need no larger context to justify their
  * existence, and may be used frequently throughout the program ***)
 
-(* initialize GTK itself *)
+(* initialize GTK itself.  THIS _/MUST/_ COME _/FIRST/_, AND CamlExt _/MUST/_
+ * BE COMPILED AND LINKED _/FIRST/_ to ensure proper execution. *)
 let _ =
     ignore (GtkMain.Main.init ());
     Gdk.Rgb.init ();

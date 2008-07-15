@@ -1,3 +1,5 @@
+(*** ItemStrings.ml contains various interface strings. ***)
+
 let monster_strings =
     ["Tick (energy)"; "Tick (oxygen)"; "Tick (kamikaze)"; "S'pht (minor)";
      "S'pht (major)"; "S'pht (minor invisible)"; "S'pht (major invisible)";

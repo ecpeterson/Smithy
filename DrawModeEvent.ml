@@ -1,3 +1,5 @@
+(*** DrawModeEvent.ml contains routines that handle the keyboard and mouse
+ * events encounted by the application while in draw mode. ***)
 open DrawModeWindows
 open DrawModeSettings
 
