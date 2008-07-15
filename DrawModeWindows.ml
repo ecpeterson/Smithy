@@ -145,18 +145,19 @@ let change_editor_state state =
         editbutton#set_label button_text2 in
     mode := of_enum mode_descriptor state;
     match !mode with
-    |Draw_Mode -> set_mode true false false "" "" ""
-    |Polygon_Types -> set_mode false false false "" "" ""
-    |Elevation_Floor -> set_mode false true false "" "" "Height:"
+    |Polygon_Types (* TODO: do this *)
+    |Draw_Mode -> set_mode false false false "" "" ""
+    |Elevation_Floor
     |Elevation_Ceiling -> set_mode false true false "" "" "Height:"
-    |Lights_Liquid ->
-        set_mode false true true "New Light..." "Edit Light..." "Light:"
-    |Lights_Floor ->
-        set_mode false true true "New Light..." "Edit Light..." "Light:"
+    |Lights_Liquid
+    |Lights_Floor
     |Lights_Ceiling ->
         set_mode false true true "New Light..." "Edit Light..." "Light:"
     |Liquids ->
         set_mode false true true "New Media..." "Edit Media..." "Media:"
+    |Sounds_Random
+    |Sounds_Ambient ->
+        set_mode false true true "New Sound..." "Edit Sound..." "Sound:"
     |_ -> ()
 
 (* set up the drawing window, try not to pollute the namespace *)

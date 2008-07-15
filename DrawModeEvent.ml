@@ -84,6 +84,22 @@ let tool_begin_event orthodrawer x y button (state: Gdk.Tags.modifier list) =
         let poly = !MapFormat.polygons.(p) in
         let v = poly#media_index () in
         numeric_entry#set_text (string_of_int v)
+    |Sounds_Ambient, 1, Some v, _, Some p ->
+        let poly = !MapFormat.polygons.(p) in
+        poly#set_ambient_sound_image_index v;
+        orthodrawer#draw ()
+    |Sounds_Ambient, 3, _, _, Some p ->
+        let poly = !MapFormat.polygons.(p) in
+        let v = poly#ambient_sound_image_index () in
+        numeric_entry#set_text (string_of_int v)
+    |Sounds_Random, 1, Some v, _, Some p ->
+        let poly = !MapFormat.polygons.(p) in
+        poly#set_random_sound_image_index v;
+        orthodrawer#draw ()
+    |Sounds_Random, 3, _, _, Some p ->
+        let poly = !MapFormat.polygons.(p) in
+        let v = poly#random_sound_image_index () in
+        numeric_entry#set_text (string_of_int v)
     |Draw_Mode, 1, _, _, _ ->
         (* in draw mode, we have to deal with what kind of tool to apply *)
         if tool = ArrowTool then begin
@@ -250,6 +266,10 @@ let edit_current_item orthodrawer =
     |(index, Lights_Liquid)
     |(index, Lights_Ceiling) ->
         MapDialogs.light_dialog !MapFormat.lights.(index)
+    |(index, Sounds_Random) ->
+        MapDialogs.random_dialog !MapFormat.randoms.(index)
+    |(index, Sounds_Ambient) ->
+        MapDialogs.ambient_dialog !MapFormat.ambients.(index)
     |_ -> ()
     with Failure "int_of_string" -> ()
 
@@ -265,5 +285,11 @@ let make_new_item orthodrawer =
     |Lights_Ceiling ->
         let l = MapDialogs.make_light () in
         numeric_entry#set_text (string_of_int l)
+    |Sounds_Random ->
+        let s = MapDialogs.make_random () in
+        numeric_entry#set_text (string_of_int s)
+    |Sounds_Ambient ->
+        let s = MapDialogs.make_ambient () in
+        numeric_entry#set_text (string_of_int s)
     |_ -> () end;
     orthodrawer#draw ()

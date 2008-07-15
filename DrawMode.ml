@@ -60,6 +60,10 @@ let draw_polygons _ =
         |Lights_Ceiling
         |Lights_Liquid ->
             Array.length !MapFormat.lights |> float
+        |Sounds_Random ->
+            Array.length !MapFormat.randoms |> float
+        |Sounds_Ambient ->
+            Array.length !MapFormat.ambients |> float
         |_ -> 0.0 in
     let draw_polygon poly =
         let vertex_array = List.map (fun x -> !MapFormat.points.(x)#vertex())
@@ -98,6 +102,14 @@ let draw_polygons _ =
         |Lights_Liquid ->
             orthodrawer#set_color (float (poly#media_lightsource ()) /. max,
                                    0.0, 0.0)
+        |Sounds_Random ->
+            let n = poly#random_sound_image_index () in
+            orthodrawer#set_color (
+                if n = -1 then (0.5, 0.5, 0.5) else (float n /. max, 0.0, 0.0))
+        |Sounds_Ambient ->
+            let n = poly#ambient_sound_image_index () in
+            orthodrawer#set_color (
+                if n = -1 then (0.5, 0.5, 0.5) else (float n /. max, 0.0, 0.0))
         |_ -> () end;
         orthodrawer#polygon true vertex_array in
     Array.iter draw_polygon !MapFormat.polygons

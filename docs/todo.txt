@@ -2,14 +2,11 @@ important
 =========
 editing:
 + finish the object dialog, which is currently in a half-formed state
-+ write the platform dialog
-+ finish platform deletion and its editor dialog
 + write polygon tool
 + write annotation tool
 + map height restriction
 + add light / media library importing / exporting
 + add placement chunk dialog / functionality
-+ add ambient / random sounds views
 interface:
 + closing the toolbar windows causes gross behavior, it would be sweet if we
 could somehow avoid that happening (hide instead of close or something)
