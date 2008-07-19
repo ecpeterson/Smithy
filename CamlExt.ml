@@ -132,15 +132,18 @@ let rec print_array2 arr =
     print_endline ""
 
 (** array mangling routines, since all our map structures are arrays **)
+(* an Array-style List.find *)
+let array_find f arr =
+    let length = Array.length arr in
+    let rec af_aux arr acc =
+        if acc = length then acc else
+        if f arr.(acc) then acc else
+        af_aux arr (acc+1) in
+    af_aux arr 0
+
 (* finds obj in arr using whatever = is defined as for obj *)
 let find_in_array arr obj =
-    let length = Array.length arr in
-    let rec fia_aux arr obj acc =
-        if acc = length then acc else
-        if arr.(acc) = obj
-            then acc
-            else fia_aux arr obj (acc+1) in
-    fia_aux arr obj 0
+    array_find (fun x -> x = obj) arr
 
 (* deletes obj from an arr, shifts the remainder over, and fills the tail of the
  * array with replace *)

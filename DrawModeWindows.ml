@@ -320,7 +320,13 @@ let menu_bar, orthodrawer, status =
         a "EditMapItemParams" ~label:"Edit Map Item _Parameters...";
         a "RecenterLevel"     ~label:"_Recenter Level";
 
-        a "MergePoints"      ~label:"_Merge Selected Points";
+        a "MergePoints"      ~label:"_Merge Selected Points"
+                             ~callback:(fun _ ->
+                                 match !highlight with Point ns ->
+                                    GeomEdit.merge_points ns ();
+                                    highlight := No_Highlight;
+                                    orthodrawer#draw ()
+                                    |_ -> ());
         a "GarbageCollect"   ~label:"_Garbage Collect"
                              ~callback:(fun _ -> Gc.full_major ());
         a "ColorPreferences" ~label:"Color _Preferences"
