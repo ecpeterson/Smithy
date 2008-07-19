@@ -232,6 +232,11 @@ let menu_bar, orthodrawer, status =
           <menuitem action='NukeAndPave'/>\
         </menu>\
         <menu action='SmithyMenu'>\
+          <menu action='LightLibMenu'>\
+            <menuitem action='AppendLightLib'/>\
+            <menuitem action='ReplaceLightLib'/>\
+            <menuitem action='SaveLightLib'/>\
+          </menu>\
           <menuitem action='MergePoints'/>\
           <menuitem action='GarbageCollect'/>\
           <menuitem action='ColorPreferences'/>\
@@ -253,12 +258,12 @@ let menu_bar, orthodrawer, status =
                                    MapFormat.reset_structures ();
                                    orthodrawer#draw ());
         a "Open"        ~stock:`OPEN
-                        ~callback:(FileDialogs.open_file_dialog set_title
+                        ~callback:(FileDialogs.open_map_dialog set_title
                                                                 orthodrawer);
         a "Save"        ~stock:`SAVE
                         ~callback:(FileDialogs.silent_save set_title);
         a "SaveAs"      ~stock:`SAVE_AS
-                        ~callback:(FileDialogs.save_file_dialog set_title);
+                        ~callback:(FileDialogs.save_map_dialog set_title);
         a "MergeLevels" ~label:"_Merge Levels...";
         a "ExportLevel" ~label:"_Export Level...";
         a "Quit"        ~stock:`QUIT
@@ -331,6 +336,15 @@ let menu_bar, orthodrawer, status =
                              ~callback:(fun _ -> Gc.full_major ());
         a "ColorPreferences" ~label:"Color _Preferences"
                              ~callback:(color_prefs_dialog orthodrawer);
+        a "LightLibMenu"     ~label:"_Light Libraries";
+        a "AppendLightLib"   ~label:"Load and _Append Light Library"
+                             ~callback:(FileDialogs.load_and_append_light_lib
+                                                                   orthodrawer);
+        a "ReplaceLightLib"  ~label:"Load and _Replace Light Library"
+                             ~callback:(FileDialogs.load_and_replace_light_lib
+                                                                   orthodrawer);
+        a "SaveLightLib"     ~label:"Save Light Library"
+                             ~callback:FileDialogs.save_light_lib
     ];
     let accel_xml =
    "<ui>\
