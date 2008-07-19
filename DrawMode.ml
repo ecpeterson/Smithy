@@ -171,15 +171,10 @@ let draw orthodrawer =
     orthodrawer#set_color !Colors.background_color;
     orthodrawer#clear ();
     if !DrawModeSettings.display_grid then draw_grid ();
-    print_endline "A";
     draw_polygons ();
-    print_endline "B";
     draw_lines ();
-    print_endline "C";
     draw_points ();
-    print_endline "D";
     draw_highlight ();
-    print_endline "E";
     draw_objects ();
     (* draw the line we're in the middle of laying, if appropriate *)
     if !DrawModeEvent.draw_intermediate then begin

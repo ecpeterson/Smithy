@@ -323,7 +323,6 @@ let make_object x y poly =
     !clone_idx
 
 let merge_points ns () =
-    print_endline "1";
     (* need to be sure no polys are attached to our pointset *)
     if not (Array.fold_left (fun x y ->
                     let y = y#endpoint_indices () in
@@ -331,26 +330,21 @@ let merge_points ns () =
                         x || List.mem y ns) false y || x)
                 false !MapFormat.polygons)
     then begin
-    print_endline "2";
     (* sort ascending and pull the first one *)
     let n :: ns = List.sort compare ns in
     (* sort the remainder descending *)
     let ns = List.sort (fun x y -> -(compare x y)) ns in
     (* suck the points in one pair at a time *)
-    print_endline "3";
     let rec do_merge ns =
         match ns with [] -> () | new_n :: ns ->
         (* is there a line between these two?  delete it *)
-        print_endline "4";
         let line = CamlExt.array_find
             (fun x -> x#endpoints () = (n, new_n) ||
                       x#endpoints () = (new_n, n)) !MapFormat.lines in
-        print_endline "4b";
         if line <> Array.length !MapFormat.lines then
             MapFormat.delete_line line;
         (** change all new_n to n in map **)
         (* update line endpoints *)
-        print_endline "5";
         Array.iter (fun x ->
             let (p0, p1) = x#endpoints () in
             let p0 =
@@ -361,15 +355,12 @@ let merge_points ns () =
                 if p1 = new_n then n else p1 in
             x#set_endpoints (p0, p1)) !MapFormat.lines;
         (* update polygon endpoint array *)
-        print_endline "6";
         Array.iter (fun x ->
             CamlExt.destructive_map (fun y ->
                     if y = new_n then n else if y > new_n then y - 1 else y)
                 (x#endpoint_indices ())) !MapFormat.polygons;
         (* actually delete the point *)
-        print_endline "7";
         MapFormat.points :=
             CamlExt.delete_from_array_and_resize !MapFormat.points new_n;
-        print_endline "8";
         do_merge ns in
     do_merge ns end
