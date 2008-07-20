@@ -212,6 +212,8 @@ let poly_dialog poly =
         (* do we want to create a new platform? *)
         |(_, Platform) ->
             let plat = new MapTypes.platform in
+            plat#set_polygon_index
+                (CamlExt.find_in_array !MapFormat.polygons poly);
             platform_dialog plat;
             let plat_idx = MapFormat.add_platform plat in
             poly#set_permutation plat_idx
