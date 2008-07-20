@@ -180,6 +180,11 @@ let draw_platforms _ =
             point_center |>
             orthodrawer#centered_text (string_of_int idx)) !MapFormat.platforms
 
+let draw_annotations _ =
+    Array.iter (fun annotation ->
+            orthodrawer#text (annotation#text ()) (annotation#location ()))
+        !MapFormat.annotations
+
 let draw orthodrawer =
     orthodrawer#set_color !Colors.background_color;
     orthodrawer#clear ();
@@ -190,6 +195,7 @@ let draw orthodrawer =
     draw_highlight ();
     draw_objects ();
     draw_platforms ();
+    draw_annotations ();
     (* draw the line we're in the middle of laying, if appropriate *)
     if !DrawModeEvent.draw_intermediate then begin
         orthodrawer#set_color !Colors.solid_line_color;
