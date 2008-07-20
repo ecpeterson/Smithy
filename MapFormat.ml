@@ -212,7 +212,7 @@ let rec read_chunks fh =
         |"medi" -> read_media fh length
         |"ambi" -> read_ambients fh length
         |"bonk" -> read_randoms fh length
-        |"NOTE" -> print_endline "NOTE"; flush stdout;read_annotations fh length
+        |"NOTE" -> read_annotations fh length
         (* and now support for optimized chunks *)
         |"EPNT" -> read_optimized_points fh length
         |"PLAT" -> read_optimized_platforms fh length

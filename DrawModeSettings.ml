@@ -21,3 +21,13 @@ let show_annotations = ref true
 let vm_crosshair = ref true
 let highlighted_point_thickness = ref 5
 let pixel_epsilon = ref 8.0
+
+(* we keep track of what item is highlighted as part of the drawing / interface
+ * object, and we have an enumerative type to match across *)
+type highlighted_component =  No_Highlight       |
+                              Point of int list  |
+                              Line of int list   |
+                              Poly of int list   |
+                              Object of int list
+(* some stateful data *)
+let highlight = ref No_Highlight

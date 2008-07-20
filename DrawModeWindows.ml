@@ -46,16 +46,6 @@ let color_prefs_dialog drawer _ =
     Colors.poly_type_value := float_of_string !value;
     drawer#draw ()
 
-(* we keep track of what item is highlighted as part of the drawing / interface
- * object, and we have an enumerative type to match across *)
-type highlighted_component =  No_Highlight       |
-                              Point of int list  |
-                              Line of int list   |
-                              Poly of int list   |
-                              Object of int list
-(* some stateful data *)
-let highlight = ref No_Highlight
-
 (* set up the drawing window *)
 let drawmode_window = GWindow.window ~width:500 ~height:300 ~title:"Smithy"
     ~allow_shrink:true ~show:true ()
@@ -317,7 +307,8 @@ let menu_bar, orthodrawer, status =
                               ~callback:(MapDialogs.map_manager orthodrawer);
         a "ViewHeightWindow"  ~label:"View _Height Window"
                               ~accel:"<Ctrl>h";
-        a "Goto"              ~label:"_Goto...";
+        a "Goto"              ~label:"_Goto..."
+                              ~callback:(MapDialogs.goto orthodrawer);
         a "SetLevelParams"    ~label:"Set _Level Parameters..."
                               ~callback:MapDialogs.info_dialog
                               ~accel:"<Ctrl>m";

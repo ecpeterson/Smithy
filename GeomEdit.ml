@@ -364,3 +364,11 @@ let merge_points ns () =
             CamlExt.delete_from_array_and_resize !MapFormat.points new_n;
         do_merge ns in
     do_merge ns end
+
+
+let point_center arr =
+    let (x, y) =
+        Array.fold_left (fun (x, y) p ->
+            let xn, yn = !MapFormat.points.(p)#vertex () in
+            x + xn, y + yn) (0, 0) arr in
+    x / (Array.length arr), y / (Array.length arr)
