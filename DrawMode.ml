@@ -113,7 +113,9 @@ let draw_polygons _ =
             orthodrawer#set_color (
                 if n = -1 then (0.5, 0.5, 0.5) else (float n /. max, 0.0, 0.0))
         |_ -> () end;
-        orthodrawer#polygon true vertex_array in
+        if (poly#floor_height () > !DrawModeSettings.floor_cutoff &&
+            poly#ceiling_height () < !DrawModeSettings.ceiling_cutoff) then
+                orthodrawer#polygon true vertex_array in
     Array.iter draw_polygon !MapFormat.polygons
 
 let draw_objects _ =
@@ -130,6 +132,9 @@ let draw_objects _ =
                 draw_filename filename x y
             with Not_found -> print_endline ("failed to find" ^ name) in
         let x, y, z = obj#point () in
+        let p = !MapFormat.polygons.(obj#polygon ()) in
+        if (p#ceiling_height () < !DrawModeSettings.ceiling_cutoff &&
+            p#floor_height () > !DrawModeSettings.floor_cutoff) then
         match obj#kind () with
         |Monster -> if !DrawModeSettings.show_monsters then
                        draw_arrow x y (1.0, 0.0, 0.0) (obj#facing ())
@@ -144,7 +149,7 @@ let draw_objects _ =
         |Sound_Source -> if !DrawModeSettings.show_sounds then
                        draw_filename Resources.sound_sourcefile x y
     in
-    !MapFormat.objs |> Array.iter draw_obj
+    Array.iter draw_obj !MapFormat.objs
 
 let draw_highlight _ =
     orthodrawer#set_color !Colors.highlight_color;

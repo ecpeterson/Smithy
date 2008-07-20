@@ -21,6 +21,8 @@ let show_annotations = ref true
 let vm_crosshair = ref true
 let highlighted_point_thickness = ref 5
 let pixel_epsilon = ref 8.0
+let floor_cutoff = ref (-9.0)
+let ceiling_cutoff = ref (9.0)
 
 (* we keep track of what item is highlighted as part of the drawing / interface
  * object, and we have an enumerative type to match across *)

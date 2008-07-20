@@ -306,7 +306,8 @@ let menu_bar, orthodrawer, status =
         a "MapManager"        ~label:"M_ap Manager"
                               ~callback:(MapDialogs.map_manager orthodrawer);
         a "ViewHeightWindow"  ~label:"View _Height Window"
-                              ~accel:"<Ctrl>h";
+                              ~accel:"<Ctrl>h"
+                              ~callback:(MapDialogs.map_height_dlg orthodrawer);
         a "Goto"              ~label:"_Goto..."
                               ~callback:(MapDialogs.goto orthodrawer);
         a "SetLevelParams"    ~label:"Set _Level Parameters..."
