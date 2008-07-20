@@ -4,7 +4,6 @@ editing:
 + finish the object dialog, which is currently in a half-formed state
 + write polygon tool
 + write annotation tool, make annotations selectable / editable with the mouse
-+ map height restriction
 + add placement chunk dialog / functionality
 interface:
 + closing the toolbar windows causes gross behavior, it would be sweet if we

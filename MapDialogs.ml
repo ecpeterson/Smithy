@@ -771,3 +771,30 @@ let goto drawer _ =
         |_ -> raise (Failure "Invalid Goto kind!") end
     |_ -> () end;
     dialog#destroy ()
+
+let map_height_dlg drawer _ =
+    let fadj = GData.adjustment ~value:!DrawModeSettings.floor_cutoff
+                                ~lower:(-9.0) ~upper:(9.01) ~step_incr:0.01
+                                ~page_incr:18.0 ~page_size:0.01 () in
+    let cadj = GData.adjustment ~value:!DrawModeSettings.ceiling_cutoff
+                                ~lower:(-9.0) ~upper:(9.01) ~step_incr:0.01
+                                ~page_incr:18.0 ~page_size:0.01 () in
+    fadj#connect#value_changed ~callback:(fun _ ->
+        DrawModeSettings.floor_cutoff := fadj#value;
+        drawer#draw ());
+    cadj#connect#value_changed ~callback:(fun _ ->
+        DrawModeSettings.ceiling_cutoff := cadj#value;
+        drawer#draw ());
+    let dialog = GWindow.dialog ~title:"Height Window" ~height:300 () in
+    let hbox = GPack.hbox ~packing:dialog#vbox#add () in
+    let vbox = GPack.vbox ~packing:hbox#add () in
+    let floor_slider = GRange.scale `VERTICAL ~adjustment:fadj
+            ~value_pos:`LEFT ~digits:2 ~packing:vbox#add ~inverted:true () in
+    GMisc.label ~text:"Floor" ~packing:vbox#pack ();
+    let vbox = GPack.vbox ~packing:hbox#add () in
+    let ceiling_slider = GRange.scale `VERTICAL ~adjustment:cadj
+            ~value_pos:`RIGHT ~digits:2 ~packing:vbox#add ~inverted:true () in
+    GMisc.label ~text:"Ceiling" ~packing:vbox#pack ();
+    dialog#add_button_stock `OK `OK;
+    dialog#run ();
+    dialog#destroy ()
