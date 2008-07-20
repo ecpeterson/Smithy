@@ -63,6 +63,7 @@ let set_title = drawmode_window#set_title
 
 let draw_toolbar = GWindow.window ~title:"Smithy Toolkit" ~show:true
                                   ~height:120 ~width:60 ()
+let _ = draw_toolbar#set_transient_for drawmode_window#as_window
 let buttonline, buttonarrow, buttonfill, buttonpoly,
     buttonzoom, buttonpan, buttonobj, buttontext =
         let vbox = GPack.vbox ~packing:draw_toolbar#add () in
@@ -109,6 +110,7 @@ let _ =
 (* and the alternative toolbar *)
 let entry_toolbar, entry_label, numeric_entry, mediabox, newbutton, editbutton =
     let entry_toolbar = GWindow.window ~title:"Smithy" ~show:false () in
+    entry_toolbar#set_transient_for drawmode_window#as_window;
     let vbox = GPack.vbox ~packing:entry_toolbar#add () in
     let hbox = GPack.hbox ~packing:vbox#add () in
     let entry_label = GMisc.label ~text:"Height: " ~packing:hbox#add () in
