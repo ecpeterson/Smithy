@@ -25,6 +25,7 @@ let optimized_point_length = 16
 let optimized_platform_length = 140
 let ambient_length = 16
 let random_length = 32
+let annotation_length = 72
 let number_of_placements = 128 (* 64 items, 64 monsters *)
 
 (* TODO: is it feasible to move these to MapTypes? *)
@@ -80,6 +81,7 @@ let placements =
 let platforms = ref (Array.make 0 empty_platform)
 let ambients = ref (Array.make 0 empty_ambient)
 let randoms = ref (Array.make 0 empty_random)
+let annotations = ref (Array.make 0 empty_annotation)
 let environment_code = ref Water
 let physics_model = ref 0
 let landscape = ref 0
@@ -99,6 +101,7 @@ let reset_structures _ =
     media := Array.make 0 empty_media;
     ambients := Array.make 0 empty_ambient;
     randoms := Array.make 0 empty_random;
+    annotations := Array.make 0 empty_annotation;
     placements := begin
         let arr = Array.make number_of_placements empty_placement in
         for i = 0 to number_of_placements - 1 do
@@ -135,6 +138,8 @@ let read_ambients fh length =
     ambients := read_chunk fh length ambient_length ambi_reader
 let read_randoms fh length =
     randoms := read_chunk fh length random_length bonk_reader
+let read_annotations fh length =
+    annotations := read_chunk fh length annotation_length note_reader
 
     (* write out various chunks *)
 let write_points fh = write_chunk fh !points point_length "PNTS" pnts_writer
@@ -151,6 +156,8 @@ let write_platforms fh =
 let write_ambients fh =
                 write_chunk fh !ambients ambient_length "ambi" ambi_writer
 let write_randoms fh = write_chunk fh !randoms random_length "bonk" bonk_writer
+let write_annotations fh =
+                write_chunk fh !annotations annotation_length "NOTE" note_writer
 
 (* read in a map info chunk *)
 let read_info fh length =
@@ -205,6 +212,7 @@ let rec read_chunks fh =
         |"medi" -> read_media fh length
         |"ambi" -> read_ambients fh length
         |"bonk" -> read_randoms fh length
+        |"NOTE" -> print_endline "NOTE"; flush stdout;read_annotations fh length
         (* and now support for optimized chunks *)
         |"EPNT" -> read_optimized_points fh length
         |"PLAT" -> read_optimized_platforms fh length
@@ -256,6 +264,7 @@ let write_to_file filename =
     write_media fh;
     write_ambients fh;
     write_randoms fh;
+    write_annotations fh;
     (* this let block and the code that follows it must wrap the last chunk
      * to be written out, to make sure we crimp the end of the file.  note:
      * we obviously must guarantee that this chunk gets written to disk,
@@ -279,16 +288,17 @@ let add_builder a o =
     let append_array = Array.make 1 o in
     a := Array.append !a append_array;
     Array.length !a - 1
-let add_point    = add_builder points
-let add_line     = add_builder lines
-let add_polygon  = add_builder polygons
-let add_media    = add_builder media
-let add_light    = add_builder lights
-let add_platform = add_builder platforms
-let add_object   = add_builder objs
-let add_side     = add_builder sides
-let add_ambient  = add_builder ambients
-let add_random   = add_builder randoms
+let add_point      = add_builder points
+let add_line       = add_builder lines
+let add_polygon    = add_builder polygons
+let add_media      = add_builder media
+let add_light      = add_builder lights
+let add_platform   = add_builder platforms
+let add_object     = add_builder objs
+let add_side       = add_builder sides
+let add_ambient    = add_builder ambients
+let add_random     = add_builder randoms
+let add_annotation = add_builder annotations
 
 (** geometry selection functions **)
 (* gets the closest object to the point (x0, y0) *)
@@ -566,6 +576,9 @@ let delete_random n =
         let i = x#random_sound_image_index () in
         if i > n then x#set_random_sound_image_index (i - 1)
         else if i = n then x#set_random_sound_image_index (-1)) !polygons
+
+let delete_annotation n =
+    annotations := delete_from_array_and_resize !annotations n
 
 (* safely deletes all the objects in a map *)
 let nuke _ =

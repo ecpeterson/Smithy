@@ -961,3 +961,38 @@ let bonk_writer fh random =
     output_word fh (random#phase ());
     output_padding fh 6
 let empty_random = new random
+
+class annotation = object
+    val mutable kind = 0
+    val mutable location = (0, 0)
+    val mutable polygon_index = 0
+    val mutable text = ""
+
+    method kind () = kind
+    method location () = location
+    method polygon_index () = polygon_index
+    method text () = text
+
+    method set_kind x = kind <- x
+    method set_location x = location <- x
+    method set_polygon_index x = polygon_index <- x
+    method set_text x = text <- x
+end
+let empty_annotation = new annotation
+let note_reader fh =
+    let annotation = new annotation in
+    annotation#set_kind (input_word fh);
+    let x = input_signed_word fh in
+    let y = input_signed_word fh in
+    annotation#set_location (x, y);
+    annotation#set_polygon_index (input_word fh);
+    let text = String.create 64 in
+    really_input fh text 0 64;
+    annotation#set_text text;
+    annotation
+let note_writer fh annotation =
+    output_word fh (annotation#kind ());
+    let x, y = annotation#location () in
+    output_word fh x; output_word fh y;
+    output_word fh (annotation#polygon_index ());
+    output_string_n fh (annotation#text ()) 64
