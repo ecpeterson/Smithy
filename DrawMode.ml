@@ -167,6 +167,19 @@ let draw_highlight _ =
             orthodrawer#polygon true vertex_array) ns
     |No_Highlight |_ -> ()
 
+let draw_platforms _ =
+    let point_center arr =
+        let (x, y) =
+            Array.fold_left (fun (x, y) p ->
+                let xn, yn = !MapFormat.points.(p)#vertex () in
+                x + xn, y + yn) (0, 0) arr in
+        x / (Array.length arr), y / (Array.length arr) in
+    Array.iteri (fun idx plat ->
+        let poly = !MapFormat.polygons.(plat#polygon_index ()) in
+        Array.sub (poly#endpoint_indices ()) 0 (poly#vertex_count ()) |>
+            point_center |>
+            orthodrawer#centered_text (string_of_int idx)) !MapFormat.platforms
+
 let draw orthodrawer =
     orthodrawer#set_color !Colors.background_color;
     orthodrawer#clear ();
@@ -176,6 +189,7 @@ let draw orthodrawer =
     draw_points ();
     draw_highlight ();
     draw_objects ();
+    draw_platforms ();
     (* draw the line we're in the middle of laying, if appropriate *)
     if !DrawModeEvent.draw_intermediate then begin
         orthodrawer#set_color !Colors.solid_line_color;
