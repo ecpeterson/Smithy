@@ -15,6 +15,8 @@ object (self)
     val mutable drawable = Obj.magic ()
     val mutable hadj = Obj.magic ()
     val mutable vadj = Obj.magic ()
+    val mutable pango_context = Obj.magic ()
+    val mutable pango_layout = Obj.magic ()
 
     (* actual data *)
     val mutable mousedown_callback =
@@ -93,6 +95,10 @@ object (self)
         ignore (area#event#connect#scroll ~callback:self#scroll_callback);
         ignore (hadj#connect#value_changed ~callback:self#draw);
         ignore (vadj#connect#value_changed ~callback:self#draw);
+        pango_context <- new GPango.context_rw
+                                            (Gdk.Screen.get_pango_context ());
+        pango_context#set_font_by_name "sans 8";
+        pango_layout <- pango_context#create_layout;
         ()
 
     (* private methods *)
@@ -272,6 +278,15 @@ object (self)
         let cx, cy = drawable#size in
         let cx, cy = self#to_map ((cx / 2), (cy / 2)) in
         self#zoom_at factor cx cy
+
+    method set_font name =
+        pango_context#set_font_by_name name
+    method centered_text str (x, y) =
+        let x, y = self#to_screen (x, y) in
+        Pango.Layout.set_text pango_layout str;
+        let dx, dy = Pango.Layout.get_pixel_size pango_layout in
+        let x, y = x - dx/2, y - dy/2 in
+        drawable#put_layout ~x ~y ~fore:`BLACK pango_layout
 
     method draw () = ignore (self#draw_callback (Obj.magic ()))
 end
