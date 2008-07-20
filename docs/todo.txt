@@ -3,9 +3,8 @@ important
 editing:
 + finish the object dialog, which is currently in a half-formed state
 + write polygon tool
-+ write annotation tool
++ write annotation tool, make annotations selectable / editable with the mouse
 + map height restriction
-+ add light / media library importing / exporting
 + add placement chunk dialog / functionality
 interface:
 + closing the toolbar windows causes gross behavior, it would be sweet if we
@@ -15,7 +14,6 @@ could somehow avoid that happening (hide instead of close or something)
 less important
 =========
 editing:
-+ merging points would be sweet, halfway implemented in GeomEdit.ml
 + make polygon types view capable of setting types
 + add Shapes reading support, at least for wall textures
 + add ceiling / floor texturing support
@@ -27,7 +25,6 @@ editing:
 + read in optimized chunks
 + write out optimized chunks
 interface:
-+ add Goto... function (i.e. add recenter-on-point function)
 + write single level undo
 + write multiple level undo
 code:
@@ -45,7 +42,6 @@ editing:
 interface:
 + apparently we're leaving locations and sizes of fresh windows up to the wm,
 which causes bad behavior on other machines.  figure it out
-+ make render coloring configurable
 code:
 + some kind of plugin interface would be pretty sweet
 + put strings into Resources.ml or some similar thing for purposes of i18n

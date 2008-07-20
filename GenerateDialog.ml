@@ -83,14 +83,6 @@ let rec build_dialog descriptor ~packing ~cleanup () =
             cb#set_active !ret;
             build_dialog descriptor ~packing ~cleanup:(fun _ ->
                 cleanup (); ret := cb#active) ()
-(*        |`T (columns, rows, components) :: descriptor ->
-            let table = GPack.table ~columns ~rows ~packing () in
-            let extra_cleanup = List.fold_left
-                (fun extra_cleanup (top, left, bottom, right, component) ->
-                    let more_extra_cleanup =
-                        build_dialog [component] ~packing:ignore
-                                                 ~cleanup:ignore () in
-                    table#attach ~top ~left ~bottom ~right  *)
         |[] ->
             cleanup
 

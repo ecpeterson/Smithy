@@ -296,4 +296,13 @@ object (self)
         drawable#put_layout ~x ~y ~fore:`BLACK pango_layout
 
     method draw () = ignore (self#draw_callback (Obj.magic ()))
+
+    method center_on (x, y) =
+        match drawable_onscreen with
+        |None -> ()
+        |Some drawable_onscreen ->
+            let width, height = drawable_onscreen#size in
+            let width, height = float width /. scale, float height /. scale in
+            self#set_origin (x - int_of_float width / 2,
+                             y - int_of_float height / 2)
 end

@@ -732,3 +732,42 @@ let make_ambient () =
     let ambient = new MapTypes.ambient in
     ambient_dialog ambient;
     MapFormat.add_ambient ambient
+
+let goto drawer _ =
+    let dialog = GWindow.dialog ~title:"Goto" () in
+    let kind, id =
+        let hbox = GPack.hbox ~packing:dialog#vbox#add () in
+        GMisc.label ~text:"Type: " ~packing:hbox#add ();
+        let cb, _ = GEdit.combo_box_text ~packing:hbox#add
+                                    ~strings:["Point"; "Line"; "Polygon"] () in
+        cb#set_active 2;
+        let hbox = GPack.hbox ~packing:dialog#vbox#add () in
+        GMisc.label ~text:"ID: " ~packing:hbox#add ();
+        let entry = GEdit.entry ~packing:hbox#add ~text:"0" () in
+        (cb, entry) in
+    dialog#add_button_stock `CANCEL `CANCEL;
+    dialog#add_button_stock `OK `OK;
+    begin match dialog#run () with
+    |`OK ->
+        let kind, id = kind#active, int_of_string id#text in
+        begin match kind with
+        |0 ->
+            let p = !MapFormat.points.(id) in
+            DrawModeSettings.highlight := Point [id];
+            drawer#center_on (p#vertex ())
+        |1 ->
+            let l = !MapFormat.lines.(id) in
+            DrawModeSettings.highlight := Line [id];
+            let p0, p1 = l#endpoints () in
+            let p0x, p0y = !MapFormat.points.(p0)#vertex () in
+            let p1x, p1y = !MapFormat.points.(p1)#vertex () in
+            drawer#center_on ((p0x + p1x)/2, (p0y + p1y)/2)
+        |2 ->
+            let p = !MapFormat.polygons.(id) in
+            DrawModeSettings.highlight := Poly [id];
+            Array.sub (p#endpoint_indices ()) 0 (p#vertex_count ()) |>
+                GeomEdit.point_center |>
+                drawer#center_on
+        |_ -> raise (Failure "Invalid Goto kind!") end
+    |_ -> () end;
+    dialog#destroy ()

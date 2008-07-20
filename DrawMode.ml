@@ -168,17 +168,12 @@ let draw_highlight _ =
     |No_Highlight |_ -> ()
 
 let draw_platforms _ =
-    let point_center arr =
-        let (x, y) =
-            Array.fold_left (fun (x, y) p ->
-                let xn, yn = !MapFormat.points.(p)#vertex () in
-                x + xn, y + yn) (0, 0) arr in
-        x / (Array.length arr), y / (Array.length arr) in
-    Array.iteri (fun idx plat ->
+    Array.iter (fun plat ->
         let poly = !MapFormat.polygons.(plat#polygon_index ()) in
         Array.sub (poly#endpoint_indices ()) 0 (poly#vertex_count ()) |>
-            point_center |>
-            orthodrawer#centered_text (string_of_int idx)) !MapFormat.platforms
+            GeomEdit.point_center |>
+            orthodrawer#centered_text (string_of_int (plat#polygon_index ())))
+                !MapFormat.platforms
 
 let draw_annotations _ =
     Array.iter (fun annotation ->
