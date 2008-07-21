@@ -213,6 +213,10 @@ let rec read_chunks fh =
         |"ambi" -> read_ambients fh length
         |"bonk" -> read_randoms fh length
         |"NOTE" -> read_annotations fh length
+        (* iidx is something that the game can recalculate, and in addition its
+         * existence signals to the game that many things have already /been/
+         * precalculated, and screw that!  toss this chunk. *)
+        |"iidx" -> ()
         (* and now support for optimized chunks *)
         |"EPNT" -> read_optimized_points fh length
         |"PLAT" -> read_optimized_platforms fh length
@@ -611,12 +615,16 @@ let pave _ =
         side#set_line_index line_index;
         side#set_polygon_index this_poly;
         side#set_primary_texture ((0, 0), default_sd);
+        side#set_secondary_texture ((0, 0), default_sd);
         side#set_kind (
             if adjacent_poly = -1 then MapTypes.Full_Side else
             let tp, ap = !polygons.(this_poly), !polygons.(adjacent_poly) in
             let tpc, apc = tp#ceiling_height (), ap#ceiling_height () in
             let tpf, apf = tp#floor_height (), ap#floor_height () in
-            if tpc > apc && tpf < apf then MapTypes.Split_Side else
+            let tpp, app = tp#kind () = MapTypes.Platform,
+                           ap#kind () = MapTypes.Platform in
+            if (tpc > apc && tpf < apf) ||
+               tpp || app then MapTypes.Split_Side else
             if tpc > apc then MapTypes.High_Side else
             if tpf < apf then MapTypes.Low_Side else
             (* if we get here that means this side isn't visible, but for
