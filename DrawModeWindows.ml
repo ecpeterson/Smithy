@@ -360,13 +360,19 @@ let menu_bar, orthodrawer, status =
     let delete_cb _ =
         (* dispatch for deleting a highlighted map item *)
         begin match !highlight with
-        |Point  n -> List.iter (fun n -> MapFormat.delete_point n) n
-        |Line   n -> List.iter (fun n -> MapFormat.delete_line n)  n
-        |Poly   n -> List.iter (fun n -> MapFormat.delete_poly n)  n
-        |Object n -> List.iter (fun n -> MapFormat.delete_obj n)   n
-        |No_Highlight |_ -> ()
-        end;
-        highlight := No_Highlight;
+        |Point  (n :: ns) ->
+            List.iter MapFormat.delete_point (n :: ns);
+            highlight := (if n > 0 then Point  [n] else No_Highlight)
+        |Line   (n :: ns) ->
+            List.iter MapFormat.delete_line  (n :: ns);
+            highlight := (if n > 0 then Line   [n] else No_Highlight)
+        |Poly   (n :: ns) ->
+            List.iter MapFormat.delete_poly  (n :: ns);
+            highlight := (if n > 0 then Poly   [n] else No_Highlight)
+        |Object (n :: ns) ->
+            List.iter MapFormat.delete_obj   (n :: ns);
+            highlight := (if n > 0 then Object [n] else No_Highlight)
+        |No_Highlight |_ -> () end;
         orthodrawer#draw (); () in
     let accel_actions = GAction.action_group ~name:"Smithy-accels" () in
     GAction.add_actions accel_actions [

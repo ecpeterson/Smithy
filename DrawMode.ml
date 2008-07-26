@@ -189,13 +189,13 @@ let draw orthodrawer =
     orthodrawer#set_color !Colors.background_color;
     orthodrawer#clear ();
     if !DrawModeSettings.display_grid then draw_grid ();
-    draw_polygons ();
-    draw_lines ();
-    draw_points ();
-    draw_highlight ();
-    draw_objects ();
-    draw_platforms ();
-    draw_annotations ();
+    begin try draw_polygons () with _ -> print_endline "Polygons!" end;
+    begin try draw_lines () with _ -> print_endline "Lines!" end;
+    begin try draw_points () with _ -> print_endline "Points!" end;
+    begin try draw_highlight () with _ -> print_endline "Highlight!" end;
+    begin try draw_objects () with _ -> print_endline "Objects!" end;
+    begin try draw_platforms () with _ -> print_endline "Platforms!" end;
+    begin try draw_annotations () with _ -> print_endline "Annotations!" end;
     (* draw the line we're in the middle of laying, if appropriate *)
     if !DrawModeEvent.draw_intermediate then begin
         orthodrawer#set_color !Colors.solid_line_color;
