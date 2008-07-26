@@ -423,6 +423,40 @@ let recalculate_lengths point =
         line_loop (n+1) in
     line_loop 0
 
+(* deletes an object and performs cleanup *)
+let delete_obj n =
+    objs := delete_from_array_and_resize !objs n;
+    Array.iter (fun x ->
+        let y = x#first_object () in
+        if y > n then x#set_first_object (y-1) else
+        if y = n then x#set_first_object (-1)) !polygons
+
+(* deletes a platform and performs cleanup *)
+let delete_platform n =
+    platforms := delete_from_array_and_resize !platforms n;
+    Array.iter (fun x ->
+        let y = x#permutation () in
+        if x#kind () <> Platform then () else
+        if y > n then x#set_permutation (y - 1) else
+        if y = n then x#set_permutation (-1)) !polygons
+
+let delete_ambient n =
+    ambients := delete_from_array_and_resize !ambients n;
+    Array.iter (fun x ->
+        let i = x#ambient_sound_image_index () in
+        if i > n then x#set_ambient_sound_image_index (i - 1)
+        else if i = n then x#set_ambient_sound_image_index (-1)) !polygons
+
+let delete_random n =
+    randoms := delete_from_array_and_resize !randoms n;
+    Array.iter (fun x ->
+        let i = x#random_sound_image_index () in
+        if i > n then x#set_random_sound_image_index (i - 1)
+        else if i = n then x#set_random_sound_image_index (-1)) !polygons
+
+let delete_annotation n =
+    annotations := delete_from_array_and_resize !annotations n
+
 (* deletes a side (i.e. a texture) and performs cleanup *)
 let delete_side n =
     let side = !sides.(n) in
@@ -483,10 +517,45 @@ let delete_poly n =
     (* shift down all the side poly own indices *)
     Array.iter (fun side ->
         let pi = side#polygon_index () in
-        if pi > n then side#set_polygon_index (pi - 1)) !sides
+        if pi > n then side#set_polygon_index (pi - 1)) !sides;
+    (* clean up the objects *)
+    let rec clean_objs () =
+        let target = CamlExt.array_find (fun x -> x#polygon () = n) !objs in
+        if target < Array.length !objs then begin
+            delete_obj target;
+            clean_objs ()
+        end in
+    clean_objs ();
+    Array.iter (fun x ->
+        let i = x#polygon () in if i > n then x#set_polygon (i-1)) !objs;
+    (* clean up the platforms *)
+    let rec clean_platforms () =
+        let target = CamlExt.array_find (fun x -> x#polygon_index () = n)
+                                        !platforms in
+        if target < Array.length !platforms then begin
+            delete_platform target;
+            clean_platforms ()
+        end in
+    clean_platforms ();
+    Array.iter (fun x ->
+        let i = x#polygon_index () in
+        if i >= n then x#set_polygon_index (i-1)) !platforms
+
+let delete_point_no_bs n =
+    points := delete_from_array_and_resize !points n;
+    (* fix the endpoints of lines *)
+    Array.iter (fun x ->
+        let (tp0, tp1) = x#endpoints () in
+        let tp0 = if tp0 > n then tp0 - 1 else tp0 in
+        let tp1 = if tp1 > n then tp1 - 1 else tp1 in
+        x#set_endpoints (tp0, tp1)) !lines;
+    (* fix the point arrays in polygons *)
+    Array.iter (fun x ->
+        destructive_map (fun x -> if x > n then x - 1 else x)
+            (x#endpoint_indices ())) !polygons
 
 (* deletes a line and performs cleanup *)
-let delete_line n =
+let rec delete_line n =
     let line = !lines.(n) in
     (* if our line is attached to polygons, delete them *)
     let poly0 = line#cw_poly_owner () in
@@ -494,21 +563,7 @@ let delete_line n =
     let (poly0, poly1) = (max poly0 poly1, min poly0 poly1) in
     if poly0 <> -1 then delete_poly poly0;
     if poly1 <> -1 then delete_poly poly1;
-    (* if our line is attached to points, detach this line and then count
-     * their owners to see if we should delete them too *)
-    (*let (p0, p1) = line#endpoints () in*)
-    (*let (p0, p1) = (max p0 p1, min p0 p1) in*)
-    (*line#set_endpoints (-1, -1);*)
-    (*let p0_count = Array.fold_left (fun x y ->*)
-        (*let (tp0, tp1) = y#endpoints () in*)
-        (*if p0 = tp0 || p0 = tp1 then x - 1 else x) 0 lines in*)
-    (*let p1_count = Array.fold_left (fun x y ->*)
-        (*let (tp0, tp1) = y#endpoints () in*)
-        (*if p1 = tp0 || p1 = tp1 then x - 1 else x) 0 lines in*)
-    (* if they don't have any more references, trash them *)
-    (*if p0_count = 0 then self#delete_point p0;*)
-    (*if p1_count = 0 then self#delete_point p1;*)
-    (* remove ourselves from the lines array *)
+    (* actually delete the line *)
     lines := delete_from_array_and_resize !lines n;
     (* loop through the other polys, fix their line indices *)
     Array.iter (fun x ->
@@ -518,71 +573,43 @@ let delete_line n =
     (* loop through sides, fix their line owner indices *)
     Array.iter (fun x ->
             let li = x#line_index () in
-            x#set_line_index (if li > n then li - 1 else li)) !sides
+            x#set_line_index (if li > n then li - 1 else li)) !sides;
+    (** delete unused points **)
+    let p0, p1 = line#endpoints () in
+    let p0, p1 = max p0 p1, min p0 p1 in
+    let i0 = CamlExt.array_find (fun x ->
+        let np0, np1 = x#endpoints () in np0 = p0 || np1 = p0) !lines in
+    if i0 = Array.length !lines then
+        delete_point_no_bs p0;
+    let i1 = CamlExt.array_find (fun x ->
+        let np0, np1 = x#endpoints () in np0 = p1 || np1 = p1) !lines in
+    if i1 = Array.length !lines then
+        delete_point_no_bs p1
 
-    (* deletes a point and performs cleanup *)
-let rec delete_point n =
-    let lines_length = Array.length !lines in
+(* safely delete a point *)
+let delete_point n =
     (* if we have a parent line, find it *)
     let rec aux acc =
-        if acc = lines_length then -1 else
+        if acc = Array.length !lines then -1 else
         let (p0, p1) = !lines.(acc)#endpoints () in
         if p0 = n || p1 = n then acc else aux (acc + 1) in
     let target_line = aux 0 in
+    (* if we do have a line owner, then just exhaustively delete the lines and
+     * let delete_line take care of everything *)
     if target_line <> -1 then begin
-        (* if we do in fact have a parent line, then we need to delete it
-         * and then try again *)
-        delete_line target_line;
-        delete_point n
-    end else begin
-        (* we don't have a parent, so let's delete the point itself.  start
-         * by removing it from the points array *)
-        points := delete_from_array_and_resize !points n;
-        (* fix the endpoints of lines *)
-        Array.iter (fun x ->
-            let (p0, p1) = x#endpoints () in
-            let p0 = if p0 > n then p0 - 1 else p0 in
-            let p1 = if p1 > n then p1 - 1 else p1 in
-            x#set_endpoints (p0, p1)) !lines;
-        (* fix the point arrays in polygons *)
-        Array.iter (fun x ->
-            destructive_map (fun x -> if x > n then x - 1 else x)
-                (x#endpoint_indices ())) !polygons
-    end
-
-(* deletes an object and performs cleanup *)
-let delete_obj n =
-    objs := delete_from_array_and_resize !objs n;
-    Array.iter (fun x ->
-        let y = x#first_object () in
-        if y > n then x#set_first_object (y-1) else
-        if y = n then x#set_first_object (-1)) !polygons
-
-(* deletes a platform and performs cleanup *)
-let delete_platform n =
-    platforms := delete_from_array_and_resize !platforms n;
-    Array.iter (fun x ->
-        let y = x#permutation () in
-        if x#kind () <> Platform then () else
-        if y > n then x#set_permutation (y - 1) else
-        if y = n then x#set_permutation (-1)) !polygons
-
-let delete_ambient n =
-    ambients := delete_from_array_and_resize !ambients n;
-    Array.iter (fun x ->
-        let i = x#ambient_sound_image_index () in
-        if i > n then x#set_ambient_sound_image_index (i - 1)
-        else if i = n then x#set_ambient_sound_image_index (-1)) !polygons
-
-let delete_random n =
-    randoms := delete_from_array_and_resize !randoms n;
-    Array.iter (fun x ->
-        let i = x#random_sound_image_index () in
-        if i > n then x#set_random_sound_image_index (i - 1)
-        else if i = n then x#set_random_sound_image_index (-1)) !polygons
-
-let delete_annotation n =
-    annotations := delete_from_array_and_resize !annotations n
+        let rec delete_line_loop () =
+            let target_line = aux 0 in
+            if target_line <> -1 then begin
+                let next_target_line =
+                    if target_line < Array.length !lines - 1 then
+                        aux (target_line + 1) else -1 in
+                flush stdout;
+                delete_line target_line;
+                if next_target_line <> -1 then
+                    delete_line_loop ()
+            end in
+        delete_line_loop ()
+    end else delete_point_no_bs n
 
 (* safely deletes all the objects in a map *)
 let nuke _ =
