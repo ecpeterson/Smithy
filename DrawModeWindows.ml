@@ -98,7 +98,8 @@ let _ =
         |> ignore) buttons
 
 (* and the alternative toolbar *)
-let entry_toolbar, entry_label, numeric_entry, mediabox, newbutton, editbutton =
+let entry_toolbar, entry_label, numeric_entry, mediabox, newbutton, editbutton,
+    ptype_cb =
     let entry_toolbar = GWindow.window ~title:"Smithy" ~show:false () in
     entry_toolbar#set_transient_for drawmode_window#as_window;
     let vbox = GPack.vbox ~packing:entry_toolbar#add () in
@@ -110,7 +111,11 @@ let entry_toolbar, entry_label, numeric_entry, mediabox, newbutton, editbutton =
                                     ~packing:mediabox#add () in
     let newbutton  = GButton.button ~label:"New Media..."
                                     ~packing:mediabox#add () in
-    entry_toolbar, entry_label, numeric_entry, mediabox, newbutton, editbutton
+    let cb, _ = GEdit.combo_box_text ~packing:vbox#add
+                                     ~strings:ItemStrings.polygon_types () in
+    cb#set_active 0;
+    (entry_toolbar, entry_label, numeric_entry, mediabox, newbutton,
+     editbutton, cb)
 
 (* the various editor mode types *)
 type modes = Draw_Mode | Visual_Mode | Elevation_Floor | Elevation_Ceiling |
@@ -127,31 +132,38 @@ let change_editor_state state =
      * modified and hidden/shown appropriately.  change_mode is an abstraction 
      * of this process, and the to_*_mode functions contain data to pass to 
      * change_mode *)
-    let set_mode box entry buttons button_text1 button_text2 label_text =
+    let set_mode box entry_window buttons button_text1 button_text2 label_text
+                 menu entry =
         if box then draw_toolbar#show ()
             else draw_toolbar#misc#hide ();
-        if entry then entry_toolbar#show ()
+        if entry_window then entry_toolbar#show ()
             else entry_toolbar#misc#hide ();
         if buttons then mediabox#misc#show ()
             else mediabox#misc#hide ();
+        if menu then ptype_cb#misc#show () else ptype_cb#misc#hide ();
+        if entry then numeric_entry#misc#show ()
+            else numeric_entry#misc#hide ();
         entry_label#set_text label_text;
         newbutton#set_label button_text1;
         editbutton#set_label button_text2 in
     mode := of_enum mode_descriptor state;
     match !mode with
-    |Polygon_Types (* TODO: do this *)
-    |Draw_Mode -> set_mode false false false "" "" ""
+    |Polygon_Types -> set_mode false true false "" "" "" true false
+    |Draw_Mode -> set_mode false false false "" "" "" false false
     |Elevation_Floor
-    |Elevation_Ceiling -> set_mode false true false "" "" "Height:"
+    |Elevation_Ceiling -> set_mode false true false "" "" "Height:" false true
     |Lights_Liquid
     |Lights_Floor
     |Lights_Ceiling ->
         set_mode false true true "New Light..." "Edit Light..." "Light:"
+                 false true
     |Liquids ->
         set_mode false true true "New Media..." "Edit Media..." "Media:"
+                 false true
     |Sounds_Random
     |Sounds_Ambient ->
         set_mode false true true "New Sound..." "Edit Sound..." "Sound:"
+        false true
     |_ -> ()
 
 (* set up the drawing window, try not to pollute the namespace *)
