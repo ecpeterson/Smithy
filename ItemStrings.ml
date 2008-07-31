@@ -80,3 +80,13 @@ let random_sound_strings =
 
 let landscape_strings = ["Daytime Lh'owon"; "Nighttime Lh'owon";
                          "Moon"; "Space"]
+
+let polygon_types =  ["Normal"; "Item Impassable"; "Monster & Item Impassable";
+                      "Hill"; "Base"; "Platform"; "Light On Trigger";
+                      "Platform On Trigger"; "Light Off Trigger";
+                      "Platform Off Trigger"; "Teleporter"; "Zone Border";
+                      "Goal"; "Visible Monster Trigger";
+                      "Invisible Monster Trigger"; "Dual Monster Trigger";
+                      "Item Trigger"; "Must be Explored"; "Automatic Exit";
+                      "Minor Ouch"; "Major Ouch"; "Glue"; "Glue Trigger";
+                      "Superglue"]

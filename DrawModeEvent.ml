@@ -102,6 +102,30 @@ let tool_begin_event orthodrawer x y button (state: Gdk.Tags.modifier list) =
         let poly = !MapFormat.polygons.(p) in
         let v = poly#random_sound_image_index () in
         numeric_entry#set_text (string_of_int v)
+    |Polygon_Types, 1, _, _, Some p ->
+        let poly = !MapFormat.polygons.(p) in
+        let ov = poly#kind () in
+        let v = CamlExt.of_enum MapTypes.poly_kind_descriptor ptype_cb#active in
+        poly#set_kind v;
+        begin match ov, v with
+        |MapTypes.Platform, MapTypes.Platform ->
+            MapDialogs.platform_dialog
+                (!MapFormat.platforms.(poly#permutation ()));
+        |MapTypes.Platform, _ ->
+            MapFormat.delete_platform (poly#permutation ())
+        |_, MapTypes.Platform ->
+            let plat = new MapTypes.platform in
+            plat#set_polygon_index p;
+            MapDialogs.platform_dialog plat;
+            let plat_idx = MapFormat.add_platform plat in
+            poly#set_permutation plat_idx
+        |_, _ -> ()
+        end;
+        orthodrawer#draw ()
+    |Polygon_Types, 3, _, _, Some p ->
+        let poly = !MapFormat.polygons.(p) in
+        let v = CamlExt.to_enum MapTypes.poly_kind_descriptor (poly#kind ()) in
+        ptype_cb#set_active v
     |Draw_Mode, 1, _, _, _ ->
         (* in draw mode, we have to deal with what kind of tool to apply *)
         if tool = ArrowTool then begin
