@@ -1,9 +1,14 @@
 (*** Smithy.ml contains the actual application framework, and in particular the
  * entry point for the program. ***)
 
+let okay_to_quit = ref true
 let at_exit _ =
-    Preferences.save_prefs ();
-    GMain.Main.quit ()
+    if !okay_to_quit then begin
+        okay_to_quit := false;
+        print_endline "Toodles!";
+        Preferences.save_prefs ();
+        GMain.Main.quit ()
+    end
 
 (* honest to god entry point for the program.  note that all kinds of
  * initialization code gets executed before this, and in particular that the
@@ -16,4 +21,5 @@ let _ =
     let args = Sys.argv in
     if Array.length args > 1 then
         MapFormat.read_from_file args.(Array.length args - 1);
-    GMain.Main.main ()
+    GMain.Main.main ();
+    at_exit ()
