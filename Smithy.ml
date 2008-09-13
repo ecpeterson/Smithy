@@ -5,7 +5,6 @@ let okay_to_quit = ref true
 let at_exit _ =
     if !okay_to_quit then begin
         okay_to_quit := false;
-        print_endline "Toodles!";
         Preferences.save_prefs ();
         GMain.Main.quit ()
     end
