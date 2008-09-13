@@ -635,7 +635,8 @@ let map_manager drawer _ =
         `V [
             `H [
                 `L "Grid Size:";
-                `M (["1 WU"; "1/2 WU"; "1/4 WU"; "1/8 WU"], grid_factor) ];
+                `M (["2 WU"; "1 WU"; "1/2 WU"; "1/4 WU"; "1/8 WU"],
+                    grid_factor) ];
             `C ("Display Grid", display_grid);
             `C ("Constrain to Grid", constrain_to_grid);
             `C ("Show Monsters", show_monsters);

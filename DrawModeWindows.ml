@@ -364,6 +364,11 @@ let menu_bar, orthodrawer, status =
       <accelerator action='TextTool'/>\
       <accelerator action='Delete'/>\
       <accelerator action='Backspace'/>\
+      <accelerator action='Grid_1_8'/>\
+      <accelerator action='Grid_1_4'/>\
+      <accelerator action='Grid_1_2'/>\
+      <accelerator action='Grid_1'/>\
+      <accelerator action='Grid_2'/>\
     </ui>" in
     let tool_cb button _ =
         toolbar_clicked (List.assoc button buttons);
@@ -386,6 +391,9 @@ let menu_bar, orthodrawer, status =
             highlight := (if n > 0 then Object [n] else No_Highlight)
         |No_Highlight |_ -> () end;
         orthodrawer#draw (); () in
+    let grid_cb factor _ =
+        grid_factor := factor;
+        orthodrawer#draw () in
     let accel_actions = GAction.action_group ~name:"Smithy-accels" () in
     GAction.add_actions accel_actions [
         a "LineTool"  ~accel:"l" ~callback:(tool_cb buttonline);
@@ -399,6 +407,12 @@ let menu_bar, orthodrawer, status =
 
         a "Delete"    ~accel:"Delete"    ~callback:delete_cb;
         a "Backspace" ~accel:"BackSpace" ~callback:delete_cb;
+
+        a "Grid_1_8"  ~accel:"1" ~callback:(grid_cb 4);
+        a "Grid_1_4"  ~accel:"2" ~callback:(grid_cb 3);
+        a "Grid_1_2"  ~accel:"3" ~callback:(grid_cb 2);
+        a "Grid_1"    ~accel:"4" ~callback:(grid_cb 1);
+        a "Grid_2"    ~accel:"5" ~callback:(grid_cb 0);
     ];
     let ui = GAction.ui_manager () in
     ui#insert_action_group menu_actions 0;
