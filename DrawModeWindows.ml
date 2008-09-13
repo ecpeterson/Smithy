@@ -116,6 +116,9 @@ let entry_toolbar, entry_label, numeric_entry, mediabox, newbutton, editbutton,
     cb#set_active 0;
     (entry_toolbar, entry_label, numeric_entry, mediabox, newbutton,
      editbutton, cb)
+let _ =
+    ignore (draw_toolbar#event#connect#delete ~callback:(fun _ -> true));
+    ignore (entry_toolbar#event#connect#delete ~callback:(fun _ -> true))
 
 (* the various editor mode types *)
 type modes = Draw_Mode | Visual_Mode | Elevation_Floor | Elevation_Ceiling |
@@ -149,7 +152,7 @@ let change_editor_state state =
     mode := of_enum mode_descriptor state;
     match !mode with
     |Polygon_Types -> set_mode false true false "" "" "" true false
-    |Draw_Mode -> set_mode false false false "" "" "" false false
+    |Draw_Mode -> set_mode true false false "" "" "" false false
     |Elevation_Floor
     |Elevation_Ceiling -> set_mode false true false "" "" "Height:" false true
     |Lights_Liquid
