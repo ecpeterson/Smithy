@@ -9,9 +9,11 @@ open MapTypes
 let draw_grid _ =
     (* draw grid lines *)
     orthodrawer#set_color !Colors.grid_color;
-    let grid_factor = 32 * (pow 2 !grid_factor) in
-    for i = -grid_factor to grid_factor do
-        let it = i * (MapFormat.half_map_width/grid_factor) in
+    (* 0 -> 2 WU, 1 -> 1 WU, ..., 4 -> 1/8 WU *)
+    let grid_size = 2048 / (pow 2 !grid_factor) in
+    for i = (-MapFormat.half_map_width / grid_size) to
+            (MapFormat.half_map_width / grid_size) do
+        let it = i * grid_size in
         orthodrawer#line (-MapFormat.half_map_width, it)
                          ( MapFormat.half_map_width, it);
         orthodrawer#line (it, -MapFormat.half_map_width)
@@ -19,10 +21,13 @@ let draw_grid _ =
     done;
     (* draw grid points *)
     orthodrawer#set_color !Colors.anchor_point_color;
-    for i = -32 to 32 do
-        for j = -32 to 32 do
-            let it, jt = i * (MapFormat.half_map_width/32),
-                         j * (MapFormat.half_map_width/32) in
+    let grid_size = if grid_size < 1024 then 1024 else grid_size in
+    for i = (-MapFormat.half_map_width / grid_size) to
+            (MapFormat.half_map_width / grid_size) do
+        for j = (-MapFormat.half_map_width / grid_size) to
+                (MapFormat.half_map_width / grid_size) do
+            let it, jt = (i * grid_size),
+                         (j * grid_size) in
             orthodrawer#fat_point (it, jt) 2
         done;
     done
