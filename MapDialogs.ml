@@ -218,6 +218,163 @@ let poly_dialog poly =
 let obj_dialog obj =
     let group = ref (CamlExt.to_enum MapTypes.object_kind_descriptor
                                     (obj#kind ())) in
+    let monster_kind = ref (obj#index ()) in
+    let monster_facing = ref (obj#facing ()) in
+    let monster_height = ref (string_of_int
+                                    ((fun (_, _, x) -> x) (obj#point ()))) in
+    let monster_teleports_in = ref (List.mem Invisible_Or_Platform
+                                             (obj#flags ())) in
+    let monster_hangs = ref (List.mem Hangs_From_Ceiling (obj#flags ())) in
+    let monster_floats = ref (List.mem Floats (obj#flags ())) in
+    let monster_blind = ref (List.mem Blind (obj#flags ())) in
+    let monster_deaf = ref (List.mem Deaf (obj#flags ())) in
+    let scenerystrings = match !MapFormat.environment_code with
+        |MapFormat.Lava   -> ItemStrings.scenery_strings_lava
+        |MapFormat.Water  -> ItemStrings.scenery_strings_water
+        |MapFormat.Sewage -> ItemStrings.scenery_strings_sewage
+        |MapFormat.Pfhor  -> ItemStrings.scenery_strings_pfhor
+        |MapFormat.Jjaro  -> ItemStrings.scenery_strings_jjaro in
+    let scenery_kind = ref (match !MapFormat.environment_code with
+        |MapFormat.Lava -> !monster_kind
+        |MapFormat.Water -> !monster_kind - 13
+        |MapFormat.Sewage -> !monster_kind - 28
+        |MapFormat.Pfhor -> !monster_kind - 39
+        |MapFormat.Jjaro -> !monster_kind - 50 ) in
+    let scenery_height = ref !monster_height in
+    let scenery_hangs = ref !monster_hangs in
+    let item_kind = ref !monster_kind in
+    let item_height = ref !monster_height in
+    let item_teleports_in = ref !monster_teleports_in in
+    let item_hangs = ref !monster_hangs in
+    let item_network_only = ref (List.mem Network_Only (obj#flags ())) in
+    let player_facing = ref !monster_facing in
+    let player_height = ref !monster_height in
+    let player_hangs = ref !monster_hangs in
+    let goal_kind = ref (string_of_int (obj#index ())) in
+    let sound_facing = ref (string_of_int (obj#facing ())) in
+    let sound_kind = ref !monster_kind in
+    let sound_height = ref !monster_height in
+    let sound_teleports_in = ref !monster_teleports_in in
+    let sound_hangs = ref !monster_hangs in
+    let sound_floats = ref !monster_floats in
+    let sound_light_vol = ref (!monster_facing <= 0) in
+    let descriptor = [
+        `N([("Monster", [
+                `H [`L "Type:";
+                    `M (ItemStrings.monster_strings, monster_kind)];
+                (* TODO: ??? *)
+                `H [`L "Activated By:";
+                    `M ([], ref 0)];
+                `S monster_facing;
+                `L "Facing";
+                `H [`L "Height Offset:";
+                    `E monster_height ];
+                `H [`V [`C ("Teleports In", monster_teleports_in);
+                        `C ("From Ceiling", monster_hangs);
+                        `C ("Teleports Out", monster_floats)];
+                    `V [`C ("Is Blind", monster_blind);
+                        `C ("Is Deaf", monster_deaf) ] ] ] );
+            ("Scenery", [
+                `H [`L "Type:";
+                    `M (scenerystrings, scenery_kind) ];
+                `H [`L "Height Offset:";
+                    `E scenery_height ];
+                `C ("From Ceiling", scenery_hangs) ] );
+            ("Item", [
+                `H [`L "Type:";
+                    `M (ItemStrings.item_strings, item_kind) ];
+                `H [`L "Height Offset:";
+                    `E item_height ];
+                `H [
+                    `V [
+                        `C ("Teleports In", item_teleports_in);
+                        `C ("From Ceiling", item_hangs) ];
+                    `V [`C ("Network Only", item_network_only) ] ] ] );
+            ("Player", [
+                `S player_facing;
+                `L "Facing";
+                `H [`L "Height Offset:";
+                    `E player_height ];
+                `C ("From Ceiling", player_hangs) ] );
+            ("Goal", [
+                `H [
+                    `L "Type:";
+                    `E goal_kind ] ] );
+            ("Sound", [
+                `H [
+                    `L "Type:";
+                    `M (ItemStrings.sound_strings, sound_kind) ];
+                `H [
+                    `L "Volume / Parent Light:";
+                    `E sound_facing ];
+                `H [
+                    `L "Height Offset:";
+                    `E sound_height ];
+                `H [
+                    `V [
+                        `C ("Is On Platform", sound_teleports_in);
+                        `C ("From Ceiling", sound_hangs) ];
+                    `V [
+                        `C ("Floats", sound_floats);
+                        `C ("Use Light For Volume", sound_light_vol) ] ] ] ) ],
+            group) ] in
+    GenerateDialog.generate_dialog descriptor "Edit Object";
+    let update_height h =
+        let (x, y, z) = obj#point () in
+        obj#set_point (x, y, int_of_string h) in
+    let update_flags list =
+            let flags = List.fold_left2 (fun mask (desc, _) flag ->
+                    if flag then mask lor desc else mask)
+                0 MapTypes.object_flags_descriptor list in
+            obj#set_flags (CamlExt.of_bitflag
+                                    MapTypes.object_flags_descriptor flags) in
+    match CamlExt.of_enum MapTypes.object_kind_descriptor !group with
+        |Monster ->
+            obj#set_index !monster_kind;
+            obj#set_facing !monster_facing;
+            update_height !monster_height;
+            let flags = List.fold_left2 (fun mask (desc, _) flag ->
+                    if flag then mask lor desc else mask)
+                0 MapTypes.object_flags_descriptor
+                [!monster_teleports_in; !monster_hangs; !monster_blind;
+                 !monster_deaf; false; false] in
+            obj#set_flags (CamlExt.of_bitflag
+                                    MapTypes.object_flags_descriptor flags)
+        |Scenery ->
+            obj#set_index
+                (match !MapFormat.environment_code with
+                    |MapFormat.Lava -> !scenery_kind
+                    |MapFormat.Water -> !scenery_kind + 13
+                    |MapFormat.Sewage -> !scenery_kind + 28
+                    |MapFormat.Pfhor -> !scenery_kind + 39
+                    |MapFormat.Jjaro -> !scenery_kind + 50);
+            update_height !scenery_height;
+            update_flags [false; !scenery_hangs; false; false; false; false]
+        |Item ->
+            obj#set_index !item_kind;
+            update_height !item_height;
+            update_flags [!item_teleports_in; !item_hangs; false; false; false;
+                          !item_network_only]
+        |Player ->
+            obj#set_facing !player_facing;
+            update_height !player_height;
+            update_flags [false; !player_hangs; false; false; false; false]
+        |Goal ->
+            obj#set_index (int_of_string !goal_kind)
+        |Sound_Source ->
+            obj#set_index !sound_kind;
+            update_height !sound_height;
+            update_flags [!sound_teleports_in; !sound_hangs; false; false;
+                          !sound_floats; false];
+            obj#set_facing (
+                if !sound_light_vol then int_of_string !sound_facing
+                                    else int_of_string !sound_facing * -1 + 1)
+        |_ -> ()
+
+(*
+let obj_dialog obj =
+    let group = ref (CamlExt.to_enum MapTypes.object_kind_descriptor
+                                    (obj#kind ())) in
     let descriptor = [
         `H [
             `L "Group:";
@@ -363,6 +520,7 @@ let obj_dialog obj =
     obj#set_flags (CamlExt.of_bitflag MapTypes.object_flags_descriptor flags);
     obj#set_facing facing;
     GeomEdit.increment_obj obj
+*)
 
 let info_dialog _ =
     let level_name = ref !MapFormat.level_name in
