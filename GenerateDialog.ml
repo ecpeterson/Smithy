@@ -1,21 +1,38 @@
 (*** GenerateDialog.ml contains routines that allow automatic dialog
  * generation, execution, and result storage. ***)
 
+open CamlExt
+
 type component =
     [ `H of component list
     | `V of component list
     | `F of string * component list
-(*  | `T of int * int * (int * int * int * int * component) list *)
     | `E of string ref
     | `M of string list * int ref
     | `C of string * bool ref
     | `S of int ref
     | `O of (float * float * float) ref
     | `R of (string * bool ref) list
-    | `L of string ]
+    | `L of string
+    | `N of (string * (component list)) list * int ref ]
 
 let rec build_dialog descriptor ~packing ~cleanup () =
     match descriptor with
+        |`N (tabs, retvar) :: descriptor ->
+            let notebook = GPack.notebook ~tab_pos:`TOP ~packing () in
+            let cleanups = List.map (fun (text, components) ->
+                let label = GMisc.label ~text () in
+                let page = notebook#append_page ~tab_label:label#coerce in
+                let vbox = GPack.vbox
+                    ~packing:(fun x -> ignore (page x)) () in
+                build_dialog components ~packing:(vbox#pack)
+                                        ~cleanup:(fun _ -> ()) ())
+                tabs in
+            notebook#goto_page !retvar;
+            build_dialog descriptor ~packing ~cleanup:(fun _ ->
+                cleanup ();
+                List.iter (fun f -> f ()) cleanups;
+                retvar := notebook#current_page) ()
         |`O rgb :: descriptor ->
             let (r, g, b) = !rgb in
             let color = Gdk.Color.alloc (Gdk.Color.get_system_colormap ())
