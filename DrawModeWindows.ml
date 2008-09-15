@@ -392,6 +392,9 @@ let menu_bar, orthodrawer, status =
         |Object (n :: ns) ->
             List.iter MapFormat.delete_obj   (n :: ns);
             highlight := (if n > 0 then Object [n] else No_Highlight)
+        |Annotation ns ->
+            List.iter MapFormat.delete_annotation ns;
+            highlight := No_Highlight
         |No_Highlight |_ -> () end;
         orthodrawer#draw (); () in
     let grid_cb factor _ =
