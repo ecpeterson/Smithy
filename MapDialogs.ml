@@ -523,6 +523,22 @@ let obj_dialog obj =
     GeomEdit.increment_obj obj
 *)
 
+let anno_dialog anno =
+    let px, py = anno#location () in
+    let px, py = (string_of_int px), (string_of_int py) in
+    let poly = anno#polygon_index () in
+    let poly = string_of_int poly in
+    let pos_str = "At X,Y: " ^ px ^ "," ^ py ^ " (Polygon: " ^ poly ^ ")" in
+    let text = anno#text () in
+    let text = ref text in
+    let descriptor = [
+        `V [
+            `L pos_str;
+            `E text ];
+    ] in
+    GenerateDialog.generate_dialog descriptor "Annotation";
+    anno#set_text !text
+
 let info_dialog _ =
     let level_name = ref !MapFormat.level_name in
     let environment_code =

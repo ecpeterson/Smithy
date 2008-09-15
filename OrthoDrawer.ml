@@ -286,14 +286,14 @@ object (self)
         Pango.Layout.set_text pango_layout str;
         let dx, dy = Pango.Layout.get_pixel_size pango_layout in
         let x, y = x - dx/2, y - dy/2 in
-        drawable#put_layout ~x ~y ~fore:`BLACK pango_layout
+        drawable#put_layout ~x ~y pango_layout
     (* outputs at the lower-left corner *)
     method text str (x, y) =
         let x, y = self#to_screen (x, y) in
         Pango.Layout.set_text pango_layout str;
         let _, dy = Pango.Layout.get_pixel_size pango_layout in
         let y = y - dy in
-        drawable#put_layout ~x ~y ~fore:`BLACK pango_layout
+        drawable#put_layout ~x ~y pango_layout
 
     method draw () = ignore (self#draw_callback (Obj.magic ()))
 

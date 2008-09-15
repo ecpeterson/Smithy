@@ -322,6 +322,13 @@ let make_object x y poly =
     clone_idx := MapFormat.add_object obj;
     !clone_idx
 
+let make_annotation x y poly =
+    let anno = new MapTypes.annotation in
+    anno#set_text "Unknown";
+    anno#set_location (x, y);
+    anno#set_polygon_index poly;
+    MapFormat.add_annotation anno
+
 let merge_points ns () =
     (* need to be sure no polys are attached to our pointset *)
     if not (Array.fold_left (fun x y ->

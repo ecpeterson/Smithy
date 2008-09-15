@@ -321,6 +321,14 @@ let get_closest_point x0 y0 =
         if this_distance < accd then (this_distance, i) else (accd, acci))
             (infinity, 0) !points
 
+    (* gets the closest annotation to the point (x0, y0) *)
+let get_closest_annotation x0 y0 =
+    array_fold_left_indexed (fun (accd, acci) this_anno i ->
+        match this_anno#location () with (xi, yi) ->
+        let this_distance = distance (float xi, float yi) (x0, y0) in
+        if this_distance < accd then (this_distance, i) else (accd, acci))
+            (infinity, 0) !annotations
+
     (* gets the closest line to the point (x0, y0) *)
 let get_closest_line x0 y0 =
     let line_distance (e0x, e0y) (e1x, e1y) (x, y) =

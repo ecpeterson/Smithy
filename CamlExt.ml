@@ -145,6 +145,16 @@ let array_find f arr =
 let find_in_array arr obj =
     array_find (fun x -> x = obj) arr
 
+let array_grep f arr =
+    Array.fold_left (fun a e -> if (f e) then e :: a else a) [] arr
+let array_grep_indices f arr =
+    let length = Array.length arr in
+    let rec ag_aux arr acc ret =
+        if acc = length then ret else
+        if f arr.(acc) then ag_aux arr (acc+1) (acc :: ret) else
+        ag_aux arr (acc+1) ret in
+    ag_aux arr 0 []
+
 (* deletes obj from an arr, shifts the remainder over, and fills the tail of the
  * array with replace *)
 let delete_from_array arr obj replace =

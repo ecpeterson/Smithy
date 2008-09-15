@@ -30,6 +30,7 @@ type highlighted_component =  No_Highlight       |
                               Point of int list  |
                               Line of int list   |
                               Poly of int list   |
-                              Object of int list
+                              Object of int list |
+                              Annotation of int list
 (* some stateful data *)
 let highlight = ref No_Highlight
