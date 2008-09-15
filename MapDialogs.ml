@@ -328,7 +328,8 @@ let obj_dialog obj =
                 0 MapTypes.object_flags_descriptor list in
             obj#set_flags (CamlExt.of_bitflag
                                     MapTypes.object_flags_descriptor flags) in
-    match CamlExt.of_enum MapTypes.object_kind_descriptor !group with
+    obj#set_kind (CamlExt.of_enum MapTypes.object_kind_descriptor !group);
+    match obj#kind () with
         |Monster ->
             obj#set_index !monster_kind;
             obj#set_facing !monster_facing;
