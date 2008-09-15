@@ -29,6 +29,7 @@ let tool_begin_event orthodrawer x y button (state: Gdk.Tags.modifier list) =
     let (line_d, line_i) = MapFormat.get_closest_line x y in
     let poly = MapFormat.get_enclosing_poly x y in
     let (obj_d, obj_i) = MapFormat.get_closest_object x y in
+    let (anno_d, anno_i) = MapFormat.get_closest_annotation x y in
     (* biiiiig switch statement that selects what exactly we want to be doing
      * with this mouse click *)
     let int_entry = try Some (int_of_string numeric_entry#text)
@@ -135,20 +136,24 @@ let tool_begin_event orthodrawer x y button (state: Gdk.Tags.modifier list) =
             (* the arrow tool selects things on mouse down, and multiple things
              * when shift is being held *)
             |true, Point n when point_d < highlight_distance orthodrawer ->
-                    highlight := Point (point_i :: n)
+                    highlight := Point (CamlExt.nub (point_i :: n))
             |_ when point_d < highlight_distance orthodrawer ->
                     highlight := Point [point_i]
             |true, Object n when obj_d < highlight_distance orthodrawer ->
-                    highlight := Object (obj_i :: n)
+                    highlight := Object (CamlExt.nub (obj_i :: n))
             |_ when obj_d < highlight_distance orthodrawer ->
                     highlight := Object [obj_i]
+            |true, Annotation n when anno_d < highlight_distance orthodrawer ->
+                    highlight := Annotation (CamlExt.nub (anno_i :: n))
+            |_ when anno_d < highlight_distance orthodrawer ->
+                    highlight := Annotation [anno_i]
             |true, Line n when line_d < highlight_distance orthodrawer ->
-                    highlight := Line (line_i :: n)
+                    highlight := Line (CamlExt.nub (line_i :: n))
             |_ when line_d < highlight_distance orthodrawer ->
                     highlight := Line [line_i]
             |true, Poly m when poly <> None ->
                     let Some n = poly in
-                    highlight := Poly (n :: m)
+                    highlight := Poly (CamlExt.nub (n :: m))
             |_ when poly <> None ->
                     let Some n = poly in
                     highlight := Poly [n]
@@ -174,6 +179,15 @@ let tool_begin_event orthodrawer x y button (state: Gdk.Tags.modifier list) =
                     MapDialogs.obj_dialog !MapFormat.objs.(objidx)
                 |_ -> () end;
             orthodrawer#draw () end
+        else if tool = TextTool then begin
+            begin match poly with
+                |Some poly ->
+                    let annoidx = GeomEdit.make_annotation (int_of_float x)
+                                                           (int_of_float y)
+                                                           poly in
+                    MapDialogs.anno_dialog !MapFormat.annotations.(annoidx)
+                |_ -> () end;
+            orthodrawer#draw () end
         else ()
     |Draw_Mode, 3, _, _, _ ->
         if tool = ArrowTool then begin
@@ -183,6 +197,8 @@ let tool_begin_event orthodrawer x y button (state: Gdk.Tags.modifier list) =
                 MapDialogs.point_dialog !MapFormat.points.(point_i)
             else if obj_d < highlight_distance orthodrawer then
                 MapDialogs.obj_dialog !MapFormat.objs.(obj_i)
+            else if anno_d < highlight_distance orthodrawer then
+                MapDialogs.anno_dialog !MapFormat.annotations.(anno_i)
             else if line_d < highlight_distance orthodrawer then
                 MapDialogs.line_dialog !MapFormat.lines.(line_i)
             else if poly <> None then
@@ -211,33 +227,119 @@ let tool_in_event orthodrawer x0 y0 old_x old_y x y =
             let delta_x = (x -. old_x) in
             let delta_y = (y -. old_y) in
             (* utilities for easy dragging *)
-            let shift_point p =
-                let point = !MapFormat.points.(p) in
-                let (px, py) = point#vertex () in
-                point#set_vertex (int_of_float (float px +. delta_x),
-                int_of_float (float py +. delta_y));
-                MapFormat.recalculate_lengths p in
-            let shift_obj obj =
-                let (x, y, z) = obj#point () in
-                obj#set_point (int_of_float (float x +. delta_x),
-                               int_of_float (float y +. delta_y), z) in
+            let has_enclosing_poly ix iy =
+                match MapFormat.get_enclosing_poly (float ix)
+                                                   (float iy) with
+                |Some p -> true
+                |None   -> false in
+            let shift_points ns =
+                let point_index_vertex p =
+                    let point = !MapFormat.points.(p) in
+                    point#vertex () in
+                let shift_point p =
+                    let (px, py) = point_index_vertex p in
+                    !MapFormat.points.(p)#set_vertex
+                        (int_of_float (float px +. delta_x),
+                         int_of_float (float py +. delta_y));
+                    MapFormat.recalculate_lengths p in
+                List.iter (fun p -> shift_point p) ns in
+            let obj_index_point o =
+                let obj = !MapFormat.objs.(o) in
+                obj#point () in
+            let shift_obj o dx dy=
+                let (ox, oy, oz) = obj_index_point o in
+                !MapFormat.objs.(o)#set_point ((ox + dx), (oy + dy), oz) in
+            let shift_objs ns =
+                let objs_shift_valid ns =
+                    let obj_place_valid o =
+                        let (ox, oy, _) = obj_index_point o in
+                        if (has_enclosing_poly (int_of_float x)
+                                               (int_of_float y)) then
+                            Some ((int_of_float x) - ox,
+                                  (int_of_float y) - oy)
+                        else
+                            None in
+                    let obj_shift_valid o dx dy =
+                        let (ox, oy, _) = obj_index_point o in
+                        has_enclosing_poly (ox + dx) (oy + dy) in
+                    match ns with
+                    |x::xs ->
+                        begin match (obj_place_valid x) with
+                        |Some (dx, dy) ->
+                            if (List.for_all
+                                    (fun o -> obj_shift_valid o dx dy) xs) then
+                                Some (dx, dy)
+                            else
+                                None
+                        |None -> None end
+                    |[] -> None in
+                match objs_shift_valid ns with
+                |Some (dx, dy) -> List.iter (fun o -> shift_obj o dx dy) ns
+                |None -> () in
+            let anno_index_location a =
+                let anno = !MapFormat.annotations.(a) in
+                anno#location () in
+            let shift_anno a dx dy=
+                let (ax, ay) = anno_index_location a in
+                !MapFormat.annotations.(a)#set_location (ax + dx, ay + dy) in
+            let shift_annos ns =
+                let annos_shift_valid ns =
+                    let anno_place_valid a =
+                        let (ax, ay) = anno_index_location a in
+                        if (has_enclosing_poly (int_of_float x)
+                                               (int_of_float y)) then
+                            Some ((int_of_float x) - ax,
+                                  (int_of_float y) - ay)
+                        else
+                            None in
+                    let anno_shift_valid a dx dy =
+                        let (ax, ay) = anno_index_location a in
+                        has_enclosing_poly (ax + dx) (ay + dy) in
+                    match ns with
+                    |x::xs ->
+                        begin match (anno_place_valid x) with
+                        |Some (dx, dy) ->
+                            if (List.for_all
+                                    (fun a -> anno_shift_valid a dx dy) xs) then
+                                Some (dx, dy)
+                            else
+                                None
+                        |None -> None end
+                    |[] -> None in
+                match annos_shift_valid ns with
+                |Some (dx, dy) -> List.iter (fun a -> shift_anno a dx dy) ns
+                |None -> () in
             begin match !highlight with
             |Point ns ->
-                List.iter shift_point ns
+                shift_points ns
             |Line ns ->
                 let points = List.fold_left (fun x y ->
                     let p0, p1 = !MapFormat.lines.(y)#endpoints () in
                     p0 :: p1 :: x) [] ns in
-                List.iter shift_point (CamlExt.nub points)
+                shift_points (CamlExt.nub points)
+            |Annotation ns ->
+                shift_annos ns
             |Poly ns ->
                 let points = List.fold_left (fun x y ->
                     let poly = !MapFormat.polygons.(y) in
                     let points = poly#endpoint_indices () in
                     let points = Array.sub points 0 (poly#vertex_count ()) in
                     Array.to_list points @ x) [] ns in
-                List.iter shift_point (CamlExt.nub points)
+                shift_points (CamlExt.nub points);
+                List.iter (fun o ->
+                               shift_obj o (int_of_float delta_x)
+                                           (int_of_float delta_y))
+                          (CamlExt.array_grep_indices
+                               (fun obj -> List.mem (obj#polygon ()) ns)
+                               !MapFormat.objs);
+                List.iter (fun a ->
+                               shift_anno a (int_of_float delta_x)
+                                            (int_of_float delta_y))
+                          (CamlExt.array_grep_indices
+                               (fun anno -> List.mem (anno#polygon_index ()) ns)
+                               !MapFormat.annotations)
             |Object ns ->
-                List.iter (fun n -> shift_obj !MapFormat.objs.(n)) ns
+                shift_objs ns
             |_ -> () end;
             orthodrawer#draw () end
         else if tool = LineTool then begin
@@ -265,6 +367,21 @@ let tool_end_event orthodrawer x0 y0 x y (button: int) _ =
                     match poly with
                     |None -> MapFormat.delete_obj n
                     |Some a -> obj#set_polygon a) n
+            |Annotation n ->
+                List.iter (fun n ->
+                    let anno = !MapFormat.annotations.(n) in
+                    let (x, y) = anno#location () in
+                    let poly = MapFormat.get_enclosing_poly
+                                                (float x) (float y) in
+                    match poly with
+                    |None -> MapFormat.delete_annotation n
+                    |Some a -> anno#set_polygon_index a) n
+            (* if we resize a polygon so that an object or annotation is
+             * outside of it, delete that object/annotation *)
+            (* TODO *)
+            |Point n -> ()
+            |Line n -> ()
+            |Poly n -> ()
             |_ -> ()
             end
         else if tool = ZoomTool then

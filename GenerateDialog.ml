@@ -109,6 +109,7 @@ let generate_dialog descriptor title =
                                           ~cleanup:ignore () in
     w#add_button_stock `CANCEL `CANCEL;
     w#add_button_stock `OK `OK;
+    w#set_default_response `OK;
     begin match w#run () with
     |`OK -> cleanup ();
     |_ -> () end;

@@ -186,9 +186,20 @@ let draw_platforms _ =
                 !MapFormat.platforms
 
 let draw_annotations _ =
-    Array.iter (fun annotation ->
-            orthodrawer#text (annotation#text ()) (annotation#location ()))
-        !MapFormat.annotations
+    orthodrawer#set_color !Colors.annotation_color;
+    Array.iter (fun annotation -> orthodrawer#text
+                                  (annotation#text ())
+                                  (annotation#location ()))
+               !MapFormat.annotations;
+    (* we want the annotation to be on top of the current highlight if the
+     * current highlight isn't an annotation, so we have to handle this here *)
+    match !highlight with
+    |Annotation n ->
+        orthodrawer#set_color !Colors.highlight_color;
+        List.iter (fun a -> let anno = !MapFormat.annotations.(a) in
+                            orthodrawer#text (anno#text ()) (anno#location ()))
+                  n
+    |_ -> ()
 
 let draw orthodrawer =
     orthodrawer#set_color !Colors.background_color;
