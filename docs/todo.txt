@@ -1,11 +1,11 @@
 important
 =========
 editing:
-+ write annotation tool, make annotations selectable / editable with the mouse
 + add placement chunk dialog / functionality
 interface:
 + /definitely/ stop using internal units in dialogs, ideally just write fixed-point readers and writers and stop using internal units in the program itself
 + fix point reselection after deletion (delete_cb)
++ allow 'cancel' to cancel the creation of a map item
 
 less important
 =========
@@ -19,10 +19,13 @@ editing:
 + merge maps
 + read in optimized chunks
 + write out optimized chunks
++ don't leave objects outside of a polygon when moving the vertices of the polygon
 interface:
 + write single level undo
 + write multiple level undo
 + add apply or auto-apply to dialogs
++ allow shift-click on a highlighted item to unhighlight it
++ display highlighted objects somehow
 code:
 + comment those ridiculous algorithms
 + finish the enumerative / bitmask type conversion in MapTypes.ml
@@ -30,6 +33,7 @@ code:
 + change the select_line_loop routine to use all lists instead of the mix of
 lists and arrays, upon second thought using arrays there doesn't actually make
 anything faster or slower, and lists are pretty
++ make classes use similar names for similar methods, so we don't have to deal with, for example, point#vertex, obj#point, and anno#location
 
 not important
 =========
