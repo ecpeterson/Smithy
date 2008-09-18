@@ -247,6 +247,7 @@ let menu_bar, orthodrawer, status =
           <menuitem action='MergePoints'/>\
           <menuitem action='GarbageCollect'/>\
           <menuitem action='ColorPreferences'/>\
+          <menuitem action='BitchAboutFeatures'/>\
         </menu>\
       </menubar>\
     </ui>" in
@@ -353,7 +354,14 @@ let menu_bar, orthodrawer, status =
                              ~callback:(FileDialogs.load_and_replace_light_lib
                                                                    orthodrawer);
         a "SaveLightLib"     ~label:"Save Light Library"
-                             ~callback:FileDialogs.save_light_lib
+                             ~callback:FileDialogs.save_light_lib;
+        a "BitchAboutFeatures" ~label:"Bitch about Features"
+            ~callback:(fun _ ->
+                let dialog = GWindow.message_dialog
+                    ~message:"-v" ~message_type:`ERROR
+                    ~buttons:GWindow.Buttons.close ~modal:true
+                    ~title:Resources.warning () in
+                dialog#run (); dialog#destroy ())
     ];
     let accel_xml =
    "<ui>\

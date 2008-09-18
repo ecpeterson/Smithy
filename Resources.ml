@@ -58,4 +58,4 @@ let _ =
     mk_item "Sub-Machine Gun"         "smg";
     mk_item "SMG Ammo"                "smg-ammo"
 
-let warning = "Roof Notification /!\\"
+let warning = "/!\\ Roof Notification /!\\"
