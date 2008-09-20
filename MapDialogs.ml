@@ -94,15 +94,15 @@ let platform_dialog plat =
     let descriptor = [
         `V [
             `H [
-                `V [
-                    `H [`L "Type: ";
-                        `M (["S'pht Door"; "S'pht Door Split";
+                `H [
+                    `V [`L "Type";
+                        `L "Speed";
+                        `L "Delay"; ];
+                    `V [`M (["S'pht Door"; "S'pht Door Split";
                              "S'pht Door Locked"; "S'pht Platform Silent";
                              "S'pht Platform"; "S'pht Door Heavy"; "Pfhor Door";
-                             "S'pht Platform Heavy"; "Pfhor Platform"], kind) ];
-                    `H [`L "Speed: ";
-                        `E speed ];
-                    `H [`L "Delay: ";
+                             "S'pht Platform Heavy"; "Pfhor Platform"], kind);
+                        `E speed;
                         `E delay ] ];
                 `V [`C ("Autocalculate Minimum Height", automin);
                     `H [`L "Minimum Height";
@@ -634,24 +634,21 @@ let media_dialog media =
     let descriptor = [
         `V [
             `H [
-                `L "Type";
-                `M (["Water";"Lava";"Alien Goo";"Sewage";"Jjaro Goo"], kind) ];
-            `H [
-                `L "Tide Parameter:";
-                `E light_parameter ];
+                `V [`L "Type";
+                    `L "Tide Parameter"; ];
+                `V [`M (["Water";"Lava";"Alien Goo";"Sewage";"Jjaro Goo"],
+                        kind);
+                    `E light_parameter ]; ];
             `H [
                 `V [
                     `S direction;
                     `L "Flow Direction" ];
-                `V [
-                    `H [
-                        `L "Flow Strength:";
-                        `E flow_strength ];
-                    `H [
-                        `L "Low Tide:";
-                        `E low_tide ];
-                    `H [
-                        `L "High Tide:";
+                `H [
+                    `V [`L "Flow Strength";
+                        `L "Low Tide";
+                        `L "High Tide"; ];
+                    `V [`E flow_strength;
+                        `E low_tide;
                         `E high_tide ] ] ];
             `C ("Liquid's sound obstructed by floor", obstructed) ] ] in
     (* run the dialog *)
@@ -897,16 +894,17 @@ let make_ambient () =
     MapFormat.add_ambient ambient
 
 let goto drawer _ =
-    let dialog = GWindow.dialog ~title:"Goto" () in
+    let dialog = GWindow.dialog ~title:"Goto" ~border_width:2 () in
     let kind, id =
         let hbox = GPack.hbox ~packing:dialog#vbox#add () in
-        GMisc.label ~text:"Type: " ~packing:hbox#add ();
-        let cb, _ = GEdit.combo_box_text ~packing:hbox#add
+        let vbox = GPack.vbox ~packing:hbox#add () in
+        GMisc.label ~text:"Type" ~packing:vbox#add ();
+        GMisc.label ~text:"ID" ~packing:vbox#add ();
+        let vbox = GPack.vbox ~packing:hbox#add () in
+        let cb, _ = GEdit.combo_box_text ~packing:vbox#add
                                     ~strings:["Point"; "Line"; "Polygon"] () in
         cb#set_active 2;
-        let hbox = GPack.hbox ~packing:dialog#vbox#add () in
-        GMisc.label ~text:"ID: " ~packing:hbox#add ();
-        let entry = GEdit.entry ~packing:hbox#add ~text:"0" () in
+        let entry = GEdit.entry ~packing:vbox#add ~text:"0" () in
         (cb, entry) in
     dialog#add_button_stock `CANCEL `CANCEL;
     dialog#add_button_stock `OK `OK;
