@@ -9,7 +9,8 @@ let drawmode_window = GWindow.window ~width:500 ~height:300 ~title:"Smithy"
 let set_title = drawmode_window#set_title
 
 let draw_toolbar = GWindow.window ~title:"Smithy Toolkit" ~show:true
-                                  ~height:122 ~width:66 ~border_width:5 ()
+                                  ~height:122 ~width:66 ~border_width:5
+                                  ~resizable:false ()
 let _ = draw_toolbar#set_transient_for drawmode_window#as_window
 let buttonline, buttonarrow, buttonfill, buttonpoly,
     buttonzoom, buttonpan, buttonobj, buttontext =
@@ -58,7 +59,7 @@ let _ =
 let entry_toolbar, entry_label, numeric_entry, mediabox, newbutton, editbutton,
     ptype_cb =
     let entry_toolbar = GWindow.window ~title:"Smithy" ~show:false
-                                       ~border_width:2 () in
+                                       ~border_width:2 ~resizable:false () in
     entry_toolbar#set_transient_for drawmode_window#as_window;
     let vbox = GPack.vbox ~spacing:2 ~packing:entry_toolbar#add () in
     let hbox = GPack.hbox ~spacing:2 ~packing:vbox#add () in

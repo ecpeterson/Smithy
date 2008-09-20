@@ -115,35 +115,35 @@ let platform_dialog plat =
                 `F ("Initially", [
                     `C ("Active", initially_active);
                     `C ("Extended", initially_extended) ]);
-                `F ("Controllable By:", [
+                `F ("Controllable By", [
                     `C ("Players", player_control);
                     `C ("Aliens", alien_control); ]);
-                `F ("When It Hits An Obstruction It:", [
+                `F ("When It Hits An Obstruction It", [
                     `C ("Causes Damage", damaging);
                     `C ("Reverses Direction", reverse_on_bump) ]);
-                `F ("Extends:", [
+                `F ("Extends", [
                     `R ["From Floor", extends_from_floor;
                         "From Ceiling", extends_from_ceiling;
                         "From Both", extends_from_both];
                         `C ("Floor to Ceiling", floor_to_ceiling)])];
             `H [
                 `V [
-                    `F ("Activates:", [
+                    `F ("Activates", [
                         `C ("Only Once", one_shot);
                         `C ("Activates Polygon Lights", a_to_a_lights);
                         `C ("Activates Adjacent Platform", a_to_a_adj_plats);
                         `C ("Deactivates Adjacent Platform", a_to_d_adj_plats);
                         `C ("Adjacent at Each Level", adjacent_at_each_level)]);
-                    `H [`L "Tags: ";
+                    `H [`L "Tags ";
                         `E tag] ];
-                `F ("Deactivates:", [
+                `F ("Deactivates", [
                     `R ["Never", deactivates_never;
                         "At Each Level", deactivates_at_each_level;
                         "At Initial Level", deactivates_at_initial_level];
                     `C ("Deactivates Polygon Lights", d_to_d_lights);
                     `C ("Deactivates Adjacent Platform", d_to_d_adj_plats);
                     `C ("Activates Adjacent Platform", d_to_a_adj_plats)]);
-                `F ("Miscellaneous:", [
+                `F ("Miscellaneous", [
                     `C ("Can't Deactivate Externally", cant_deactivate);
                     `C ("Uses Native Polygon Heights", uses_native_heights);
                     `C ("Delay Before Activation", delay_before_active);
@@ -799,7 +799,7 @@ let map_manager drawer _ =
     let descriptor = [
         `V [
             `H [
-                `L "Grid Size:";
+                `L "Grid Size";
                 `M (["2 WU"; "1 WU"; "1/2 WU"; "1/4 WU"; "1/8 WU"],
                     grid_factor) ];
             `C ("Display Grid", display_grid);
@@ -880,8 +880,8 @@ let ambient_dialog ambient =
     let volume = ref (ambient#volume () |> string_of_int) in
     let descriptor = [
         `H [
-            `V [`L "Type ";
-                `L "Volume "; ];
+            `V [`L "Type";
+                `L "Volume"; ];
             `V [`M (ItemStrings.sound_strings, index);
                 `E volume ] ] ] in
     GenerateDialog.generate_dialog descriptor "Ambient Sound Parameters";
@@ -894,7 +894,8 @@ let make_ambient () =
     MapFormat.add_ambient ambient
 
 let goto drawer _ =
-    let dialog = GWindow.dialog ~title:"Goto" ~border_width:2 () in
+    let dialog = GWindow.dialog ~title:"Goto" ~border_width:2
+                                ~resizable:false () in
     let kind, id =
         let hbox = GPack.hbox ~packing:dialog#vbox#add () in
         let vbox = GPack.vbox ~packing:hbox#add () in
@@ -949,7 +950,8 @@ let map_height_dlg drawer _ =
         DrawModeSettings.ceiling_cutoff := cadj#value;
         drawer#draw ());
     let dialog = GWindow.window ~title:"Height Window" ~height:300
-                                ~show:false ~border_width:5 () in
+                                ~show:false ~border_width:5
+                                ~resizable:false () in
     dialog#event#connect#delete ~callback:(fun _ ->
         map_height_window := None; false);
     let hbox = GPack.hbox ~packing:dialog#add () in
