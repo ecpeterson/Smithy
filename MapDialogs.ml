@@ -9,12 +9,10 @@ let point_dialog point =
     let px, py = point#vertex () in
     let px, py = ref (string_of_int px), ref (string_of_int py) in
     let descriptor = [
-        `V [
-            `H [
-                `L "X Coord:";
-                `E px ];
-            `H [
-                `L "Y Coord:";
+        `H [
+            `V [`L "X Coord";
+                `L "Y Coord"; ];
+            `V [`E px;
                 `E py ] ] ] in
     GenerateDialog.generate_dialog descriptor "Edit Point";
     point#set_vertex (int_of_string !px, int_of_string !py)
@@ -183,12 +181,10 @@ let poly_dialog poly =
     let kind = ref (CamlExt.to_enum MapTypes.poly_kind_descriptor old_kind) in
     let media_index = ref (string_of_int (poly#media_index ())) in
     let descriptor = [
-        `V [
-            `H [
-                `L "Type:";
-                `M (ItemStrings.polygon_types, kind) ];
-            `H [
-                `L "Liquid";
+        `H [
+            `V [`L "Type";
+                `L "Liquid"; ];
+            `V [`M (ItemStrings.polygon_types, kind);
                 `E media_index ] ] ] in
     GenerateDialog.generate_dialog descriptor "Edit Polygon";
     let kind = CamlExt.of_enum MapTypes.poly_kind_descriptor !kind in
@@ -260,14 +256,15 @@ let obj_dialog obj =
     let sound_light_vol = ref (!monster_facing <= 0) in
     let descriptor = [
         `N([("Monster", [
-                `H [`L "Type:";
-                    `M (ItemStrings.monster_strings, monster_kind)];
-                (* TODO: ??? *)
-                `H [`L "Activated By:";
-                    `M ([], ref 0)];
+                `H [
+                    `V [`L "Type";
+                        `L "Activated By"; ];
+                    `V [`M (ItemStrings.monster_strings, monster_kind);
+                        (* TODO: ??? *)
+                        `M ([], ref 0)] ];
                 `S monster_facing;
                 `L "Facing";
-                `H [`L "Height Offset:";
+                `H [`L "Height Offset";
                     `E monster_height ];
                 `H [`V [`C ("Teleports In", monster_teleports_in);
                         `C ("From Ceiling", monster_hangs);
@@ -275,16 +272,20 @@ let obj_dialog obj =
                     `V [`C ("Is Blind", monster_blind);
                         `C ("Is Deaf", monster_deaf) ] ] ] );
             ("Scenery", [
-                `H [`L "Type:";
-                    `M (scenerystrings, scenery_kind) ];
-                `H [`L "Height Offset:";
-                    `E scenery_height ];
+                `H [
+                    `V [`L "Type";
+                        `L "Height Offset"; ];
+                    `V [`M (scenerystrings, scenery_kind);
+                        `E scenery_height ];
+                ];
                 `C ("From Ceiling", scenery_hangs) ] );
             ("Item", [
-                `H [`L "Type:";
-                    `M (ItemStrings.item_strings, item_kind) ];
-                `H [`L "Height Offset:";
-                    `E item_height ];
+                `H [
+                    `V [`L "Type";
+                        `L "Height Offset"; ];
+                    `V [`M (ItemStrings.item_strings, item_kind);
+                        `E item_height ];
+                ];
                 `H [
                     `V [
                         `C ("Teleports In", item_teleports_in);
@@ -293,23 +294,22 @@ let obj_dialog obj =
             ("Player", [
                 `S player_facing;
                 `L "Facing";
-                `H [`L "Height Offset:";
+                `H [`L "Height Offset";
                     `E player_height ];
                 `C ("From Ceiling", player_hangs) ] );
             ("Goal", [
                 `H [
-                    `L "Type:";
+                    `L "Type";
                     `E goal_kind ] ] );
             ("Sound", [
                 `H [
-                    `L "Type:";
-                    `M (ItemStrings.sound_strings, sound_kind) ];
-                `H [
-                    `L "Volume / Parent Light:";
-                    `E sound_facing ];
-                `H [
-                    `L "Height Offset:";
-                    `E sound_height ];
+                    `V [`L "Type";
+                        `L "Volume / Parent Light";
+                        `L "Height Offset"; ];
+                    `V [`M (ItemStrings.sound_strings, sound_kind);
+                        `E sound_facing;
+                        `E sound_height; ];
+                ];
                 `H [
                     `V [
                         `C ("Is On Platform", sound_teleports_in);
@@ -568,31 +568,31 @@ let info_dialog _ =
     let descriptor = [
         `V [
             `H [
-                `L "Level Name:";
+                `L "Level Name";
                 `E level_name ];
-            `H [
-                `V [
+            `V [
+                `H [
                     `H [
-                        `L "Environment:";
-                        `M (["Water"; "Lava"; "Sewage"; "Jjaro"; "Pfhor"],
-                            environment_code) ];
-                    `H [
-                        `L "Landscape:";
-                        `M (ItemStrings.landscape_strings, landscape) ];
+                        `V [`L "Environment";
+                            `L "Landscape"; ];
+                        `V [`M (["Water"; "Lava"; "Sewage"; "Jjaro"; "Pfhor"],
+                                environment_code);
+                            `M (ItemStrings.landscape_strings, landscape); ]; ];
+                    `V [
+                        `F ("Environment Type", [
+                            `V [
+                                `C ("Vacuum", vacuum);
+                                `C ("Rebellion", rebellion);
+                                `C ("Low Gravity", low_gravity);
+                                `C ("Magnetic", magnetic) ] ] ); ] ];
+                `H [
                     `F ("Game Type", [
                         `V [
                             `C ("Single Player", solo);
                             `C ("Multiplayer Cooperative", coop);
                             `C ("Multiplayer Carnage", emfh);
                             `C ("King of the Hill", koth);
-                            `C ("Kill the Man with the Ball", ktmwtb) ] ] ) ];
-                `V [
-                    `F ("Environment Type", [
-                        `V [
-                            `C ("Vacuum", vacuum);
-                            `C ("Rebellion", rebellion);
-                            `C ("Low Gravity", low_gravity);
-                            `C ("Magnetic", magnetic) ] ] );
+                            `C ("Kill the Man with the Ball", ktmwtb) ] ] );
                     `F ("Mission Type", [
                         `V [
                             `C ("Extermination", extermination);
@@ -718,31 +718,24 @@ let light_dialog light =
         ref (string_of_float si_dintensity) in
     let frame_descriptor title fn period dperiod intensity dintensity =
         `F (title, [
-            `V [
-                `H [
-                    `L "Function:";
-                    `M (["Constant"; "Linear"; "Smooth"; "Flicker"], fn) ];
-                `H [
-                    `L "Period:";
-                    `E period ];
-                `H [
-                    `L "D Period:";
-                    `E dperiod ];
-                `H [
-                    `L "Intensity (%):";
-                    `E intensity ];
-                `H [
-                    `L "D Intensity (%):";
+            `H [
+                `V [`L "Function";
+                    `L "Period";
+                    `L "D Period";
+                    `L "Intensity (%)";
+                    `L "D Intensity (%)"; ];
+                `V [`M (["Constant"; "Linear"; "Smooth"; "Flicker"], fn);
+                    `E period;
+                    `E dperiod;
+                    `E intensity;
                     `E dintensity ] ] ] ) in
     let (descriptor : GenerateDialog.component list) = [
         `V [
             `H [
-                `V [
-                    `H [
-                        `L "Preset:";
-                        `M (["Normal"; "Strobe"; "Liquid Tide"], preset) ];
-                    `H [
-                        `L "Phase:";
+                `H [
+                    `V [`L "Preset";
+                        `L "Phase"; ];
+                    `V [`M (["Normal"; "Strobe"; "Liquid Tide"], preset);
                         `E phase ] ];
                 `V [
                     `C ("Stateless", stateless);
@@ -838,21 +831,21 @@ let random_dialog random =
     let ddirection = ref (random#ddirection ()) in
     let descriptor = [
         `V [
-            `H [`L "Type: ";
+            `H [`L "Type";
                 `M (ItemStrings.random_sound_strings, index) ];
             `H [
-                `V [
-                    `H [`L "Volume: ";
-                        `E volume];
-                    `H [`L "D Volume: ";
-                        `E dvolume];
-                    `H [`L "Period: ";
-                        `E period];
-                    `H [`L "D Period: ";
-                        `E dperiod];
-                    `H [`L "Pitch: ";
-                        `E pitch];
-                    `H [`L "D Pitch: ";
+                `H [
+                    `V [`L "Volume";
+                        `L "D Volume";
+                        `L "Period";
+                        `L "D Period";
+                        `L "Pitch";
+                        `L "D Pitch"; ];
+                    `V [`E volume;
+                        `E dvolume;
+                        `E period;
+                        `E dperiod;
+                        `E pitch;
                         `E dpitch]];
                 `V [
                     `C ("Non-Directional", nondirectional);
@@ -889,10 +882,10 @@ let ambient_dialog ambient =
     let index = ref (ambient#index ()) in
     let volume = ref (ambient#volume () |> string_of_int) in
     let descriptor = [
-        `V [
-            `H [`L "Type: ";
-                `M (ItemStrings.sound_strings, index) ];
-            `H [`L "Volume: ";
+        `H [
+            `V [`L "Type ";
+                `L "Volume "; ];
+            `V [`M (ItemStrings.sound_strings, index);
                 `E volume ] ] ] in
     GenerateDialog.generate_dialog descriptor "Ambient Sound Parameters";
     ambient#set_volume (int_of_string !volume);
@@ -958,7 +951,7 @@ let map_height_dlg drawer _ =
         DrawModeSettings.ceiling_cutoff := cadj#value;
         drawer#draw ());
     let dialog = GWindow.window ~title:"Height Window" ~height:300
-                                ~show:false () in
+                                ~show:false ~border_width:5 () in
     dialog#event#connect#delete ~callback:(fun _ ->
         map_height_window := None; false);
     let hbox = GPack.hbox ~packing:dialog#add () in
@@ -973,3 +966,49 @@ let map_height_dlg drawer _ =
     map_height_window := Some dialog;
     dialog#show () end else
         let Some dialog = !map_height_window in dialog#present ()
+
+let color_prefs_dialog drawer _ =
+    let thickness = ref (string_of_int
+                        !DrawModeSettings.highlighted_point_thickness) in
+    let looseness = ref (string_of_float !DrawModeSettings.pixel_epsilon) in
+    let saturation = ref (string_of_float !Colors.poly_type_saturation) in
+    let value = ref (string_of_float !Colors.poly_type_value) in
+    let descriptor = [
+        `H [
+            `V [
+                `L "Background color";
+                `L "Grid color";
+                `L "Anchor point color";
+                `L "Point color";
+                `L "Solid line color";
+                `L "Transparent line color";
+                `L "Passable line color";
+                `L "Polygon color";
+                `L "Invalid polygon color";
+                `L "Highlight color";
+                `L "Highlight thickness";
+                `L "Click looseness";
+                `L "Polygon Type Saturation";
+                `L "Polygon Type Value";
+            ];
+            `V [
+                `O Colors.background_color;
+                `O Colors.grid_color;
+                `O Colors.anchor_point_color;
+                `O Colors.point_color;
+                `O Colors.solid_line_color;
+                `O Colors.transparent_line_color;
+                `O Colors.passable_line_color;
+                `O Colors.polygon_color;
+                `O Colors.invalid_polygon;
+                `O Colors.highlight_color;
+                `E thickness;
+                `E looseness;
+                `E saturation;
+                `E value ] ] ] in
+    GenerateDialog.generate_dialog descriptor "Color Preferences";
+    DrawModeSettings.highlighted_point_thickness := int_of_string !thickness;
+    DrawModeSettings.pixel_epsilon := float_of_string !looseness;
+    Colors.poly_type_saturation := float_of_string !saturation;
+    Colors.poly_type_value := float_of_string !value;
+    drawer#draw ()

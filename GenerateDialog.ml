@@ -23,7 +23,7 @@ let rec build_dialog descriptor ~packing ~cleanup () =
             let cleanups = List.map (fun (text, components) ->
                 let label = GMisc.label ~text () in
                 let page = notebook#append_page ~tab_label:label#coerce in
-                let vbox = GPack.vbox
+                let vbox = GPack.vbox ~border_width:2
                     ~packing:(fun x -> ignore (page x)) () in
                 build_dialog components ~packing:(vbox#pack)
                                         ~cleanup:(fun _ -> ()) ())
@@ -57,14 +57,14 @@ let rec build_dialog descriptor ~packing ~cleanup () =
             build_dialog descriptor ~packing ~cleanup:(fun _ ->
                 cleanup (); return := spinner#theta) ()
         |`F (label, components) :: descriptor ->
-            let f = GBin.frame ~label ~packing () in
+            let f = GBin.frame ~label ~packing ~border_width:2 () in
             let v = GPack.vbox ~packing:f#add () in
             let extra_cleanup = build_dialog components ~packing:v#add
                                                         ~cleanup:ignore () in
             build_dialog descriptor ~packing ~cleanup:(fun _ ->
                 cleanup (); extra_cleanup ()) ()
         |`R ((first_label, first_setting) :: bdesc) :: descriptor ->
-            let vbox = GPack.vbox ~packing () in
+            let vbox = GPack.vbox ~packing ~border_width:2 () in
             let first_button = GButton.radio_button ~label:first_label
                                 ~active:!first_setting ~packing:vbox#add () in
             let buttons = List.map (fun (label, setting) ->
@@ -76,13 +76,13 @@ let rec build_dialog descriptor ~packing ~cleanup () =
                     ((first_label, first_setting) :: bdesc)
                     (first_button :: buttons)) ()
         |`V components :: descriptor ->
-            let vbox = GPack.vbox ~packing () in
+            let vbox = GPack.vbox ~packing ~spacing:2 () in
             let extra_cleanup = build_dialog components ~packing:vbox#add
                                                         ~cleanup:ignore () in
             build_dialog descriptor ~packing ~cleanup:(fun _ ->
                 cleanup (); extra_cleanup ()) ()
         |`H components :: descriptor ->
-            let hbox = GPack.hbox ~packing () in
+            let hbox = GPack.hbox ~packing ~spacing:2 () in
             let extra_cleanup = build_dialog components ~packing:hbox#add
                                                         ~cleanup:ignore () in
             build_dialog descriptor ~packing ~cleanup:(fun _ ->
@@ -104,7 +104,7 @@ let rec build_dialog descriptor ~packing ~cleanup () =
             cleanup
 
 let generate_dialog descriptor title =
-    let w = GWindow.dialog ~title () in
+    let w = GWindow.dialog ~title ~border_width:2 () in
     let cleanup = build_dialog descriptor ~packing:w#vbox#add
                                           ~cleanup:ignore () in
     w#add_button_stock `CANCEL `CANCEL;

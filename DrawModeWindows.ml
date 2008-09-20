@@ -3,56 +3,13 @@
 open CamlExt
 open DrawModeSettings
 
-let color_prefs_dialog drawer _ =
-    let thickness = ref (string_of_int
-                        !DrawModeSettings.highlighted_point_thickness) in
-    let looseness = ref (string_of_float !DrawModeSettings.pixel_epsilon) in
-    let saturation = ref (string_of_float !Colors.poly_type_saturation) in
-    let value = ref (string_of_float !Colors.poly_type_value) in
-    let descriptor = [
-        `V [
-            `H [`L "Background color: ";
-                `O Colors.background_color ];
-            `H [`L "Grid color: ";
-                `O Colors.grid_color ];
-            `H [`L "Anchor point color: ";
-                `O Colors.anchor_point_color ];
-            `H [`L "Point color: ";
-                `O Colors.point_color ];
-            `H [`L "Solid line color: ";
-                `O Colors.solid_line_color ];
-            `H [`L "Transparent line color: ";
-                `O Colors.transparent_line_color ];
-            `H [`L "Passable line color: ";
-                `O Colors.passable_line_color ];
-            `H [`L "Polygon color: ";
-                `O Colors.polygon_color ];
-            `H [`L "Invalid polygon color: ";
-                `O Colors.invalid_polygon ];
-            `H [`L "Highlight color: ";
-                `O Colors.highlight_color ];
-            `H [`L "Highlight thickness: ";
-                `E thickness ];
-            `H [`L "Click looseness: ";
-                `E looseness ];
-            `H [`L "Polygon Type Saturation: ";
-                `E saturation ];
-            `H [`L "Polygon Type Value: ";
-                `E value ] ] ] in
-    GenerateDialog.generate_dialog descriptor "Color Preferences";
-    DrawModeSettings.highlighted_point_thickness := int_of_string !thickness;
-    DrawModeSettings.pixel_epsilon := float_of_string !looseness;
-    Colors.poly_type_saturation := float_of_string !saturation;
-    Colors.poly_type_value := float_of_string !value;
-    drawer#draw ()
-
 (* set up the drawing window *)
 let drawmode_window = GWindow.window ~width:500 ~height:300 ~title:"Smithy"
     ~allow_shrink:true ~show:true ()
 let set_title = drawmode_window#set_title
 
 let draw_toolbar = GWindow.window ~title:"Smithy Toolkit" ~show:true
-                                  ~height:120 ~width:60 ()
+                                  ~height:122 ~width:66 ~border_width:5 ()
 let _ = draw_toolbar#set_transient_for drawmode_window#as_window
 let buttonline, buttonarrow, buttonfill, buttonpoly,
     buttonzoom, buttonpan, buttonobj, buttontext =
@@ -100,11 +57,12 @@ let _ =
 (* and the alternative toolbar *)
 let entry_toolbar, entry_label, numeric_entry, mediabox, newbutton, editbutton,
     ptype_cb =
-    let entry_toolbar = GWindow.window ~title:"Smithy" ~show:false () in
+    let entry_toolbar = GWindow.window ~title:"Smithy" ~show:false
+                                       ~border_width:2 () in
     entry_toolbar#set_transient_for drawmode_window#as_window;
-    let vbox = GPack.vbox ~packing:entry_toolbar#add () in
-    let hbox = GPack.hbox ~packing:vbox#add () in
-    let entry_label = GMisc.label ~text:"Height: " ~packing:hbox#add () in
+    let vbox = GPack.vbox ~spacing:2 ~packing:entry_toolbar#add () in
+    let hbox = GPack.hbox ~spacing:2 ~packing:vbox#add () in
+    let entry_label = GMisc.label ~text:"Height " ~packing:hbox#add () in
     let numeric_entry = GEdit.entry ~packing:hbox#add () in
     let mediabox = GPack.hbox ~packing:vbox#add () in
     let editbutton = GButton.button ~label:"Edit Media..."
@@ -154,18 +112,18 @@ let change_editor_state state =
     |Polygon_Types -> set_mode false true false "" "" "" true false
     |Draw_Mode -> set_mode true false false "" "" "" false false
     |Elevation_Floor
-    |Elevation_Ceiling -> set_mode false true false "" "" "Height:" false true
+    |Elevation_Ceiling -> set_mode false true false "" "" "Height" false true
     |Lights_Liquid
     |Lights_Floor
     |Lights_Ceiling ->
-        set_mode false true true "New Light..." "Edit Light..." "Light:"
+        set_mode false true true "New Light..." "Edit Light..." "Light"
                  false true
     |Liquids ->
-        set_mode false true true "New Media..." "Edit Media..." "Media:"
+        set_mode false true true "New Media..." "Edit Media..." "Media"
                  false true
     |Sounds_Random
     |Sounds_Ambient ->
-        set_mode false true true "New Sound..." "Edit Sound..." "Sound:"
+        set_mode false true true "New Sound..." "Edit Sound..." "Sound"
         false true
     |_ -> ()
 
@@ -345,7 +303,7 @@ let menu_bar, orthodrawer, status =
         a "GarbageCollect"   ~label:"_Garbage Collect"
                              ~callback:(fun _ -> Gc.full_major ());
         a "ColorPreferences" ~label:"Color _Preferences"
-                             ~callback:(color_prefs_dialog orthodrawer);
+                             ~callback:(MapDialogs.color_prefs_dialog orthodrawer);
         a "LightLibMenu"     ~label:"_Light Libraries";
         a "AppendLightLib"   ~label:"Load and _Append Light Library"
                              ~callback:(FileDialogs.load_and_append_light_lib
