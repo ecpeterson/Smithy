@@ -92,7 +92,7 @@ let rec build_dialog descriptor ~packing ~cleanup () =
             build_dialog descriptor ~packing ~cleanup:(fun _ ->
                 cleanup (); str := entry#text) ()
         |`L str :: descriptor ->
-            GMisc.label ~text:str ~packing ~justify:`FILL ();
+            GMisc.label ~text:str ~xpad:2 ~packing ~justify:`FILL ();
             build_dialog descriptor ~packing ~cleanup ()
         |`M (strings, ret) :: descriptor ->
             let cb = GEdit.combo_box_text ~packing ~strings () in
