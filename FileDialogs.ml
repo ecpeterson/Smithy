@@ -68,28 +68,25 @@ let save_file_dialog f title _ =
     dialog#destroy ()
 
 (* open/save dialogs for maps *)
-let open_map_dialog set_title drawer _ =
+let open_map_dialog set_title _ =
     open_file_dialog (fun filename ->
         MapFormat.read_from_file filename;
-        set_title ("Smithy: " ^ filename);
-        drawer#draw ()) "Open Map" ()
+        set_title ("Smithy: " ^ filename)) "Open Map" ()
 let save_map_dialog set_title _ =
     save_file_dialog (fun filename ->
         MapFormat.write_to_file filename;
         set_title ("Smithy: " ^ filename)) "Save Map" ()
 
 (* open/save dialogs for light libraries *)
-let load_and_append_light_lib drawer _ =
+let load_and_append_light_lib _ =
     open_file_dialog (fun filename ->
             let lights = load_light_library filename in
-            MapFormat.lights := Array.append !MapFormat.lights lights;
-            drawer#draw ())
+            MapFormat.lights := Array.append !MapFormat.lights lights)
         "Load and Append Light Library" ()
-let load_and_replace_light_lib drawer _ =
+let load_and_replace_light_lib _ =
     open_file_dialog (fun filename ->
             let lights = load_light_library filename in
-            MapFormat.lights := lights;
-            drawer#draw ())
+            MapFormat.lights := lights)
         "Load and Replace Light Library" ()
 let save_light_lib _ =
     save_file_dialog (fun filename ->

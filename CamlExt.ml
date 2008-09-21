@@ -2,14 +2,6 @@
  * functionality of OCaml itself, need no larger context to justify their
  * existence, and may be used frequently throughout the program ***)
 
-(* initialize GTK itself.  THIS _/MUST/_ COME _/FIRST/_, AND CamlExt _/MUST/_
- * BE COMPILED AND LINKED _/FIRST/_ to ensure proper execution. *)
-let _ =
-    ignore (GtkMain.Main.init ());
-    Gdk.Rgb.init ();
-    GtkBase.Widget.set_default_visual (Gdk.Rgb.get_visual ());
-    GtkBase.Widget.set_default_colormap (Gdk.Rgb.get_cmap ())
-
 (* some functionals *)
 let id x = x
 let const a = fun x -> a

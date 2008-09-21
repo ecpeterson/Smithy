@@ -15,12 +15,13 @@ let intermediate_line x y =
     intermediate_x := int_of_float x;
     intermediate_y := int_of_float y
 
-(* an event utility, note that the 8.0 is actually configurable *)
+(* an event utility *)
 let highlight_distance orthodrawer =
     !pixel_epsilon /. orthodrawer#scale
 
 (* this gets called when we start applying a tool *)
-let tool_begin_event orthodrawer x y button (state: Gdk.Tags.modifier list) =
+let tool_begin_event toolbar orthodrawer x y button
+                     (state: Gdk.Tags.modifier list) =
     let x, y = float x, float y in
     (* unwrap values actually useful to us *)
     let tool = !active_tool in
@@ -32,81 +33,78 @@ let tool_begin_event orthodrawer x y button (state: Gdk.Tags.modifier list) =
     let (anno_d, anno_i) = MapFormat.get_closest_annotation x y in
     (* biiiiig switch statement that selects what exactly we want to be doing
      * with this mouse click *)
-    let int_entry = try Some (int_of_string numeric_entry#text)
-                    with _ -> None in
-    let float_entry = try Some (float_of_string numeric_entry#text)
-                      with _ -> None in
-    begin match (!mode, button, int_entry,
-                 float_entry, poly) with
+    begin match (!mode, button, toolbar#int_entry,
+                 toolbar#float_entry, poly) with
     (* a bunch of these get and set media/light/height/whatever attributes *)
-    |Lights_Liquid, 1, Some v, _, Some p ->
+    |Lights_Liquid, 1, v, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         poly#set_media_lightsource v;
         orthodrawer#draw ()
     |Lights_Liquid, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         let v = poly#media_lightsource () in
-        numeric_entry#set_text (string_of_int v)
-    |Lights_Ceiling, 1, Some v, _, Some p ->
+        toolbar#set_int v
+    |Lights_Ceiling, 1, v, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         poly#set_ceiling_lightsource v;
         orthodrawer#draw ()
     |Lights_Ceiling, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         let v = poly#ceiling_lightsource () in
-        numeric_entry#set_text (string_of_int v)
-    |Lights_Floor, 1, Some v, _, Some p ->
+        toolbar#set_int v
+    |Lights_Floor, 1, v, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         poly#set_floor_lightsource v;
         orthodrawer#draw ()
     |Lights_Floor, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         let v = poly#floor_lightsource () in
-        numeric_entry#set_text (string_of_int v)
-    |Elevation_Ceiling, 1, _, Some v, Some p ->
+        toolbar#set_int v
+    |Elevation_Ceiling, 1, _, v, Some p ->
         let poly = !MapFormat.polygons.(p) in
         poly#set_ceiling_height v;
         orthodrawer#draw ()
     |Elevation_Ceiling, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         let v = poly#ceiling_height () in
-        numeric_entry#set_text (string_of_float v)
-    |Elevation_Floor, 1, _, Some v, Some p ->
+        toolbar#set_float v
+    |Elevation_Floor, 1, _, v, Some p ->
         let poly = !MapFormat.polygons.(p) in
         poly#set_floor_height v;
         orthodrawer#draw ()
     |Elevation_Floor, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         let v = poly#floor_height () in
-        numeric_entry#set_text (string_of_float v)
-    |Liquids, 1, Some v, _, Some p ->
+        toolbar#set_float v
+    |Liquids, 1, v, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         poly#set_media_index v;
         orthodrawer#draw ()
     |Liquids, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         let v = poly#media_index () in
-        numeric_entry#set_text (string_of_int v)
-    |Sounds_Ambient, 1, Some v, _, Some p ->
+        toolbar#set_int v
+    |Sounds_Ambient, 1, v, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         poly#set_ambient_sound_image_index v;
         orthodrawer#draw ()
     |Sounds_Ambient, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         let v = poly#ambient_sound_image_index () in
-        numeric_entry#set_text (string_of_int v)
-    |Sounds_Random, 1, Some v, _, Some p ->
+        toolbar#set_int v
+    |Sounds_Random, 1, v, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         poly#set_random_sound_image_index v;
         orthodrawer#draw ()
     |Sounds_Random, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         let v = poly#random_sound_image_index () in
-        numeric_entry#set_text (string_of_int v)
+        toolbar#set_int v
     |Polygon_Types, 1, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         let ov = poly#kind () in
-        let v = CamlExt.of_enum MapTypes.poly_kind_descriptor ptype_cb#active in
+        let v =
+            CamlExt.of_enum MapTypes.poly_kind_descriptor toolbar#cb_index in
         poly#set_kind v;
         begin match ov, v with
         |MapTypes.Platform, MapTypes.Platform ->
@@ -126,7 +124,7 @@ let tool_begin_event orthodrawer x y button (state: Gdk.Tags.modifier list) =
     |Polygon_Types, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
         let v = CamlExt.to_enum MapTypes.poly_kind_descriptor (poly#kind ()) in
-        ptype_cb#set_active v
+        toolbar#set_cb_index v
     |Draw_Mode, 1, _, _, _ ->
         (* in draw mode, we have to deal with what kind of tool to apply *)
         if tool = ArrowTool then begin
@@ -210,7 +208,7 @@ let tool_begin_event orthodrawer x y button (state: Gdk.Tags.modifier list) =
     |_ -> () end
 
 (* this gets called when we're dragging a tool around *)
-let tool_in_event orthodrawer x0 y0 old_x old_y x y =
+let tool_in_event toolbar orthodrawer x0 y0 old_x old_y x y =
     let x0, y0, old_x, old_y, x, y = float x0, float y0, float old_x,
                                      float old_y, float x, float y in
     (* extract values actually useful to us *)
@@ -349,7 +347,7 @@ let tool_in_event orthodrawer x0 y0 old_x old_y x y =
     |_ -> () end
 
 (* and this gets called when we release the mouse button and apply the tool *)
-let tool_end_event orthodrawer x0 y0 x y (button: int) _ =
+let tool_end_event toolbar orthodrawer x0 y0 x y (button: int) _ =
     let x0, y0, x, y = float x0, float y0, float x, float y in
     let tool = !active_tool in
     begin match !mode with
@@ -400,8 +398,8 @@ let tool_end_event orthodrawer x0 y0 x y (button: int) _ =
     |_ -> () end
 
 (* depending upon what mode we're in, launch the appropriate dialog *)
-let edit_current_item orthodrawer =
-    try match (int_of_string numeric_entry#text, !mode) with
+let edit_current_item toolbar orthodrawer =
+    try match (toolbar#int_entry, !mode) with
     |(-1, _) -> ()
     |(index, Liquids) ->
         MapDialogs.media_dialog !MapFormat.media.(index)
@@ -418,21 +416,21 @@ let edit_current_item orthodrawer =
 
 (* depending upon what mode we're in, spawn in a new light/media/whatever and
  * open the editor so that we can customize it *)
-let make_new_item orthodrawer =
+let make_new_item toolbar orthodrawer =
     begin match !mode with
     |Liquids ->
         let n = MapDialogs.make_media () in
-        numeric_entry#set_text (string_of_int n)
+        toolbar#set_int n
     |Lights_Floor
     |Lights_Liquid
     |Lights_Ceiling ->
         let l = MapDialogs.make_light () in
-        numeric_entry#set_text (string_of_int l)
+        toolbar#set_int l
     |Sounds_Random ->
         let s = MapDialogs.make_random () in
-        numeric_entry#set_text (string_of_int s)
+        toolbar#set_int s
     |Sounds_Ambient ->
         let s = MapDialogs.make_ambient () in
-        numeric_entry#set_text (string_of_int s)
+        toolbar#set_int s
     |_ -> () end;
     orthodrawer#draw ()
