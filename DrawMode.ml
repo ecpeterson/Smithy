@@ -1,12 +1,11 @@
 (*** DrawMode.ml contains routines that handle the actual drawing of the
  * overhead map while in draw mode. ***)
 open CamlExt
-open DrawModeWindows
 open DrawModeSettings
 open MapTypes
 
 (* module methods *)
-let draw_grid _ =
+let draw_grid orthodrawer =
     (* draw grid lines *)
     orthodrawer#set_color !Colors.grid_color;
     (* 0 -> 2 WU, 1 -> 1 WU, ..., 4 -> 1/8 WU *)
@@ -32,13 +31,13 @@ let draw_grid _ =
         done;
     done
 
-let draw_points _ =
+let draw_points orthodrawer =
     orthodrawer#set_color !Colors.point_color;
     !MapFormat.points |> Array.map (fun x -> x#vertex ())
                       |> Array.iter (fun (x, y) ->
                                         orthodrawer#fat_point (x, y) 2)
 
-let draw_lines _ =
+let draw_lines orthodrawer =
     let draw_these f =
         !MapFormat.lines |> Array.to_list
                          |> List.filter f
@@ -56,7 +55,7 @@ let draw_lines _ =
     draw_these (fun x -> not (List.mem TRANSPARENT (x#flags ())) &&
                          not (List.mem SOLID (x#flags ())))
 
-let draw_polygons _ =
+let draw_polygons orthodrawer =
     let max =
         match !mode with
         |Polygon_Types ->
@@ -123,7 +122,7 @@ let draw_polygons _ =
                 orthodrawer#polygon true vertex_array in
     Array.iter draw_polygon !MapFormat.polygons
 
-let draw_objects _ =
+let draw_objects orthodrawer =
     let draw_obj obj =
         let draw_filename name x y =
             orthodrawer#image (GMisc.image ~file:name ()) x y in
@@ -156,7 +155,7 @@ let draw_objects _ =
     in
     Array.iter draw_obj !MapFormat.objs
 
-let draw_highlight _ =
+let draw_highlight orthodrawer =
     orthodrawer#set_color !Colors.highlight_color;
     match !highlight with
     |Point ns ->
@@ -177,7 +176,7 @@ let draw_highlight _ =
             orthodrawer#polygon true vertex_array) ns
     |No_Highlight |_ -> ()
 
-let draw_platforms _ =
+let draw_platforms orthodrawer =
     Array.iter (fun plat ->
         let poly = !MapFormat.polygons.(plat#polygon_index ()) in
         Array.sub (poly#endpoint_indices ()) 0 (poly#vertex_count ()) |>
@@ -185,7 +184,7 @@ let draw_platforms _ =
             orthodrawer#centered_text (string_of_int (plat#polygon_index ())))
                 !MapFormat.platforms
 
-let draw_annotations _ =
+let draw_annotations orthodrawer =
     orthodrawer#set_color !Colors.annotation_color;
     Array.iter (fun annotation -> orthodrawer#text
                                   (annotation#text ())
@@ -204,14 +203,21 @@ let draw_annotations _ =
 let draw orthodrawer =
     orthodrawer#set_color !Colors.background_color;
     orthodrawer#clear ();
-    if !DrawModeSettings.display_grid then draw_grid ();
-    begin try draw_polygons () with _ -> print_endline "Polygons!" end;
-    begin try draw_lines () with _ -> print_endline "Lines!" end;
-    begin try draw_points () with _ -> print_endline "Points!" end;
-    begin try draw_highlight () with _ -> print_endline "Highlight!" end;
-    begin try draw_objects () with _ -> print_endline "Objects!" end;
-    begin try draw_platforms () with _ -> print_endline "Platforms!" end;
-    begin try draw_annotations () with _ -> print_endline "Annotations!" end;
+    if !DrawModeSettings.display_grid then draw_grid orthodrawer;
+    begin try draw_polygons orthodrawer
+        with _ -> print_endline "Polygons!" end;
+    begin try draw_lines orthodrawer
+        with _ -> print_endline "Lines!" end;
+    begin try draw_points orthodrawer
+        with _ -> print_endline "Points!" end;
+    begin try draw_highlight orthodrawer
+        with _ -> print_endline "Highlight!" end;
+    begin try draw_objects orthodrawer
+        with _ -> print_endline "Objects!" end;
+    begin try draw_platforms orthodrawer
+        with _ -> print_endline "Platforms!" end;
+    begin try draw_annotations orthodrawer
+        with _ -> print_endline "Annotations!" end;
     (* draw the line we're in the middle of laying, if appropriate *)
     if !DrawModeEvent.draw_intermediate then begin
         orthodrawer#set_color !Colors.solid_line_color;
@@ -222,12 +228,17 @@ let draw orthodrawer =
     end
 
 (* set up draw mode event hooks *)
-let _ =
-    orthodrawer#connect_draw draw;
-    orthodrawer#connect_mousedown DrawModeEvent.tool_begin_event;
-    orthodrawer#connect_mouseup   DrawModeEvent.tool_end_event;
-    orthodrawer#connect_mousedrag DrawModeEvent.tool_in_event;
-    newbutton#connect#clicked
-        (fun _ -> DrawModeEvent.make_new_item orthodrawer);
-    editbutton#connect#clicked
-        (fun _ -> DrawModeEvent.edit_current_item orthodrawer);
+let init_draw_mode window =
+    window#orthodrawer#connect_draw draw;
+    window#orthodrawer#connect_mousedown (DrawModeEvent.tool_begin_event
+                                       window#toolbar);
+    window#orthodrawer#connect_mouseup   (DrawModeEvent.tool_end_event
+                                       window#toolbar);
+    window#orthodrawer#connect_mousedrag (DrawModeEvent.tool_in_event
+                                       window#toolbar);
+    window#toolbar#newbutton#connect#clicked
+        ~callback:(fun _ -> DrawModeEvent.make_new_item window#toolbar
+                                       window#orthodrawer);
+    window#toolbar#editbutton#connect#clicked
+        ~callback:(fun _ -> DrawModeEvent.edit_current_item window#toolbar
+                                       window#orthodrawer);

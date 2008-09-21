@@ -104,7 +104,8 @@ let rec build_dialog descriptor ~packing ~cleanup () =
             cleanup
 
 let generate_dialog descriptor title =
-    let w = GWindow.dialog ~title ~border_width:2 ~resizable:false () in
+    let w = GWindow.dialog ~title ~border_width:2 ~resizable:false
+                           ~position:`CENTER_ON_PARENT () in
     let cleanup = build_dialog descriptor ~packing:w#vbox#add
                                           ~cleanup:ignore () in
     w#add_button_stock `CANCEL `CANCEL;

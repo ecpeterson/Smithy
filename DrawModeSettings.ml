@@ -34,3 +34,16 @@ type highlighted_component =  No_Highlight       |
                               Annotation of int list
 (* some stateful data *)
 let highlight = ref No_Highlight
+
+(* the various editor mode types *)
+type modes = Draw_Mode         | Visual_Mode    | Elevation_Floor  |
+             Elevation_Ceiling | Textures_Floor | Textures_Ceiling |
+             Polygon_Types     | Lights_Floor   | Lights_Ceiling   |
+             Lights_Liquid     | Liquids        | Sounds_Ambient   |
+             Sounds_Random
+let mode_descriptor = 0, [Draw_Mode;      Visual_Mode;      Polygon_Types;
+                          Liquids;        Elevation_Floor;  Elevation_Ceiling;
+                          Textures_Floor; Textures_Ceiling; Lights_Floor;
+                          Lights_Ceiling; Lights_Liquid;    Sounds_Ambient;
+                          Sounds_Random]
+let mode = ref Draw_Mode

@@ -795,7 +795,7 @@ let make_light () =
     light_dialog l;
     MapFormat.add_light l
 
-let map_manager drawer _ =
+let map_manager _ =
     let descriptor = [
         `V [
             `H [
@@ -812,8 +812,7 @@ let map_manager drawer _ =
             `C ("Show Sounds", show_sounds);
             `C ("Show Annotations", show_annotations);
             `C ("Visual Mode Crosshairs", vm_crosshair) ] ] in
-    GenerateDialog.generate_dialog descriptor "Map Manager";
-    drawer#draw ()
+    GenerateDialog.generate_dialog descriptor "Map Manager"
 
 let random_dialog random =
     let index = ref (random#index ()) in
@@ -893,7 +892,7 @@ let make_ambient () =
     ambient_dialog ambient;
     MapFormat.add_ambient ambient
 
-let goto drawer _ =
+let goto _ =
     let dialog = GWindow.dialog ~title:"Goto" ~border_width:2
                                 ~resizable:false () in
     let kind, id =
@@ -909,30 +908,30 @@ let goto drawer _ =
         (cb, entry) in
     dialog#add_button_stock `CANCEL `CANCEL;
     dialog#add_button_stock `OK `OK;
-    begin match dialog#run () with
+    let center = begin match dialog#run () with
     |`OK ->
         let kind, id = kind#active, int_of_string id#text in
         begin match kind with
         |0 ->
             let p = !MapFormat.points.(id) in
             DrawModeSettings.highlight := Point [id];
-            drawer#center_on (p#vertex ())
+            Some (p#vertex ())
         |1 ->
             let l = !MapFormat.lines.(id) in
             DrawModeSettings.highlight := Line [id];
             let p0, p1 = l#endpoints () in
             let p0x, p0y = !MapFormat.points.(p0)#vertex () in
             let p1x, p1y = !MapFormat.points.(p1)#vertex () in
-            drawer#center_on ((p0x + p1x)/2, (p0y + p1y)/2)
+            Some ((p0x + p1x)/2, (p0y + p1y)/2)
         |2 ->
             let p = !MapFormat.polygons.(id) in
             DrawModeSettings.highlight := Poly [id];
-            Array.sub (p#endpoint_indices ()) 0 (p#vertex_count ()) |>
-                GeomEdit.point_center |>
-                drawer#center_on
+            Some (GeomEdit.point_center
+                (Array.sub (p#endpoint_indices ()) 0 (p#vertex_count ())))
         |_ -> raise (Failure "Invalid Goto kind!") end
-    |_ -> () end;
-    dialog#destroy ()
+    |_ -> None end in
+    dialog#destroy ();
+    center
 
 let map_height_window = ref None
 let map_height_dlg drawer _ =
@@ -967,7 +966,7 @@ let map_height_dlg drawer _ =
     dialog#show () end else
         let Some dialog = !map_height_window in dialog#present ()
 
-let color_prefs_dialog drawer _ =
+let color_prefs_dialog _ =
     let thickness = ref (string_of_int
                         !DrawModeSettings.highlighted_point_thickness) in
     let looseness = ref (string_of_float !DrawModeSettings.pixel_epsilon) in
@@ -1011,4 +1010,4 @@ let color_prefs_dialog drawer _ =
     DrawModeSettings.pixel_epsilon := float_of_string !looseness;
     Colors.poly_type_saturation := float_of_string !saturation;
     Colors.poly_type_value := float_of_string !value;
-    drawer#draw ()
+    ()

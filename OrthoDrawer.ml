@@ -2,6 +2,7 @@
  * points, lines, polygons, and bitmaps under scaling and translation
  * transformations. ***)
 
+        open CamlExt
 class orthoDrawer ?width:explicit_width ?height:explicit_height
                   ?packing:(packing = ignore)
                   ~xmin ~xmax ~ymin ~ymax
@@ -69,9 +70,7 @@ object (self)
         let eventbox =
             GBin.event_box ~packing:(table#attach ~left:0 ~top:0 ~expand:`BOTH)
                            () in
-
         area <- GMisc.drawing_area ~packing:eventbox#add ();
-        area#misc#realize ();
 
         hadj <- GData.adjustment ();
         vadj <- GData.adjustment ();
