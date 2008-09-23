@@ -5,7 +5,7 @@ open MapTypes
 open CamlExt
 open DrawModeSettings
 
-let point_dialog point =
+let point_dialog point redraw =
     let px, py = point#vertex () in
     let px, py = ref (string_of_int px), ref (string_of_int py) in
     let descriptor = [
@@ -14,10 +14,12 @@ let point_dialog point =
                 `L "Y Coord"; ];
             `V [`E px;
                 `E py ] ] ] in
-    GenerateDialog.generate_dialog descriptor "Edit Point";
-    point#set_vertex (int_of_string !px, int_of_string !py)
+    let apply _ =
+        point#set_vertex (int_of_string !px, int_of_string !py);
+        redraw () in
+    GenerateDialog.generate_dialog descriptor apply "Edit Point"
 
-let line_dialog line =
+let line_dialog line redraw =
     let solid = ref (List.mem SOLID (line#flags ())) in
     let transparent = ref (List.mem TRANSPARENT (line#flags ())) in
     let (cw, ccw) = line#cw_poly_side_index (), line#ccw_poly_side_index () in
@@ -27,20 +29,21 @@ let line_dialog line =
             `C ("Solid", solid);
             `C ("Transparent", transparent);
             `C ("Empty", empty) ] ] in
-    GenerateDialog.generate_dialog descriptor "Edit Line";
-    let flags = if !solid then [SOLID] else [] in
-    let flags = if !transparent then TRANSPARENT :: flags else flags in
-    line#set_flags flags;
-    if !empty then begin
-        let (cw, ccw) = (max cw ccw, min cw ccw) in
-        if cw <> -1 then MapFormat.delete_side cw;
-        line#set_cw_poly_side_index (-1);
-        if ccw <> -1 then MapFormat.delete_side ccw;
-        line#set_ccw_poly_side_index (-1)
-    end
+    let apply _ =
+        let flags = if !solid then [SOLID] else [] in
+        let flags = if !transparent then TRANSPARENT :: flags else flags in
+        line#set_flags flags;
+        if !empty then begin
+            let (cw, ccw) = (max cw ccw, min cw ccw) in
+            if cw <> -1 then MapFormat.delete_side cw;
+            line#set_cw_poly_side_index (-1);
+            if ccw <> -1 then MapFormat.delete_side ccw;
+            line#set_ccw_poly_side_index (-1)
+        end;
+        redraw () in
+    GenerateDialog.generate_dialog descriptor apply "Edit Line"
 
-open MapTypes
-let platform_dialog plat =
+let platform_dialog plat redraw =
     let kind = ref (plat#kind ()) in
     let speed = ref (plat#speed () |> string_of_int) in
     let delay = ref (plat#delay () |> string_of_int) in
@@ -151,32 +154,34 @@ let platform_dialog plat =
                     `C ("Contracts Slower", contracts_slower);
                     `C ("Locked Door", locked);
                     `C ("Secret", secret) ]) ] ] ] in
-    GenerateDialog.generate_dialog descriptor "Platform Properties";
-    let speed = int_of_string !speed in
-    let delay = int_of_string !delay in
-    let minheight = int_of_string !minheight in
-    let maxheight = int_of_string !maxheight in
-    let tag = int_of_string !tag in
-    plat#set_kind !kind;
-    plat#set_speed speed;
-    plat#set_delay delay;
-    plat#set_maximum_height (if !automax then -1 else maxheight);
-    plat#set_minimum_height (if !automin then -1 else minheight);
-    plat#set_tag tag;
-    plat#set_flags (List.fold_left2 (fun build_mask (_, new_mask) flag ->
-        if flag then new_mask :: build_mask else build_mask)
-        [] platform_flags_descriptor
-        [!initially_active; !initially_extended; !deactivates_at_each_level;
-         !deactivates_at_initial_level; !d_to_a_adj_plats; !floor_to_ceiling;
-         !extends_from_floor || !extends_from_both;
-         !extends_from_ceiling || !extends_from_both; !damaging;
-         !doesnt_activate_parent; !one_shot; !a_to_a_lights; !d_to_d_lights;
-         !player_control; !alien_control; !reverse_on_bump; !cant_deactivate;
-         !uses_native_heights; !delay_before_active; !a_to_a_adj_plats;
-         !a_to_d_adj_plats; !d_to_d_adj_plats; !contracts_slower;
-         !adjacent_at_each_level; !locked; !secret; !is_door])
+    let apply _ =
+        let speed = int_of_string !speed in
+        let delay = int_of_string !delay in
+        let minheight = int_of_string !minheight in
+        let maxheight = int_of_string !maxheight in
+        let tag = int_of_string !tag in
+        plat#set_kind !kind;
+        plat#set_speed speed;
+        plat#set_delay delay;
+        plat#set_maximum_height (if !automax then -1 else maxheight);
+        plat#set_minimum_height (if !automin then -1 else minheight);
+        plat#set_tag tag;
+        plat#set_flags (List.fold_left2 (fun build_mask (_, new_mask) flag ->
+            if flag then new_mask :: build_mask else build_mask)
+            [] platform_flags_descriptor
+            [!initially_active; !initially_extended; !deactivates_at_each_level;
+            !deactivates_at_initial_level; !d_to_a_adj_plats; !floor_to_ceiling;
+            !extends_from_floor || !extends_from_both;
+            !extends_from_ceiling || !extends_from_both; !damaging;
+            !doesnt_activate_parent; !one_shot; !a_to_a_lights; !d_to_d_lights;
+            !player_control; !alien_control; !reverse_on_bump; !cant_deactivate;
+            !uses_native_heights; !delay_before_active; !a_to_a_adj_plats;
+            !a_to_d_adj_plats; !d_to_d_adj_plats; !contracts_slower;
+            !adjacent_at_each_level; !locked; !secret; !is_door]);
+        redraw () in
+    GenerateDialog.generate_dialog descriptor apply "Platform Properties"
 
-let poly_dialog poly =
+let poly_dialog poly redraw =
     let old_kind = poly#kind () in
     let kind = ref (CamlExt.to_enum MapTypes.poly_kind_descriptor old_kind) in
     let media_index = ref (string_of_int (poly#media_index ())) in
@@ -186,32 +191,34 @@ let poly_dialog poly =
                 `L "Liquid"; ];
             `V [`M (ItemStrings.polygon_types, kind);
                 `E media_index ] ] ] in
-    GenerateDialog.generate_dialog descriptor "Edit Polygon";
-    let kind = CamlExt.of_enum MapTypes.poly_kind_descriptor !kind in
-    let media_index = int_of_string !media_index in
-    begin match old_kind, kind with
-        (* do we just want to open the platform dialog again? *)
-        |(Platform, Platform) ->
-            let plat = !MapFormat.platforms.(poly#permutation ()) in
-            platform_dialog plat
-        (* do we want to trash an old platform? *)
-        |(Platform, _) ->
-            MapFormat.delete_platform (poly#permutation ())
-        (* do we want to create a new platform? *)
-        |(_, Platform) ->
-            let plat = new MapTypes.platform in
-            plat#set_polygon_index
-                (CamlExt.find_in_array !MapFormat.polygons poly);
-            platform_dialog plat;
-            let plat_idx = MapFormat.add_platform plat in
-            poly#set_permutation plat_idx
-        (* do we need to take no special action? *)
-        |_ -> ()
-    end;
-    poly#set_kind kind;
-    poly#set_media_index media_index
+    let apply _ =
+        let kind = CamlExt.of_enum MapTypes.poly_kind_descriptor !kind in
+        let media_index = int_of_string !media_index in
+        begin match old_kind, kind with
+            (* do we just want to open the platform dialog again? *)
+            |(Platform, Platform) ->
+                let plat = !MapFormat.platforms.(poly#permutation ()) in
+                platform_dialog plat redraw
+            (* do we want to trash an old platform? *)
+            |(Platform, _) ->
+                MapFormat.delete_platform (poly#permutation ())
+            (* do we want to create a new platform? *)
+            |(_, Platform) ->
+                let plat = new MapTypes.platform in
+                plat#set_polygon_index
+                    (CamlExt.find_in_array !MapFormat.polygons poly);
+                platform_dialog plat redraw;
+                let plat_idx = MapFormat.add_platform plat in
+                poly#set_permutation plat_idx
+            (* do we need to take no special action? *)
+            |_ -> ()
+        end;
+        poly#set_kind kind;
+        poly#set_media_index media_index;
+        redraw () in
+    GenerateDialog.generate_dialog descriptor apply "Edit Polygon"
 
-let obj_dialog obj =
+let obj_dialog obj redraw =
     let group = ref (CamlExt.to_enum MapTypes.object_kind_descriptor
                                     (obj#kind ())) in
     let monster_kind = ref (obj#index ()) in
@@ -318,212 +325,65 @@ let obj_dialog obj =
                         `C ("Floats", sound_floats);
                         `C ("Use Light For Volume", sound_light_vol) ] ] ] ) ],
             group) ] in
-    GenerateDialog.generate_dialog descriptor "Edit Object";
-    let update_height h =
-        let (x, y, z) = obj#point () in
-        obj#set_point (x, y, int_of_string h) in
-    let update_flags list =
-            let flags = List.fold_left2 (fun mask (desc, _) flag ->
+    let apply _ =
+        let update_height h =
+            let (x, y, z) = obj#point () in
+            obj#set_point (x, y, int_of_string h) in
+        let update_flags list =
+            let flags = List.fold_left2
+                (fun mask (desc, _) flag ->
                     if flag then mask lor desc else mask)
                 0 MapTypes.object_flags_descriptor list in
             obj#set_flags (CamlExt.of_bitflag
-                                    MapTypes.object_flags_descriptor flags) in
-    obj#set_kind (CamlExt.of_enum MapTypes.object_kind_descriptor !group);
-    match obj#kind () with
-        |Monster ->
-            obj#set_index !monster_kind;
-            obj#set_facing !monster_facing;
-            update_height !monster_height;
-            let flags = List.fold_left2 (fun mask (desc, _) flag ->
-                    if flag then mask lor desc else mask)
-                0 MapTypes.object_flags_descriptor
-                [!monster_teleports_in; !monster_hangs; !monster_blind;
-                 !monster_deaf; false; false] in
-            obj#set_flags (CamlExt.of_bitflag
-                                    MapTypes.object_flags_descriptor flags)
-        |Scenery ->
-            obj#set_index
-                (match !MapFormat.environment_code with
-                    |MapFormat.Lava -> !scenery_kind
-                    |MapFormat.Water -> !scenery_kind + 13
-                    |MapFormat.Sewage -> !scenery_kind + 28
-                    |MapFormat.Pfhor -> !scenery_kind + 39
-                    |MapFormat.Jjaro -> !scenery_kind + 50);
-            update_height !scenery_height;
-            update_flags [false; !scenery_hangs; false; false; false; false]
-        |Item ->
-            obj#set_index !item_kind;
-            update_height !item_height;
-            update_flags [!item_teleports_in; !item_hangs; false; false; false;
-                          !item_network_only]
-        |Player ->
-            obj#set_facing !player_facing;
-            update_height !player_height;
-            update_flags [false; !player_hangs; false; false; false; false]
-        |Goal ->
-            obj#set_index (int_of_string !goal_kind)
-        |Sound_Source ->
-            obj#set_index !sound_kind;
-            update_height !sound_height;
-            update_flags [!sound_teleports_in; !sound_hangs; false; false;
-                          !sound_floats; false];
-            obj#set_facing (
-                if !sound_light_vol then int_of_string !sound_facing
-                                    else int_of_string !sound_facing * -1 + 1)
-        |_ -> ()
+                MapTypes.object_flags_descriptor flags) in
+        obj#set_kind (CamlExt.of_enum MapTypes.object_kind_descriptor !group);
+        begin match obj#kind () with
+            |Monster ->
+                obj#set_index !monster_kind;
+                obj#set_facing !monster_facing;
+                update_height !monster_height;
+                let flags = List.fold_left2 (fun mask (desc, _) flag ->
+                        if flag then mask lor desc else mask)
+                    0 MapTypes.object_flags_descriptor
+                    [!monster_teleports_in; !monster_hangs; !monster_blind;
+                    !monster_deaf; false; false] in
+                obj#set_flags (CamlExt.of_bitflag
+                                        MapTypes.object_flags_descriptor flags)
+            |Scenery ->
+                obj#set_index
+                    (match !MapFormat.environment_code with
+                        |MapFormat.Lava -> !scenery_kind
+                        |MapFormat.Water -> !scenery_kind + 13
+                        |MapFormat.Sewage -> !scenery_kind + 28
+                        |MapFormat.Pfhor -> !scenery_kind + 39
+                        |MapFormat.Jjaro -> !scenery_kind + 50);
+                update_height !scenery_height;
+                update_flags [false; !scenery_hangs; false; false; false;
+                              false]
+            |Item ->
+                obj#set_index !item_kind;
+                update_height !item_height;
+                update_flags [!item_teleports_in; !item_hangs; false; false;
+                              false; !item_network_only]
+            |Player ->
+                obj#set_facing !player_facing;
+                update_height !player_height;
+                update_flags [false; !player_hangs; false; false; false; false]
+            |Goal ->
+                obj#set_index (int_of_string !goal_kind)
+            |Sound_Source ->
+                obj#set_index !sound_kind;
+                update_height !sound_height;
+                update_flags [!sound_teleports_in; !sound_hangs; false; false;
+                            !sound_floats; false];
+                obj#set_facing
+                    (if !sound_light_vol then int_of_string !sound_facing
+                     else int_of_string !sound_facing * -1 + 1)
+            |_ -> () end;
+        redraw () in
+    GenerateDialog.generate_dialog descriptor apply "Edit Object"
 
-(*
-let obj_dialog obj =
-    let group = ref (CamlExt.to_enum MapTypes.object_kind_descriptor
-                                    (obj#kind ())) in
-    let descriptor = [
-        `H [
-            `L "Group:";
-            `M (["Monster"; "Scenery"; "Object"; "Player"; "Goal"; "Sound"],
-                group) ] ] in
-    GenerateDialog.generate_dialog descriptor "Edit Object";
-    (* we also need to decrement the obj's old placement chunk! *)
-    GeomEdit.decrement_obj obj;
-    let group = CamlExt.of_enum MapTypes.object_kind_descriptor !group in
-    obj#set_kind group;
-    (* launch secondary dialog *)
-    let kind = ref (obj#index ()) in
-    let scenerykind = ref (match !MapFormat.environment_code with
-        |MapFormat.Lava -> !kind
-        |MapFormat.Water -> !kind - 13
-        |MapFormat.Sewage -> !kind - 28
-        |MapFormat.Pfhor -> !kind - 39
-        |MapFormat.Jjaro -> !kind - 50 ) in
-    let goalkind = ref (string_of_int (obj#index ())) in
-    let height = ref (string_of_int ((fun (_, _, x) -> x) (obj#point ()))) in
-    let hangs = ref (List.mem Hangs_From_Ceiling (obj#flags ())) in
-    let teleports_in = ref (List.mem Invisible_Or_Platform (obj#flags ())) in
-    let floats = ref (List.mem Floats (obj#flags ())) in
-    let facing = ref (obj#facing ()) in
-    let soundfacing = ref (string_of_int (obj#facing ())) in
-    let blind = ref (List.mem Blind (obj#flags ())) in
-    let deaf = ref (List.mem Deaf (obj#flags ())) in
-    let network_only = ref (List.mem Network_Only (obj#flags ())) in
-    let light_vol = ref (!facing <= 0) in
-    begin match group with
-        |Monster ->
-            let descriptor = [
-                `V [
-                    `H [
-                        `L "Type:";
-                        `M (ItemStrings.monster_strings, kind) ];
-                    `H [
-                        `L "Activated By:";
-                        `M ([], ref 0) ];
-                    `S facing;
-                    `L "Facing";
-                    `H [
-                        `L "Height Offset:";
-                        `E height ];
-                    `H [
-                        `V [
-                            `C ("Teleports In", teleports_in);
-                            `C ("From Ceiling", hangs);
-                            `C ("Teleports Out", floats) ];
-                        `V [
-                            `C ("Is Blind", blind);
-                            `C ("Is Deaf", deaf) ] ] ] ] in
-            GenerateDialog.generate_dialog descriptor "Edit Monster"
-        |Scenery ->
-            let strings = match !MapFormat.environment_code with
-                |MapFormat.Lava   -> ItemStrings.scenery_strings_lava
-                |MapFormat.Water  -> ItemStrings.scenery_strings_water
-                |MapFormat.Sewage -> ItemStrings.scenery_strings_sewage
-                |MapFormat.Pfhor  -> ItemStrings.scenery_strings_pfhor
-                |MapFormat.Jjaro  -> ItemStrings.scenery_strings_jjaro in
-            let descriptor = [
-                `V [
-                    `H [
-                        `L "Type:";
-                        `M (strings, scenerykind) ];
-                    `H [
-                        `L "Height Offset:";
-                        `E height ];
-                    `C ("From Ceiling", hangs) ] ] in
-            GenerateDialog.generate_dialog descriptor "Edit Scenery"
-        |Item ->
-            let descriptor = [
-                `V [
-                    `H [
-                        `L "Type:";
-                        `M (ItemStrings.item_strings, kind) ];
-                    `H [
-                        `L "Height Offset:";
-                        `E height ];
-                    `H [
-                        `V [
-                            `C ("Teleports In", teleports_in);
-                            `C ("From Ceiling", hangs) ];
-                        `V [`C ("Network Only", network_only) ] ] ] ] in
-            GenerateDialog.generate_dialog descriptor "Edit Item"
-        |Player ->
-            let descriptor = [
-                `V [
-                    `S facing;
-                    `L "Facing";
-                    `H [
-                        `L "Height Offset:";
-                        `E height ];
-                    `C ("From Ceiling", hangs) ] ] in
-            GenerateDialog.generate_dialog descriptor "Edit Player"
-        |Goal ->
-            let descriptor = [
-                `H [
-                    `L "Type:";
-                    `E goalkind ] ] in
-            GenerateDialog.generate_dialog descriptor "Edit Goal"
-        |Sound_Source ->
-            let descriptor = [
-                `V [
-                    `H [
-                        `L "Type:";
-                        `M (ItemStrings.sound_strings, kind) ];
-                    `H [
-                        `L "Volume / Parent Light:";
-                        `E soundfacing ];
-                    `H [
-                        `L "Height Offset:";
-                        `E height ];
-                    `H [
-                        `V [
-                            `C ("Is On Platform", teleports_in);
-                            `C ("From Ceiling", hangs) ];
-                        `V [
-                            `C ("Floats", floats);
-                            `C ("Use Light For Volume", light_vol) ] ] ] ] in
-            GenerateDialog.generate_dialog descriptor "Edit Sound"
-    end;
-    let kind = match group with
-        |Goal -> int_of_string !goalkind
-        |Scenery -> begin match !MapFormat.environment_code with
-            |MapFormat.Lava -> !kind
-            |MapFormat.Water -> !kind + 13
-            |MapFormat.Sewage -> !kind + 28
-            |MapFormat.Pfhor -> !kind + 39
-            |MapFormat.Jjaro -> !kind + 50 end
-        |_ -> !kind in
-    let facing = match group with
-        |Sound_Source -> if !light_vol then int_of_string !soundfacing
-                         else int_of_string !soundfacing * -1 + 1
-        |_ -> !facing in
-    let flags = List.fold_left2 (fun mask (desc, _) flag ->
-            if flag then mask lor desc else mask)
-        0 MapTypes.object_flags_descriptor
-        [!teleports_in; !hangs; !blind; !deaf; !floats; !network_only] in
-    obj#set_index kind;
-    let (x, y, z) = obj#point () in
-    obj#set_point (x, y, int_of_string !height);
-    obj#set_flags (CamlExt.of_bitflag MapTypes.object_flags_descriptor flags);
-    obj#set_facing facing;
-    GeomEdit.increment_obj obj
-*)
-
-let anno_dialog anno =
+let anno_dialog anno redraw =
     let px, py = anno#location () in
     let px, py = (string_of_int px), (string_of_int py) in
     let poly = anno#polygon_index () in
@@ -536,10 +396,12 @@ let anno_dialog anno =
             `L pos_str;
             `E text ];
     ] in
-    GenerateDialog.generate_dialog descriptor "Annotation";
-    anno#set_text !text
+    let apply _ =
+        anno#set_text !text;
+        redraw () in
+    GenerateDialog.generate_dialog descriptor apply "Annotation"
 
-let info_dialog _ =
+let info_dialog redraw =
     let level_name = ref !MapFormat.level_name in
     let environment_code =
         ref (CamlExt.to_enum MapFormat.environment_descriptor
@@ -600,28 +462,30 @@ let info_dialog _ =
                             `C ("Retrieval", retrieval);
                             `C ("Repair", repair);
                             `C ("Rescue", rescue) ] ] ) ] ] ] ] in
-    GenerateDialog.generate_dialog descriptor "Level Parameters";
-    MapFormat.level_name := !level_name;
-    MapFormat.environment_code :=
-        CamlExt.of_enum MapFormat.environment_descriptor !environment_code;
-    MapFormat.landscape := !landscape;
-    MapFormat.entry_point_flags := List.fold_left2
-        (fun mask (desc, _) flag -> if flag then mask lor desc else mask) 0
-        MapFormat.entry_point_descriptor
-        [!solo; !coop; !emfh; !ktmwtb; !koth; false; false; false] |>
-        CamlExt.of_bitflag MapFormat.entry_point_descriptor;
-    MapFormat.environment_flags := List.fold_left2
-        (fun mask (desc, _) flag -> if flag then mask lor desc else mask) 0
-        MapFormat.env_flags_descriptor
-        [!vacuum; !magnetic; !rebellion; !low_gravity] |>
-        CamlExt.of_bitflag MapFormat.env_flags_descriptor;
-    MapFormat.mission_flags := List.fold_left2
-        (fun mask (desc, _) flag -> if flag then mask lor desc else mask) 0
-        MapFormat.mission_descriptor
-        [!extermination; !exploration; !retrieval; !repair; !rescue] |>
-        CamlExt.of_bitflag MapFormat.mission_descriptor
+    let apply _ =
+        MapFormat.level_name := !level_name;
+        MapFormat.environment_code :=
+            CamlExt.of_enum MapFormat.environment_descriptor !environment_code;
+        MapFormat.landscape := !landscape;
+        MapFormat.entry_point_flags := List.fold_left2
+            (fun mask (desc, _) flag -> if flag then mask lor desc else mask) 0
+            MapFormat.entry_point_descriptor
+            [!solo; !coop; !emfh; !ktmwtb; !koth; false; false; false] |>
+            CamlExt.of_bitflag MapFormat.entry_point_descriptor;
+        MapFormat.environment_flags := List.fold_left2
+            (fun mask (desc, _) flag -> if flag then mask lor desc else mask) 0
+            MapFormat.env_flags_descriptor
+            [!vacuum; !magnetic; !rebellion; !low_gravity] |>
+            CamlExt.of_bitflag MapFormat.env_flags_descriptor;
+        MapFormat.mission_flags := List.fold_left2
+            (fun mask (desc, _) flag -> if flag then mask lor desc else mask) 0
+            MapFormat.mission_descriptor
+            [!extermination; !exploration; !retrieval; !repair; !rescue] |>
+            CamlExt.of_bitflag MapFormat.mission_descriptor;
+        redraw () in
+    GenerateDialog.generate_dialog descriptor apply "Level Parameters"
 
-let media_dialog media =
+let media_dialog media redraw =
     (* set up the dialog *)
     let kind = ref (media#kind ()) in
     let light_parameter = ref (string_of_int (media#light_index ())) in
@@ -651,28 +515,30 @@ let media_dialog media =
                         `E low_tide;
                         `E high_tide ] ] ];
             `C ("Liquid's sound obstructed by floor", obstructed) ] ] in
+    let apply _ =
+        (* convert all values so we don't have a partial commit *)
+        let low_tide = int_of_string !low_tide in
+        let high_tide = int_of_string !high_tide in
+        let light_parameter = int_of_string !light_parameter in
+        let flow_strength = int_of_string !flow_strength in
+        (* commit to the liquid *)
+        media#set_kind !kind;
+        media#set_light_index light_parameter;
+        media#set_direction !direction;
+        media#set_magnitude flow_strength;
+        media#set_low low_tide;
+        media#set_high high_tide;
+        media#set_flags (if !obstructed then [Liquid_Obstructs_Sounds] else []);
+        redraw () in
     (* run the dialog *)
-    GenerateDialog.generate_dialog descriptor "Liquid";
-    (* convert all values so we don't have a partial commit *)
-    let low_tide = int_of_string !low_tide in
-    let high_tide = int_of_string !high_tide in
-    let light_parameter = int_of_string !light_parameter in
-    let flow_strength = int_of_string !flow_strength in
-    (* commit to the liquid *)
-    media#set_kind !kind;
-    media#set_light_index light_parameter;
-    media#set_direction !direction;
-    media#set_magnitude flow_strength;
-    media#set_low low_tide;
-    media#set_high high_tide;
-    media#set_flags (if !obstructed then [Liquid_Obstructs_Sounds] else [])
+    GenerateDialog.generate_dialog descriptor apply "Liquid"
 
-let make_media () =
+let make_media redraw =
     let m = new MapTypes.media in
-    media_dialog m;
+    media_dialog m redraw;
     MapFormat.add_media m
 
-let light_dialog light =
+let light_dialog light redraw =
     let preset = ref (CamlExt.to_enum light_kind_descriptor (light#kind ())) in
     let phase = ref (string_of_int (light#phase ())) in
     let stateless = ref (List.mem MapTypes.Stateless_Light (light#flags ())) in
@@ -751,51 +617,53 @@ let light_dialog light =
                                  pi_intensity pi_dintensity;
                 frame_descriptor "Secondary Inactive" si_fn si_period si_dperiod
                                  si_intensity si_dintensity ] ] ] in
-    GenerateDialog.generate_dialog descriptor "Light Parameters";
-    if ((int_of_string !pa_period) = 0 &&
-        (int_of_string !sa_period) = 0) ||
-       ((int_of_string !pi_period) = 0 &&
-        (int_of_string !si_period) = 0) then begin
-        let dialog = GWindow.message_dialog
-                                ~message:"Can't set both periods to zero!"
-                                ~message_type:`ERROR
-                                ~buttons:GWindow.Buttons.close
-                                ~modal:true ~title:Resources.warning () in
-        dialog#run ();
-        dialog#destroy () end else begin
-    light#set_kind (CamlExt.of_enum light_kind_descriptor !preset);
-    light#set_becoming_active (!ba_fn, int_of_string !ba_period,
-        int_of_string !ba_dperiod, float_of_string !ba_intensity,
-        float_of_string !ba_dintensity);
-    light#set_primary_active (!pa_fn, int_of_string !pa_period,
-        int_of_string !pa_dperiod, float_of_string !pa_intensity,
-        float_of_string !pa_dintensity);
-    light#set_secondary_active (!sa_fn, int_of_string !sa_period,
-        int_of_string !sa_dperiod, float_of_string !sa_intensity,
-        float_of_string !sa_dintensity);
-    light#set_becoming_inactive (!bi_fn, int_of_string !bi_period,
-        int_of_string !bi_dperiod, float_of_string !bi_intensity,
-        float_of_string !bi_dintensity);
-    light#set_primary_inactive (!pi_fn, int_of_string !pi_period,
-        int_of_string !pi_dperiod, float_of_string !pi_intensity,
-        float_of_string !pi_dintensity);
-    light#set_secondary_inactive (!si_fn, int_of_string !si_period,
-        int_of_string !si_dperiod, float_of_string !si_intensity,
-        float_of_string !si_dintensity);
-    light#set_phase (int_of_string !phase);
-    List.fold_left2
-        (fun mask (desc, _) flag -> if flag then mask lor desc else mask) 0
-        MapTypes.light_flag_descriptor [!active; false; !stateless]
-        |> CamlExt.of_bitflag MapTypes.light_flag_descriptor
-        |> light#set_flags
-    end
+    let apply _ =
+        if ((int_of_string !pa_period) = 0 &&
+            (int_of_string !sa_period) = 0) ||
+        ((int_of_string !pi_period) = 0 &&
+            (int_of_string !si_period) = 0) then begin
+            let dialog = GWindow.message_dialog
+                                    ~message:"Can't set both periods to zero!"
+                                    ~message_type:`ERROR
+                                    ~buttons:GWindow.Buttons.close
+                                    ~modal:true ~title:Resources.warning () in
+            dialog#run ();
+            dialog#destroy () end else begin
+        light#set_kind (CamlExt.of_enum light_kind_descriptor !preset);
+        light#set_becoming_active (!ba_fn, int_of_string !ba_period,
+            int_of_string !ba_dperiod, float_of_string !ba_intensity,
+            float_of_string !ba_dintensity);
+        light#set_primary_active (!pa_fn, int_of_string !pa_period,
+            int_of_string !pa_dperiod, float_of_string !pa_intensity,
+            float_of_string !pa_dintensity);
+        light#set_secondary_active (!sa_fn, int_of_string !sa_period,
+            int_of_string !sa_dperiod, float_of_string !sa_intensity,
+            float_of_string !sa_dintensity);
+        light#set_becoming_inactive (!bi_fn, int_of_string !bi_period,
+            int_of_string !bi_dperiod, float_of_string !bi_intensity,
+            float_of_string !bi_dintensity);
+        light#set_primary_inactive (!pi_fn, int_of_string !pi_period,
+            int_of_string !pi_dperiod, float_of_string !pi_intensity,
+            float_of_string !pi_dintensity);
+        light#set_secondary_inactive (!si_fn, int_of_string !si_period,
+            int_of_string !si_dperiod, float_of_string !si_intensity,
+            float_of_string !si_dintensity);
+        light#set_phase (int_of_string !phase);
+        List.fold_left2
+            (fun mask (desc, _) flag -> if flag then mask lor desc else mask) 0
+            MapTypes.light_flag_descriptor [!active; false; !stateless]
+            |> CamlExt.of_bitflag MapTypes.light_flag_descriptor
+            |> light#set_flags
+        end;
+        redraw () in
+    GenerateDialog.generate_dialog descriptor apply "Light Parameters"
 
-let make_light () =
+let make_light redraw =
     let l = new MapTypes.light in
-    light_dialog l;
+    light_dialog l redraw;
     MapFormat.add_light l
 
-let map_manager _ =
+let map_manager redraw =
     let descriptor = [
         `V [
             `H [
@@ -812,9 +680,10 @@ let map_manager _ =
             `C ("Show Sounds", show_sounds);
             `C ("Show Annotations", show_annotations);
             `C ("Visual Mode Crosshairs", vm_crosshair) ] ] in
-    GenerateDialog.generate_dialog descriptor "Map Manager"
+    GenerateDialog.generate_dialog descriptor (fun _ -> redraw ())
+        "Map Manager"
 
-let random_dialog random =
+let random_dialog random redraw =
     let index = ref (random#index ()) in
     let volume = ref (random#volume () |> string_of_int) in
     let dvolume = ref (random#dvolume () |> string_of_int) in
@@ -849,32 +718,33 @@ let random_dialog random =
                     `L "Direction";
                     `S ddirection;
                     `L "D Direction" ] ] ] ] in
-    GenerateDialog.generate_dialog descriptor "Random Sound Parameters";
-    let volume = int_of_string !volume in
-    let dvolume = int_of_string !dvolume in
-    let period = int_of_string !period in
-    let dperiod = int_of_string !dperiod in
-    let pitch = int_of_string !pitch in
-    let dpitch = int_of_string !dpitch in
-    random#set_volume volume;
-    random#set_dvolume dvolume;
-    random#set_period period;
-    random#set_dperiod dperiod;
-    random#set_pitch pitch;
-    random#set_dpitch dpitch;
-    if !nondirectional then
-        random#set_direction (-1)
-    else
-        random#set_direction !direction;
-    random#set_ddirection !ddirection
+    let apply _ =
+        let volume = int_of_string !volume in
+        let dvolume = int_of_string !dvolume in
+        let period = int_of_string !period in
+        let dperiod = int_of_string !dperiod in
+        let pitch = int_of_string !pitch in
+        let dpitch = int_of_string !dpitch in
+        random#set_volume volume;
+        random#set_dvolume dvolume;
+        random#set_period period;
+        random#set_dperiod dperiod;
+        random#set_pitch pitch;
+        random#set_dpitch dpitch;
+        if !nondirectional then random#set_direction (-1)
+        else random#set_direction !direction;
+        random#set_ddirection !ddirection;
+        redraw () in
+    GenerateDialog.generate_dialog descriptor apply
+        "Random Sound Parameters"
     (* TODO: this dialog doesn't have a spot for pitch.  hmm. *)
 
-let make_random () =
+let make_random redraw =
     let random = new MapTypes.random in
-    random_dialog random;
+    random_dialog random redraw;
     MapFormat.add_random random
 
-let ambient_dialog ambient =
+let ambient_dialog ambient redraw =
     let index = ref (ambient#index ()) in
     let volume = ref (ambient#volume () |> string_of_int) in
     let descriptor = [
@@ -883,15 +753,19 @@ let ambient_dialog ambient =
                 `L "Volume"; ];
             `V [`M (ItemStrings.sound_strings, index);
                 `E volume ] ] ] in
-    GenerateDialog.generate_dialog descriptor "Ambient Sound Parameters";
-    ambient#set_volume (int_of_string !volume);
-    ambient#set_index !index
+    let apply _ =
+        ambient#set_volume (int_of_string !volume);
+        ambient#set_index !index;
+        redraw () in
+    GenerateDialog.generate_dialog descriptor apply
+        "Ambient Sound Parameters"
 
-let make_ambient () =
+let make_ambient redraw =
     let ambient = new MapTypes.ambient in
-    ambient_dialog ambient;
+    ambient_dialog ambient redraw;
     MapFormat.add_ambient ambient
 
+(* XXX: rewrite this to use GenerateDialogs *)
 let goto _ =
     let dialog = GWindow.dialog ~title:"Goto" ~border_width:2
                                 ~resizable:false () in
@@ -933,6 +807,8 @@ let goto _ =
     dialog#destroy ();
     center
 
+(* XXX: rewrite this to use GenerateDialogs - probably going to need to add
+ * sliders to GenerateDialogs first *)
 let map_height_window = ref None
 let map_height_dlg drawer _ =
     if !map_height_window = None then begin
@@ -966,7 +842,7 @@ let map_height_dlg drawer _ =
     dialog#show () end else
         let Some dialog = !map_height_window in dialog#present ()
 
-let color_prefs_dialog _ =
+let color_prefs_dialog redraw =
     let thickness = ref (string_of_int
                         !DrawModeSettings.highlighted_point_thickness) in
     let looseness = ref (string_of_float !DrawModeSettings.pixel_epsilon) in
@@ -1005,9 +881,11 @@ let color_prefs_dialog _ =
                 `E looseness;
                 `E saturation;
                 `E value ] ] ] in
-    GenerateDialog.generate_dialog descriptor "Color Preferences";
-    DrawModeSettings.highlighted_point_thickness := int_of_string !thickness;
-    DrawModeSettings.pixel_epsilon := float_of_string !looseness;
-    Colors.poly_type_saturation := float_of_string !saturation;
-    Colors.poly_type_value := float_of_string !value;
-    ()
+    let apply _ =
+        DrawModeSettings.highlighted_point_thickness :=
+            int_of_string !thickness;
+        DrawModeSettings.pixel_epsilon := float_of_string !looseness;
+        Colors.poly_type_saturation := float_of_string !saturation;
+        Colors.poly_type_value := float_of_string !value;
+        redraw () in
+    GenerateDialog.generate_dialog descriptor apply "Color Preferences"

@@ -149,12 +149,12 @@ object (self)
 
             a "New"         ~stock:`NEW
                             ~callback:(fun _ ->
-                                    MapFormat.reset_structures ();
-                                    orthodrawer#draw ());
+                                    FileDialogs.new_map
+                                        orthodrawer#draw);
             a "Open"        ~stock:`OPEN
                             ~callback:(fun _ ->
-                                FileDialogs.open_map_dialog self#set_title;
-                                orthodrawer#draw ());
+                                FileDialogs.open_map_dialog self#set_title
+                                    orthodrawer#draw);
             a "Save"        ~stock:`SAVE
                             ~callback:(FileDialogs.silent_save
                                            self#set_title);
@@ -210,8 +210,7 @@ object (self)
                                 ~callback:(fun _ -> orthodrawer#zoom 0.5);
             a "MapManager"        ~label:"M_ap Manager"
                                 ~callback:(fun _ ->
-                                    MapDialogs.map_manager ();
-                                    orthodrawer#draw ());
+                                    MapDialogs.map_manager orthodrawer#draw);
             a "ViewHeightWindow"  ~label:"View _Height Window"
                                 ~accel:"<Ctrl>h"
                                 (* XXX: move the redrawing stuff back to here,
@@ -223,7 +222,8 @@ object (self)
                                     let Some center = MapDialogs.goto () in
                                     orthodrawer#center_on center);
             a "SetLevelParams"    ~label:"Set _Level Parameters..."
-                                ~callback:MapDialogs.info_dialog
+                                ~callback:(fun _ ->
+                                    MapDialogs.info_dialog orthodrawer#draw)
                                 ~accel:"<Ctrl>m";
             a "SetItemParams"     ~label:"Set _Item Parameters..."
                                 ~accel:"<Ctrl>i";
@@ -243,17 +243,17 @@ object (self)
                                 ~callback:(fun _ -> Gc.full_major ());
             a "ColorPreferences" ~label:"Color _Preferences"
                                 ~callback:(fun _ ->
-                                    MapDialogs.color_prefs_dialog ();
-                                    orthodrawer#draw ());
+                                    MapDialogs.color_prefs_dialog
+                                        orthodrawer#draw);
             a "LightLibMenu"     ~label:"_Light Libraries";
             a "AppendLightLib"   ~label:"Load and _Append Light Library"
                                 ~callback:(fun _ ->
-                                    FileDialogs.load_and_append_light_lib ();
-                                    orthodrawer#draw ());
+                                    FileDialogs.load_and_append_light_lib
+                                        orthodrawer#draw);
             a "ReplaceLightLib" ~label:"Load and _Replace Light Library"
                                 ~callback:(fun _ ->
-                                    FileDialogs.load_and_replace_light_lib ();
-                                    orthodrawer#draw ());
+                                    FileDialogs.load_and_replace_light_lib
+                                        orthodrawer#draw);
             a "SaveLightLib"     ~label:"Save Light Library"
                                 ~callback:FileDialogs.save_light_lib;
             a "BitchAboutFeatures" ~label:"Bitch about Features"
