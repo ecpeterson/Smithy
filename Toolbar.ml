@@ -122,6 +122,8 @@ object (self)
             editbutton#set_label button_text2;
             () in
         mode := of_enum mode_descriptor state;
+        numeric_entry#set_text "";
+        ptype_cb#set_active 0;
         match !mode with
         |Polygon_Types ->
             set_mode false true false "" "" "" true false
