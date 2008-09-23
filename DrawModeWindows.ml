@@ -210,7 +210,8 @@ object (self)
                                 ~callback:(fun _ -> orthodrawer#zoom 0.5);
             a "MapManager"        ~label:"M_ap Manager"
                                 ~callback:(fun _ ->
-                                    MapDialogs.map_manager orthodrawer#draw);
+                                    MapDialogs.map_manager orthodrawer#draw;
+                                    ());
             a "ViewHeightWindow"  ~label:"View _Height Window"
                                 ~accel:"<Ctrl>h"
                                 (* XXX: move the redrawing stuff back to here,
@@ -223,7 +224,8 @@ object (self)
                                     orthodrawer#center_on center);
             a "SetLevelParams"    ~label:"Set _Level Parameters..."
                                 ~callback:(fun _ ->
-                                    MapDialogs.info_dialog orthodrawer#draw)
+                                    MapDialogs.info_dialog orthodrawer#draw;
+                                    ())
                                 ~accel:"<Ctrl>m";
             a "SetItemParams"     ~label:"Set _Item Parameters..."
                                 ~accel:"<Ctrl>i";
@@ -244,7 +246,8 @@ object (self)
             a "ColorPreferences" ~label:"Color _Preferences"
                                 ~callback:(fun _ ->
                                     MapDialogs.color_prefs_dialog
-                                        orthodrawer#draw);
+                                        orthodrawer#draw;
+                                    ());
             a "LightLibMenu"     ~label:"_Light Libraries";
             a "AppendLightLib"   ~label:"Load and _Append Light Library"
                                 ~callback:(fun _ ->

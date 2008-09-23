@@ -110,6 +110,7 @@ let tool_begin_event toolbar orthodrawer x y button
         |MapTypes.Platform, MapTypes.Platform ->
             MapDialogs.platform_dialog
                 (!MapFormat.platforms.(poly#permutation ())) orthodrawer#draw;
+            ()
         |MapTypes.Platform, _ ->
             MapFormat.delete_platform (poly#permutation ());
             orthodrawer#draw ()
@@ -174,8 +175,9 @@ let tool_begin_event toolbar orthodrawer x y button
                 |Some poly ->
                     let objidx = GeomEdit.make_object (int_of_float x)
                                                       (int_of_float y) poly in
-                    MapDialogs.obj_dialog !MapFormat.objs.(objidx)
-                                          orthodrawer#draw
+                    if not (MapDialogs.obj_dialog !MapFormat.objs.(objidx)
+                               orthodrawer#draw) then
+                        MapFormat.delete_obj objidx
                 |_ -> () end;
             orthodrawer#draw () end
         else if tool = TextTool then begin
@@ -184,8 +186,10 @@ let tool_begin_event toolbar orthodrawer x y button
                     let annoidx = GeomEdit.make_annotation (int_of_float x)
                                                            (int_of_float y)
                                                            poly in
-                    MapDialogs.anno_dialog !MapFormat.annotations.(annoidx)
-                                           orthodrawer#draw
+                    if not (MapDialogs.anno_dialog
+                               !MapFormat.annotations.(annoidx)
+                               orthodrawer#draw) then
+                        MapFormat.delete_annotation annoidx
                 |_ -> () end;
             orthodrawer#draw () end
         else ()
@@ -208,7 +212,9 @@ let tool_begin_event toolbar orthodrawer x y button
             else if poly <> None then
                 let Some n = poly in
                 MapDialogs.poly_dialog !MapFormat.polygons.(n)
-                                       orthodrawer#draw)
+                                       orthodrawer#draw
+            else false);
+            ()
         end
         else ()
     |_ -> () end
@@ -406,7 +412,7 @@ let tool_end_event toolbar orthodrawer x0 y0 x y (button: int) _ =
 (* depending upon what mode we're in, launch the appropriate dialog *)
 let edit_current_item toolbar orthodrawer =
     try match (toolbar#int_entry, !mode) with
-    |(-1, _) -> ()
+    |(-1, _) -> false
     |(index, Liquids) ->
         MapDialogs.media_dialog !MapFormat.media.(index) orthodrawer#draw
     |(index, Lights_Floor)
@@ -417,25 +423,24 @@ let edit_current_item toolbar orthodrawer =
         MapDialogs.random_dialog !MapFormat.randoms.(index) orthodrawer#draw
     |(index, Sounds_Ambient) ->
         MapDialogs.ambient_dialog !MapFormat.ambients.(index) orthodrawer#draw
-    |_ -> ()
-    with Failure "int_of_string" -> ()
+    |_ -> false
+    with Failure "int_of_string" -> false
 
 (* depending upon what mode we're in, spawn in a new light/media/whatever and
  * open the editor so that we can customize it *)
 let make_new_item toolbar orthodrawer =
-    begin match !mode with
+    let creator = begin match !mode with
     |Liquids ->
-        let n = MapDialogs.make_media orthodrawer#draw in
-        toolbar#set_int n
+        MapDialogs.make_media
     |Lights_Floor
     |Lights_Liquid
     |Lights_Ceiling ->
-        let l = MapDialogs.make_light orthodrawer#draw in
-        toolbar#set_int l
+        MapDialogs.make_light
     |Sounds_Random ->
-        let s = MapDialogs.make_random orthodrawer#draw in
-        toolbar#set_int s
+        MapDialogs.make_random
     |Sounds_Ambient ->
-        let s = MapDialogs.make_ambient orthodrawer#draw in
-        toolbar#set_int s
-    |_ -> () end
+        MapDialogs.make_ambient
+    |_ -> (fun _ -> None) end in
+    match creator orthodrawer#draw with
+    |Some n -> toolbar#set_int n
+    |None -> ()
