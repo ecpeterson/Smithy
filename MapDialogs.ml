@@ -774,27 +774,17 @@ let make_ambient redraw =
     else
         None
 
-(* XXX: rewrite this to use GenerateDialogs *)
-let goto _ =
-    let dialog = GWindow.dialog ~title:"Goto" ~border_width:2
-                                ~resizable:false () in
-    let kind, id =
-        let hbox = GPack.hbox ~packing:dialog#vbox#add () in
-        let vbox = GPack.vbox ~packing:hbox#add () in
-        GMisc.label ~text:"Type" ~packing:vbox#add ();
-        GMisc.label ~text:"ID" ~packing:vbox#add ();
-        let vbox = GPack.vbox ~packing:hbox#add () in
-        let cb, _ = GEdit.combo_box_text ~packing:vbox#add
-                                    ~strings:["Point"; "Line"; "Polygon"] () in
-        cb#set_active 2;
-        let entry = GEdit.entry ~packing:vbox#add ~text:"0" () in
-        (cb, entry) in
-    dialog#add_button_stock `CANCEL `CANCEL;
-    dialog#add_button_stock `OK `OK;
-    let center = begin match dialog#run () with
-    |`OK ->
-        let kind, id = kind#active, int_of_string id#text in
-        begin match kind with
+let goto recenter =
+    let kind = ref 2 in
+    let id = ref "0" in
+    let descriptor = [
+        `H [`V [`L "Type";
+                `L "ID" ];
+            `V [`M (["Point"; "Line"; "Polygon"], kind);
+                `E id ] ] ] in
+    let apply _ =
+        let id = int_of_string !id in
+        let center = begin match !kind with
         |0 ->
             let p = !MapFormat.points.(id) in
             DrawModeSettings.highlight := Point [id];
@@ -811,10 +801,11 @@ let goto _ =
             DrawModeSettings.highlight := Poly [id];
             Some (GeomEdit.point_center
                 (Array.sub (p#endpoint_indices ()) 0 (p#vertex_count ())))
-        |_ -> raise (Failure "Invalid Goto kind!") end
-    |_ -> None end in
-    dialog#destroy ();
-    center
+        |_ -> raise (Failure "Invalid Goto kind!") end in
+        match center with
+        |Some (px, py) -> recenter (px, py)
+        |None -> () in
+    GenerateDialog.generate_dialog descriptor apply "Goto"
 
 (* XXX: rewrite this to use GenerateDialogs - probably going to need to add
  * sliders to GenerateDialogs first *)

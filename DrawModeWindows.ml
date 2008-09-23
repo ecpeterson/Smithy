@@ -220,8 +220,8 @@ object (self)
                                                orthodrawer);
             a "Goto"              ~label:"_Goto..."
                                 ~callback:(fun _ ->
-                                    let Some center = MapDialogs.goto () in
-                                    orthodrawer#center_on center);
+                                    MapDialogs.goto orthodrawer#center_on;
+                                    ());
             a "SetLevelParams"    ~label:"Set _Level Parameters..."
                                 ~callback:(fun _ ->
                                     MapDialogs.info_dialog orthodrawer#draw;
