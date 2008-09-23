@@ -238,7 +238,7 @@ let init_draw_mode window =
                                        window#toolbar);
     window#toolbar#newbutton#connect#clicked
         ~callback:(fun _ -> DrawModeEvent.make_new_item window#toolbar
-                                       window#orthodrawer);
+                                window#orthodrawer; ());
     window#toolbar#editbutton#connect#clicked
         ~callback:(fun _ -> DrawModeEvent.edit_current_item window#toolbar
-                                       window#orthodrawer);
+                                window#orthodrawer; ());

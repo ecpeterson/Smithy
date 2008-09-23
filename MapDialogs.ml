@@ -198,7 +198,8 @@ let poly_dialog poly redraw =
             (* do we just want to open the platform dialog again? *)
             |(Platform, Platform) ->
                 let plat = !MapFormat.platforms.(poly#permutation ()) in
-                platform_dialog plat redraw
+                platform_dialog plat redraw;
+                ()
             (* do we want to trash an old platform? *)
             |(Platform, _) ->
                 MapFormat.delete_platform (poly#permutation ())
@@ -535,8 +536,10 @@ let media_dialog media redraw =
 
 let make_media redraw =
     let m = new MapTypes.media in
-    media_dialog m redraw;
-    MapFormat.add_media m
+    if media_dialog m redraw then
+        Some (MapFormat.add_media m)
+    else
+        None
 
 let light_dialog light redraw =
     let preset = ref (CamlExt.to_enum light_kind_descriptor (light#kind ())) in
@@ -660,8 +663,10 @@ let light_dialog light redraw =
 
 let make_light redraw =
     let l = new MapTypes.light in
-    light_dialog l redraw;
-    MapFormat.add_light l
+    if light_dialog l redraw then
+        Some (MapFormat.add_light l)
+    else
+        None
 
 let map_manager redraw =
     let descriptor = [
@@ -741,8 +746,10 @@ let random_dialog random redraw =
 
 let make_random redraw =
     let random = new MapTypes.random in
-    random_dialog random redraw;
-    MapFormat.add_random random
+    if random_dialog random redraw then
+        Some (MapFormat.add_random random)
+    else
+        None
 
 let ambient_dialog ambient redraw =
     let index = ref (ambient#index ()) in
@@ -762,8 +769,10 @@ let ambient_dialog ambient redraw =
 
 let make_ambient redraw =
     let ambient = new MapTypes.ambient in
-    ambient_dialog ambient redraw;
-    MapFormat.add_ambient ambient
+    if ambient_dialog ambient redraw then
+        Some (MapFormat.add_ambient ambient)
+    else
+        None
 
 (* XXX: rewrite this to use GenerateDialogs *)
 let goto _ =

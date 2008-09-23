@@ -106,8 +106,10 @@ let rec build_dialog descriptor ~packing ~cleanup () =
 let generate_dialog descriptor apply title =
     let w = GWindow.dialog ~title ~border_width:2 ~resizable:false
                            ~position:`CENTER_ON_PARENT () in
-    let cleanup = build_dialog descriptor ~packing:w#vbox#add
-                                          ~cleanup:apply () in
+    let response = ref false in
+    let cleanup = build_dialog descriptor
+                      ~packing:w#vbox#add
+                      ~cleanup:(fun _ -> apply (); response := true) () in
     w#add_button_stock `APPLY `APPLY;
     w#add_button_stock `CANCEL `CANCEL;
     w#add_button_stock `OK `OK;
@@ -118,4 +120,5 @@ let generate_dialog descriptor apply title =
         |`APPLY -> cleanup (); run ()
         |_ -> () end in
     run ();
-    w#destroy ()
+    w#destroy ();
+    !response
