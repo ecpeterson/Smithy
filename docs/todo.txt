@@ -4,7 +4,6 @@ editing:
 + add placement chunk dialog / functionality
 interface:
 + /definitely/ stop using internal units in dialogs, ideally just write fixed-point readers and writers and stop using internal units in the program itself
-+ fix point reselection after deletion (delete_cb)
 
 less important
 =========
