@@ -308,7 +308,7 @@ let add_annotation = add_builder annotations
 (* gets the closest object to the point (x0, y0) *)
 let get_closest_object x0 y0 =
     array_fold_left_indexed (fun (accd, acci) this_obj i ->
-        let (xi, yi, _) = this_obj#point () in
+        let (xi, yi, _) = this_obj#point in
         let this_distance = distance (float xi, float yi) (x0, y0) in
         if this_distance < accd then (this_distance, i) else (accd, acci))
             (infinity, 0) !objs
@@ -316,7 +316,7 @@ let get_closest_object x0 y0 =
     (* gets the closest map point to the point (x0, y0) *)
 let get_closest_point x0 y0 =
     array_fold_left_indexed (fun (accd, acci) this_point i ->
-        match this_point#vertex () with (xi, yi) ->
+        match this_point#vertex with (xi, yi) ->
         let this_distance = distance (float xi, float yi) (x0, y0) in
         if this_distance < accd then (this_distance, i) else (accd, acci))
             (infinity, 0) !points
@@ -324,7 +324,7 @@ let get_closest_point x0 y0 =
     (* gets the closest annotation to the point (x0, y0) *)
 let get_closest_annotation x0 y0 =
     array_fold_left_indexed (fun (accd, acci) this_anno i ->
-        match this_anno#location () with (xi, yi) ->
+        match this_anno#location with (xi, yi) ->
         let this_distance = distance (float xi, float yi) (x0, y0) in
         if this_distance < accd then (this_distance, i) else (accd, acci))
             (infinity, 0) !annotations
@@ -340,9 +340,9 @@ let get_closest_line x0 y0 =
         let iy = e0y +. u *. (e1y -. e0y) in
         distance (x, y) (ix, iy) in
     array_fold_left_indexed (fun (accd, acci) this_line i ->
-            let (p0i, p1i) = this_line#endpoints () in
-            let (p0x, p0y) = !points.(p0i)#vertex () in
-            let (p1x, p1y) = !points.(p1i)#vertex () in
+            let (p0i, p1i) = this_line#endpoints in
+            let (p0x, p0y) = !points.(p0i)#vertex in
+            let (p1x, p1y) = !points.(p1i)#vertex in
             let d = line_distance (float p0x, float p0y) (float p1x, float p1y) (x0, y0) in
             if d < accd then (d, i) else (accd, acci))
         (infinity, 0) !lines
@@ -353,10 +353,9 @@ let get_closest_line x0 y0 =
  * particular order *)
 let get_poly_ring (poly : polygon) =
     let endpoints = Array.map
-        (fun x -> !lines.(x)#endpoints ())
-        (poly#line_indices ()) in
+        (fun x -> !lines.(x)#endpoints) poly#line_indices in
     let rec loop n acc =
-        if n = poly#vertex_count () then acc else
+        if n = poly#vertex_count then acc else
         let (e0, e1) = endpoints.(n) in
         if n = 0 then begin
             let (e2, e3) = endpoints.(1) in
@@ -405,7 +404,7 @@ let get_enclosing_poly x0 y0 =
         if i = Array.length !polygons then None else
         let poly = !polygons.(i) in
         let poly_ring = get_poly_ring poly in
-        let poly_points = List.map (fun x -> !points.(x)#vertex ()) poly_ring in
+        let poly_points = List.map (fun x -> !points.(x)#vertex) poly_ring in
         let sum = sum_angles poly_points (x0, y0) 0 0.0 in
         if abs_float sum < pi then
             g_e_p_aux x0 y0 (i+1)
@@ -423,10 +422,9 @@ let recalculate_lengths point =
     let rec line_loop n =
         if n = line_length then () else
         let line = !lines.(n) in
-        let (p0, p1) = line#endpoints () in
+        let (p0, p1) = line#endpoints in
         if p0 = point || p1 = point then
-            let p0 = !points.(p0)#vertex () in
-            let p1 = !points.(p1)#vertex () in
+            let p0, p1 = !points.(p0)#vertex, !points.(p1)#vertex in
             line#set_length (length p0 p1);
         line_loop (n+1) in
     line_loop 0
@@ -435,7 +433,7 @@ let recalculate_lengths point =
 let delete_obj n =
     objs := delete_from_array_and_resize !objs n;
     Array.iter (fun x ->
-        let y = x#first_object () in
+        let y = x#first_object in
         if y > n then x#set_first_object (y-1) else
         if y = n then x#set_first_object (-1)) !polygons
 
@@ -443,22 +441,22 @@ let delete_obj n =
 let delete_platform n =
     platforms := delete_from_array_and_resize !platforms n;
     Array.iter (fun x ->
-        let y = x#permutation () in
-        if x#kind () <> Platform then () else
+        let y = x#permutation in
+        if x#kind <> Platform then () else
         if y > n then x#set_permutation (y - 1) else
         if y = n then x#set_permutation (-1)) !polygons
 
 let delete_ambient n =
     ambients := delete_from_array_and_resize !ambients n;
     Array.iter (fun x ->
-        let i = x#ambient_sound_image_index () in
+        let i = x#ambient_sound_image_index in
         if i > n then x#set_ambient_sound_image_index (i - 1)
         else if i = n then x#set_ambient_sound_image_index (-1)) !polygons
 
 let delete_random n =
     randoms := delete_from_array_and_resize !randoms n;
     Array.iter (fun x ->
-        let i = x#random_sound_image_index () in
+        let i = x#random_sound_image_index in
         if i > n then x#set_random_sound_image_index (i - 1)
         else if i = n then x#set_random_sound_image_index (-1)) !polygons
 
@@ -468,9 +466,9 @@ let delete_annotation n =
 (* deletes a side (i.e. a texture) and performs cleanup *)
 let delete_side n =
     let side = !sides.(n) in
-    let parent_poly = !polygons.(side#polygon_index ()) in
-    let parent_line = !lines.(side#line_index ()) in
-    let poly_side_array = parent_poly#side_indices () in
+    let parent_poly = !polygons.(side#polygon_index) in
+    let parent_line = !lines.(side#line_index) in
+    let poly_side_array = parent_poly#side_indices in
     (* get rid of this side from the parent array, filling in the empty end
      * slot with a -1 value, signalling emptiness *)
     delete_from_array poly_side_array n (-1);
@@ -479,11 +477,10 @@ let delete_side n =
     (* iterate through all the available polys, shifting the indices into
      * the sides array down as needed *)
     Array.iter (fun poly -> destructive_map
-            (fun x -> if x > n then x - 1 else x)
-            (poly#side_indices ())) !polygons;
+            (fun x -> if x > n then x - 1 else x) poly#side_indices) !polygons;
     (* iterate through the lines, again shifting indices *)
     Array.iter (fun line ->
-        let (cw, ccw) = line#cw_poly_side_index (), line#ccw_poly_side_index () in
+        let (cw, ccw) = line#cw_poly_side_index, line#ccw_poly_side_index in
         if cw = n then line#set_cw_poly_side_index (-1);
         if cw > n then line#set_cw_poly_side_index (cw - 1);
         if ccw = n then line#set_ccw_poly_side_index (-1);
@@ -510,8 +507,8 @@ let delete_poly n =
     polygons := delete_from_array_and_resize !polygons n;
     (* shift down all the line poly owner indices *)
     Array.iter (fun line ->
-            let cw_poly_owner = line#cw_poly_owner () in
-            let ccw_poly_owner = line#ccw_poly_owner () in
+            let cw_poly_owner = line#cw_poly_owner in
+            let ccw_poly_owner = line#ccw_poly_owner in
             if (cw_poly_owner = n || ccw_poly_owner = n) then begin
                 line#set_flags [SOLID]
             end;
@@ -524,21 +521,21 @@ let delete_poly n =
         !lines;
     (* shift down all the side poly own indices *)
     Array.iter (fun side ->
-        let pi = side#polygon_index () in
+        let pi = side#polygon_index in
         if pi > n then side#set_polygon_index (pi - 1)) !sides;
     (* clean up the objects *)
     let rec clean_objs () =
-        let target = CamlExt.array_find (fun x -> x#polygon () = n) !objs in
+        let target = CamlExt.array_find (fun x -> x#polygon = n) !objs in
         if target < Array.length !objs then begin
             delete_obj target;
             clean_objs ()
         end in
     clean_objs ();
     Array.iter (fun x ->
-        let i = x#polygon () in if i > n then x#set_polygon (i-1)) !objs;
+        let i = x#polygon in if i > n then x#set_polygon (i-1)) !objs;
     (* clean up the platforms *)
     let rec clean_platforms () =
-        let target = CamlExt.array_find (fun x -> x#polygon_index () = n)
+        let target = CamlExt.array_find (fun x -> x#polygon_index = n)
                                         !platforms in
         if target < Array.length !platforms then begin
             delete_platform target;
@@ -546,28 +543,28 @@ let delete_poly n =
         end in
     clean_platforms ();
     Array.iter (fun x ->
-        let i = x#polygon_index () in
+        let i = x#polygon_index in
         if i >= n then x#set_polygon_index (i-1)) !platforms
 
 let delete_point_no_bs n =
     points := delete_from_array_and_resize !points n;
     (* fix the endpoints of lines *)
     Array.iter (fun x ->
-        let (tp0, tp1) = x#endpoints () in
+        let (tp0, tp1) = x#endpoints in
         let tp0 = if tp0 > n then tp0 - 1 else tp0 in
         let tp1 = if tp1 > n then tp1 - 1 else tp1 in
         x#set_endpoints (tp0, tp1)) !lines;
     (* fix the point arrays in polygons *)
     Array.iter (fun x ->
         destructive_map (fun x -> if x > n then x - 1 else x)
-            (x#endpoint_indices ())) !polygons
+            x#endpoint_indices) !polygons
 
 (* deletes a line and performs cleanup *)
 let rec delete_line n =
     let line = !lines.(n) in
     (* if our line is attached to polygons, delete them *)
-    let poly0 = line#cw_poly_owner () in
-    let poly1 = line#ccw_poly_owner () in
+    let poly0 = line#cw_poly_owner in
+    let poly1 = line#ccw_poly_owner in
     let (poly0, poly1) = (max poly0 poly1, min poly0 poly1) in
     if poly0 <> -1 then delete_poly poly0;
     if poly1 <> -1 then delete_poly poly1;
@@ -575,22 +572,22 @@ let rec delete_line n =
     lines := delete_from_array_and_resize !lines n;
     (* loop through the other polys, fix their line indices *)
     Array.iter (fun x ->
-            let lines = x#line_indices () in
+            let lines = x#line_indices in
             destructive_map (fun x -> if x > n then x - 1 else x) lines)
         !polygons;
     (* loop through sides, fix their line owner indices *)
     Array.iter (fun x ->
-            let li = x#line_index () in
+            let li = x#line_index in
             x#set_line_index (if li > n then li - 1 else li)) !sides;
     (** delete unused points **)
-    let p0, p1 = line#endpoints () in
+    let p0, p1 = line#endpoints in
     let p0, p1 = max p0 p1, min p0 p1 in
     let i0 = CamlExt.array_find (fun x ->
-        let np0, np1 = x#endpoints () in np0 = p0 || np1 = p0) !lines in
+        let np0, np1 = x#endpoints in np0 = p0 || np1 = p0) !lines in
     if i0 = Array.length !lines then
         delete_point_no_bs p0;
     let i1 = CamlExt.array_find (fun x ->
-        let np0, np1 = x#endpoints () in np0 = p1 || np1 = p1) !lines in
+        let np0, np1 = x#endpoints in np0 = p1 || np1 = p1) !lines in
     if i1 = Array.length !lines then
         delete_point_no_bs p1
 
@@ -599,7 +596,7 @@ let delete_point n =
     (* if we have a parent line, find it *)
     let rec aux acc =
         if acc = Array.length !lines then -1 else
-        let (p0, p1) = !lines.(acc)#endpoints () in
+        let (p0, p1) = !lines.(acc)#endpoints in
         if p0 = n || p1 = n then acc else aux (acc + 1) in
     let target_line = aux 0 in
     (* if we do have a line owner, then just exhaustively delete the lines and
@@ -654,10 +651,10 @@ let pave _ =
         side#set_kind (
             if adjacent_poly = -1 then MapTypes.Full_Side else
             let tp, ap = !polygons.(this_poly), !polygons.(adjacent_poly) in
-            let tpc, apc = tp#ceiling_height (), ap#ceiling_height () in
-            let tpf, apf = tp#floor_height (), ap#floor_height () in
-            let tpp, app = tp#kind () = MapTypes.Platform,
-                           ap#kind () = MapTypes.Platform in
+            let tpc, apc = tp#ceiling_height, ap#ceiling_height in
+            let tpf, apf = tp#floor_height, ap#floor_height in
+            let tpp, app = tp#kind = MapTypes.Platform,
+                           ap#kind = MapTypes.Platform in
             if (tpc > apc && tpf < apf) ||
                tpp || app then MapTypes.Split_Side else
             if tpc > apc then MapTypes.High_Side else
@@ -667,7 +664,7 @@ let pave _ =
             MapTypes.High_Side);
         add_side side end in
     CamlExt.array_fold_left_indexed (fun () line idx ->
-        let cw_poly, ccw_poly = line#cw_poly_owner (), line#ccw_poly_owner () in
+        let cw_poly, ccw_poly = line#cw_poly_owner, line#ccw_poly_owner in
         line#set_cw_poly_side_index (make_side line idx cw_poly ccw_poly);
         line#set_ccw_poly_side_index (make_side line idx ccw_poly cw_poly))
             () !lines;
