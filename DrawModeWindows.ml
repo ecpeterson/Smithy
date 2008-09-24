@@ -214,8 +214,6 @@ object (self)
                                     ());
             a "ViewHeightWindow"  ~label:"View _Height Window"
                                 ~accel:"<Ctrl>h"
-                                (* XXX: move the redrawing stuff back to here,
-                                 * don't pass orthodrawer into the dialog *)
                                 ~callback:(fun _ ->
                                     MapDialogs.map_height_dlg orthodrawer#draw;
                                     ());
