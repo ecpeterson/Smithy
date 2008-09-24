@@ -27,11 +27,11 @@ let start_line x y choose_distance =
      * resultant point *)
     else if line_distance < choose_distance && nearest_line >= 0 then begin
         let line = !MapFormat.lines.(nearest_line) in
-        let (cw_poly, ccw_poly) = (line#cw_poly_owner (), line#ccw_poly_owner ()) in
+        let cw_poly, ccw_poly = line#cw_poly_owner, line#ccw_poly_owner in
         (* make sure this line isn't owned by a poly! *)
         if cw_poly = -1 && ccw_poly = -1 then begin
             (* do line splitting, pretty straightforward *)
-            let (p0, p1) = line#endpoints () in
+            let (p0, p1) = line#endpoints in
             MapFormat.delete_line nearest_line;
             let point = new MapTypes.point in
             let (px, py) = point_filter (int_of_float x, int_of_float y) in
@@ -53,8 +53,8 @@ let start_line x y choose_distance =
 let connect_line start_point x y choose_distance =
     (* utility to actually add the line *)
     let do_line target_point =
-        let (p0x, p0y) = !MapFormat.points.(start_point)#vertex () in
-        let (p1x, p1y) = !MapFormat.points.(target_point)#vertex () in
+        let (p0x, p0y) = !MapFormat.points.(start_point)#vertex in
+        let (p1x, p1y) = !MapFormat.points.(target_point)#vertex in
         let length = int_of_float (((float p0x -. (float p1x))**2.0 +.
                                     (float p0y -. (float p1y))**2.0)**0.5) in
         let line = new MapTypes.line in
@@ -77,9 +77,9 @@ let connect_line start_point x y choose_distance =
     else if line_distance < choose_distance && nearest_line >= 0 then begin
         let line = !MapFormat.lines.(nearest_line) in
         (* are we attached to a poly? *)
-        if (line#cw_poly_owner () = -1 && line#ccw_poly_owner () = -1) then begin
+        if (line#cw_poly_owner = -1 && line#ccw_poly_owner = -1) then begin
             (* nope, so here we split the line *)
-            let (p0, p1) = line#endpoints () in
+            let (p0, p1) = line#endpoints in
             MapFormat.delete_line nearest_line;
             let point = new MapTypes.point in
             let (px, py) = point_filter (int_of_float x, int_of_float y) in
@@ -107,9 +107,9 @@ let select_line_loop x y =
          * intersection point lies in the part that parameterizes the segment *)
         let test_line n =
             let line = !MapFormat.lines.(n) in
-            let (p0, p1) = line#endpoints () in
-            let (p0x, p0y) = !MapFormat.points.(p0)#vertex () in
-            let (p1x, p1y) = !MapFormat.points.(p1)#vertex () in
+            let (p0, p1) = line#endpoints in
+            let (p0x, p0y) = !MapFormat.points.(p0)#vertex in
+            let (p1x, p1y) = !MapFormat.points.(p1)#vertex in
             let u = (float (y - p0y)) /. (float (p1y - p0y)) in
             let x_intersect = p0x + (int_of_float (u *. (float p1x -. (float p0x)))) in
             (* u \in [0, 1] ? *)
@@ -125,10 +125,10 @@ let select_line_loop x y =
         (* returns the x-coordinate on a line that intercepts the aforementioned
          * ray, used to sort the lines outward *)
         let get_intersection_point line =
-            let (p0, p1) = line#endpoints () in
-            let (p0x, p0y) = !MapFormat.points.(p0)#vertex () in
+            let (p0, p1) = line#endpoints in
+            let (p0x, p0y) = !MapFormat.points.(p0)#vertex in
             let (p0x, p0y) = (float p0x, float p0y) in
-            let (p1x, p1y) = !MapFormat.points.(p1)#vertex () in
+            let (p1x, p1y) = !MapFormat.points.(p1)#vertex in
             let (p1x, p1y) = (float p1x, float p1y) in
             (float y -. p0y) *. (p1x -. p0x) /. (p1y -. p0y) +. p0x in
         (* the actual sorting function *)
@@ -144,7 +144,7 @@ let select_line_loop x y =
     let rec get_neighbors index p =
         if index = lines_length then [] else
         (* grab a line's endpoints *)
-        let (p0, p1) = !MapFormat.lines.(index)#endpoints () in
+        let (p0, p1) = !MapFormat.lines.(index)#endpoints in
         (* if one matches, include the line, otherwise keep on truckin' *)
         if p0 = p || p1 = p then index :: (get_neighbors (index+1) p) else
             get_neighbors (index+1) p in
@@ -157,8 +157,8 @@ let select_line_loop x y =
         let diff (x0, y0) (x1, y1) = float x0 -. (float x1), float y0 -. (float y1) in
         (* prev_vtx is the vertex we had one step ago, and working_vtx is the
          * vertex we're on now. *)
-        let prev_vtx = !MapFormat.points.(prev)#vertex () in
-        let working_vtx = !MapFormat.points.(working)#vertex () in
+        let prev_vtx = !MapFormat.points.(prev)#vertex in
+        let working_vtx = !MapFormat.points.(working)#vertex in
         (* get the list of neighbors attached to the working vertex *)
         let neighbors = get_neighbors_except starter working in
         (* deal with the base cases of too long a loop or too few neighbors *)
@@ -168,9 +168,9 @@ let select_line_loop x y =
         let neighbors = List.combine neighbors
             (List.map (fun x ->
                 let line = !MapFormat.lines.(x) in
-                let (p0, p1) = line#endpoints () in
-                let p0_vtx = !MapFormat.points.(p0)#vertex () in
-                let p1_vtx = !MapFormat.points.(p1)#vertex () in
+                let (p0, p1) = line#endpoints in
+                let p0_vtx = !MapFormat.points.(p0)#vertex in
+                let p1_vtx = !MapFormat.points.(p1)#vertex in
                 if p0 = prev || p1 = prev then neg_infinity else
                 if p0 = working then CamlExt.dotf (diff prev_vtx working_vtx)
                                                   (diff p1_vtx working_vtx) /.
@@ -187,9 +187,9 @@ let select_line_loop x y =
         let rec get_first_neighbor lst =
             match lst with (line_idx, dot_value) :: xs ->
             let line = !MapFormat.lines.(line_idx) in
-            let (p0, p1) = line#endpoints () in
-            let p0_vtx = !MapFormat.points.(p0)#vertex () in
-            let p1_vtx = !MapFormat.points.(p1)#vertex () in
+            let (p0, p1) = line#endpoints in
+            let p0_vtx = !MapFormat.points.(p0)#vertex in
+            let p1_vtx = !MapFormat.points.(p1)#vertex in
             let cross = if p0 = working then
                      CamlExt.crossf (diff prev_vtx working_vtx)
                                     (diff p1_vtx working_vtx)
@@ -202,10 +202,10 @@ let select_line_loop x y =
          * it's good enough for us *)
         let (tightest, dot_value) = get_first_neighbor neighbors in
         (* and pull off the vertex that differs from the working vertex *)
-        let (p0, p1) = !MapFormat.lines.(tightest)#endpoints () in
+        let (p0, p1) = !MapFormat.lines.(tightest)#endpoints in
         let tightest_pt = if p0 = working then p1 else p0 in
         (* then recurse *)
-        match build_loop target working tightest_pt (rec_depth + 1) starter with 
+        match build_loop target working tightest_pt (rec_depth + 1) starter with
             |None -> None
             |Some a -> Some (tightest :: a) end in
     (* attempt to build a line loop out of each candidate line *)
@@ -213,9 +213,9 @@ let select_line_loop x y =
         (* pull off the first line candidate *)
         match starters with [] -> None | starter :: starters ->
         (* pull and sort its endpoints *)
-        let (ep0, ep1) = !MapFormat.lines.(starter)#endpoints () in
-        let (_, p0y) = !MapFormat.points.(ep0)#vertex () in
-        let (_, p1y) = !MapFormat.points.(ep1)#vertex () in
+        let (ep0, ep1) = !MapFormat.lines.(starter)#endpoints in
+        let (_, p0y) = !MapFormat.points.(ep0)#vertex in
+        let (_, p1y) = !MapFormat.points.(ep1)#vertex in
         let (ep0, ep1) = if p0y < p1y then (ep0, ep1) else (ep1, ep0) in
         (* attempt to build the line loop *)
         try begin match build_loop ep0 ep0 ep1 0 starter with
@@ -234,7 +234,7 @@ let fill_poly x y =
     (* now make sure all the lines have a free side *)
     match List.fold_left (fun x y -> x && (
         let line = !MapFormat.lines.(y) in
-        line#cw_poly_owner () == -1 || line#ccw_poly_owner () == -1)) true
+        line#cw_poly_owner == -1 || line#ccw_poly_owner == -1)) true
         line_loop with false -> () | true ->
     (* now build a new polygon *)
     let poly = new MapTypes.polygon in
@@ -247,14 +247,14 @@ let fill_poly x y =
     let rec build_point_loop line_loop point_loop =
         match (line_loop, point_loop) with
             (line :: lines, point :: points) ->
-                let (p0, p1) = !MapFormat.lines.(line)#endpoints () in
+                let (p0, p1) = !MapFormat.lines.(line)#endpoints in
                 build_point_loop lines ((if p0 = point then p1 else p0) :: point_loop)
             |([], _) -> point_loop in
     (* figure out which way we should be winding, since the order of vertices in
      * a particular line is pretty meaningless *)
     let line1 :: line2 :: remaining_lines = line_loop in
-    let (p0, p1) = !MapFormat.lines.(line1)#endpoints () in
-    let (p2, p3) = !MapFormat.lines.(line2)#endpoints () in
+    let (p0, p1) = !MapFormat.lines.(line1)#endpoints in
+    let (p2, p3) = !MapFormat.lines.(line2)#endpoints in
     let first_point = if p0 = p2 || p0 = p3 then p1 else p0 in
     (* and now build the point loop using the seed we just calculated *)
     let point_loop = List.tl (List.rev (build_point_loop line_loop [first_point])) in
@@ -270,39 +270,39 @@ let fill_poly x y =
      * this line with some other polygon. *)
     List.iter2 (fun x y ->
         let line = !MapFormat.lines.(x) in
-        let (p0, p1) = line#endpoints () in
+        let (p0, p1) = line#endpoints in
         if p1 = y then line#set_cw_poly_owner poly_idx else
                        line#set_ccw_poly_owner poly_idx;
-        if line#cw_poly_owner () <> -1 && line#ccw_poly_owner () <> -1 then
+        if line#cw_poly_owner <> -1 && line#ccw_poly_owner <> -1 then
             line#set_flags [MapTypes.TRANSPARENT]) line_loop point_loop
 
 let decrement_obj obj =
-    begin match obj#kind () with
+    begin match obj#kind with
         |MapTypes.Monster ->
             (* update plac + (MapFormat.number_of_placements / 2) *)
-            let plac = !MapFormat.placements.(obj#index () +
+            let plac = !MapFormat.placements.(obj#index +
                                     MapFormat.number_of_placements / 2) in
-            if plac#initial_count () > 0 then
-                plac#set_initial_count (plac#initial_count () - 1)
+            if plac#initial_count > 0 then
+                plac#set_initial_count (plac#initial_count - 1)
         |MapTypes.Item ->
             (* update plac *)
-            let plac = !MapFormat.placements.(obj#index ()) in
-            if plac#initial_count () > 0 then
-                plac#set_initial_count (plac#initial_count () - 1)
+            let plac = !MapFormat.placements.(obj#index) in
+            if plac#initial_count > 0 then
+                plac#set_initial_count (plac#initial_count - 1)
         |_ -> ()
     end
 
 let increment_obj obj =
-    begin match obj#kind () with
+    begin match obj#kind with
         |MapTypes.Monster ->
             (* update plac + (MapFormat.number_of_placements / 2) *)
-            let plac = !MapFormat.placements.(obj#index () +
+            let plac = !MapFormat.placements.(obj#index +
                                     MapFormat.number_of_placements / 2) in
-            plac#set_initial_count (plac#initial_count () + 1)
+            plac#set_initial_count (plac#initial_count + 1)
         |MapTypes.Item ->
             (* update plac *)
-            let plac = !MapFormat.placements.(obj#index ()) in
-            plac#set_initial_count (plac#initial_count () + 1)
+            let plac = !MapFormat.placements.(obj#index) in
+            plac#set_initial_count (plac#initial_count + 1)
         |_ -> ()
     end
 
@@ -310,10 +310,10 @@ let clone_idx = ref 0
 let make_object x y poly =
     let obj = new MapTypes.obj in
     begin try let clone_obj = !MapFormat.objs.(!clone_idx) in
-        obj#set_kind (clone_obj#kind ());
-        obj#set_index (clone_obj#index ());
-        obj#set_facing (clone_obj#facing ());
-        obj#set_flags (clone_obj#flags ())
+        obj#set_kind clone_obj#kind;
+        obj#set_index clone_obj#index;
+        obj#set_facing clone_obj#facing;
+        obj#set_flags clone_obj#flags
     with _ -> () end;
     increment_obj obj;
     obj#set_polygon poly;
@@ -332,7 +332,7 @@ let make_annotation x y poly =
 let merge_points ns () =
     (* need to be sure no polys are attached to our pointset *)
     if not (Array.fold_left (fun x y ->
-                    let y = y#endpoint_indices () in
+                    let y = y#endpoint_indices in
                     Array.fold_left (fun x y ->
                         x || List.mem y ns) false y || x)
                 false !MapFormat.polygons)
@@ -346,14 +346,14 @@ let merge_points ns () =
         match ns with [] -> () | new_n :: ns ->
         (* is there a line between these two?  delete it *)
         let line = CamlExt.array_find
-            (fun x -> x#endpoints () = (n, new_n) ||
-                      x#endpoints () = (new_n, n)) !MapFormat.lines in
+            (fun x -> x#endpoints = (n, new_n) ||
+                      x#endpoints = (new_n, n)) !MapFormat.lines in
         if line <> Array.length !MapFormat.lines then
             MapFormat.delete_line line;
         (** change all new_n to n in map **)
         (* update line endpoints *)
         Array.iter (fun x ->
-            let (p0, p1) = x#endpoints () in
+            let (p0, p1) = x#endpoints in
             let p0 =
                 if p0 > new_n then p0 - 1 else
                 if p0 = new_n then n else p0 in
@@ -365,7 +365,7 @@ let merge_points ns () =
         Array.iter (fun x ->
             CamlExt.destructive_map (fun y ->
                     if y = new_n then n else if y > new_n then y - 1 else y)
-                (x#endpoint_indices ())) !MapFormat.polygons;
+                x#endpoint_indices) !MapFormat.polygons;
         (* actually delete the point *)
         MapFormat.points :=
             CamlExt.delete_from_array_and_resize !MapFormat.points new_n;
@@ -376,6 +376,6 @@ let merge_points ns () =
 let point_center arr =
     let (x, y) =
         Array.fold_left (fun (x, y) p ->
-            let xn, yn = !MapFormat.points.(p)#vertex () in
+            let xn, yn = !MapFormat.points.(p)#vertex in
             x + xn, y + yn) (0, 0) arr in
     x / (Array.length arr), y / (Array.length arr)

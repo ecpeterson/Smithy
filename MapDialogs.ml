@@ -6,7 +6,7 @@ open CamlExt
 open DrawModeSettings
 
 let point_dialog point redraw =
-    let px, py = point#vertex () in
+    let px, py = point#vertex in
     let px, py = ref (string_of_int px), ref (string_of_int py) in
     let descriptor = [
         `H [
@@ -20,9 +20,9 @@ let point_dialog point redraw =
     GenerateDialog.generate_dialog descriptor apply "Edit Point"
 
 let line_dialog line redraw =
-    let solid = ref (List.mem SOLID (line#flags ())) in
-    let transparent = ref (List.mem TRANSPARENT (line#flags ())) in
-    let (cw, ccw) = line#cw_poly_side_index (), line#ccw_poly_side_index () in
+    let solid = ref (List.mem SOLID line#flags) in
+    let transparent = ref (List.mem TRANSPARENT line#flags) in
+    let cw, ccw = line#cw_poly_side_index, line#ccw_poly_side_index in
     let empty = ref (cw = -1 && ccw = -1) in
     let descriptor = [
         `V [
@@ -44,14 +44,14 @@ let line_dialog line redraw =
     GenerateDialog.generate_dialog descriptor apply "Edit Line"
 
 let platform_dialog plat redraw =
-    let kind = ref (plat#kind ()) in
-    let speed = ref (plat#speed () |> string_of_int) in
-    let delay = ref (plat#delay () |> string_of_int) in
-    let automin = ref (plat#minimum_height () = -1) in
-    let minheight = ref (plat#minimum_height () |> string_of_int) in
-    let automax = ref (plat#maximum_height () = -1) in
-    let maxheight = ref (plat#maximum_height () |> string_of_int) in
-    let flags = plat#flags () in
+    let kind = ref plat#kind in
+    let speed = ref (string_of_int plat#speed) in
+    let delay = ref (string_of_int plat#delay) in
+    let automin = ref (plat#minimum_height = -1) in
+    let minheight = ref (string_of_int plat#minimum_height) in
+    let automax = ref (plat#maximum_height = -1) in
+    let maxheight = ref (string_of_int plat#maximum_height) in
+    let flags = plat#flags in
     let is_door = ref (List.mem Plat_Door flags) in
     let initially_active = ref(List.mem Plat_Initially_Active flags) in
     let initially_extended = ref (List.mem Plat_Initially_Extended flags) in
@@ -74,7 +74,7 @@ let platform_dialog plat redraw =
         ref (List.mem Plat_Deactivates_Adj_Plats_On_Activation flags) in
     let adjacent_at_each_level =
         ref (List.mem Plat_Activates_Adj_Plats_At_Each_Level flags) in
-    let tag = ref (plat#tag () |> string_of_int) in
+    let tag = ref (string_of_int plat#tag) in
     let deactivates_at_each_level =
         ref (List.mem Plat_Deactivates_At_Each_Level flags) in
     let deactivates_at_initial_level =
@@ -182,9 +182,9 @@ let platform_dialog plat redraw =
     GenerateDialog.generate_dialog descriptor apply "Platform Properties"
 
 let poly_dialog poly redraw =
-    let old_kind = poly#kind () in
+    let old_kind = poly#kind in
     let kind = ref (CamlExt.to_enum MapTypes.poly_kind_descriptor old_kind) in
-    let media_index = ref (string_of_int (poly#media_index ())) in
+    let media_index = ref (string_of_int poly#media_index) in
     let descriptor = [
         `H [
             `V [`L "Type";
@@ -197,12 +197,12 @@ let poly_dialog poly redraw =
         begin match old_kind, kind with
             (* do we just want to open the platform dialog again? *)
             |(Platform, Platform) ->
-                let plat = !MapFormat.platforms.(poly#permutation ()) in
+                let plat = !MapFormat.platforms.(poly#permutation) in
                 platform_dialog plat redraw;
                 ()
             (* do we want to trash an old platform? *)
             |(Platform, _) ->
-                MapFormat.delete_platform (poly#permutation ())
+                MapFormat.delete_platform poly#permutation
             (* do we want to create a new platform? *)
             |(_, Platform) ->
                 let plat = new MapTypes.platform in
@@ -221,17 +221,17 @@ let poly_dialog poly redraw =
 
 let obj_dialog obj redraw =
     let group = ref (CamlExt.to_enum MapTypes.object_kind_descriptor
-                                    (obj#kind ())) in
-    let monster_kind = ref (obj#index ()) in
-    let monster_facing = ref (obj#facing ()) in
+                                     obj#kind) in
+    let monster_kind = ref obj#index in
+    let monster_facing = ref obj#facing in
     let monster_height = ref (string_of_int
-                                    ((fun (_, _, x) -> x) (obj#point ()))) in
+                                    ((fun (_, _, x) -> x) obj#point)) in
     let monster_teleports_in = ref (List.mem Invisible_Or_Platform
-                                             (obj#flags ())) in
-    let monster_hangs = ref (List.mem Hangs_From_Ceiling (obj#flags ())) in
-    let monster_floats = ref (List.mem Floats (obj#flags ())) in
-    let monster_blind = ref (List.mem Blind (obj#flags ())) in
-    let monster_deaf = ref (List.mem Deaf (obj#flags ())) in
+                                             obj#flags) in
+    let monster_hangs = ref (List.mem Hangs_From_Ceiling obj#flags) in
+    let monster_floats = ref (List.mem Floats obj#flags) in
+    let monster_blind = ref (List.mem Blind obj#flags) in
+    let monster_deaf = ref (List.mem Deaf obj#flags) in
     let scenerystrings = match !MapFormat.environment_code with
         |MapFormat.Lava   -> ItemStrings.scenery_strings_lava
         |MapFormat.Water  -> ItemStrings.scenery_strings_water
@@ -250,12 +250,12 @@ let obj_dialog obj redraw =
     let item_height = ref !monster_height in
     let item_teleports_in = ref !monster_teleports_in in
     let item_hangs = ref !monster_hangs in
-    let item_network_only = ref (List.mem Network_Only (obj#flags ())) in
+    let item_network_only = ref (List.mem Network_Only obj#flags) in
     let player_facing = ref !monster_facing in
     let player_height = ref !monster_height in
     let player_hangs = ref !monster_hangs in
-    let goal_kind = ref (string_of_int (obj#index ())) in
-    let sound_facing = ref (string_of_int (obj#facing ())) in
+    let goal_kind = ref (string_of_int obj#index) in
+    let sound_facing = ref (string_of_int obj#facing) in
     let sound_kind = ref !monster_kind in
     let sound_height = ref !monster_height in
     let sound_teleports_in = ref !monster_teleports_in in
@@ -328,7 +328,7 @@ let obj_dialog obj redraw =
             group) ] in
     let apply _ =
         let update_height h =
-            let (x, y, z) = obj#point () in
+            let (x, y, z) = obj#point in
             obj#set_point (x, y, int_of_string h) in
         let update_flags list =
             let flags = List.fold_left2
@@ -338,7 +338,7 @@ let obj_dialog obj redraw =
             obj#set_flags (CamlExt.of_bitflag
                 MapTypes.object_flags_descriptor flags) in
         obj#set_kind (CamlExt.of_enum MapTypes.object_kind_descriptor !group);
-        begin match obj#kind () with
+        begin match obj#kind with
             |Monster ->
                 obj#set_index !monster_kind;
                 obj#set_facing !monster_facing;
@@ -385,12 +385,12 @@ let obj_dialog obj redraw =
     GenerateDialog.generate_dialog descriptor apply "Edit Object"
 
 let anno_dialog anno redraw =
-    let px, py = anno#location () in
+    let px, py = anno#location in
     let px, py = (string_of_int px), (string_of_int py) in
-    let poly = anno#polygon_index () in
+    let poly = anno#polygon_index in
     let poly = string_of_int poly in
     let pos_str = "At X,Y: " ^ px ^ "," ^ py ^ " (Polygon: " ^ poly ^ ")" in
-    let text = anno#text () in
+    let text = anno#text in
     let text = ref text in
     let descriptor = [
         `V [
@@ -488,14 +488,14 @@ let info_dialog redraw =
 
 let media_dialog media redraw =
     (* set up the dialog *)
-    let kind = ref (media#kind ()) in
-    let light_parameter = ref (string_of_int (media#light_index ())) in
-    let direction = ref (media#direction ()) in
-    let flow_strength = ref (string_of_int (media#magnitude ())) in
-    let low_tide = ref (string_of_int (media#low ())) in
-    let high_tide = ref (string_of_int (media#high ())) in
+    let kind = ref media#kind in
+    let light_parameter = ref (string_of_int media#light_index) in
+    let direction = ref media#direction in
+    let flow_strength = ref (string_of_int media#magnitude) in
+    let low_tide = ref (string_of_int media#low) in
+    let high_tide = ref (string_of_int media#high) in
     let obstructed = ref (List.mem MapTypes.Liquid_Obstructs_Sounds
-                                   (media#flags ())) in
+                                   media#flags) in
     let descriptor = [
         `V [
             `H [
@@ -542,42 +542,42 @@ let make_media redraw =
         None
 
 let light_dialog light redraw =
-    let preset = ref (CamlExt.to_enum light_kind_descriptor (light#kind ())) in
-    let phase = ref (string_of_int (light#phase ())) in
-    let stateless = ref (List.mem MapTypes.Stateless_Light (light#flags ())) in
-    let active = ref (List.mem MapTypes.Active_Light (light#flags ())) in
+    let preset = ref (CamlExt.to_enum light_kind_descriptor light#kind) in
+    let phase = ref (string_of_int light#phase) in
+    let stateless = ref (List.mem MapTypes.Stateless_Light light#flags) in
+    let active = ref (List.mem MapTypes.Active_Light light#flags) in
     let (ba_fn, ba_period, ba_dperiod, ba_intensity, ba_dintensity) =
-        light#becoming_active () in
+        light#becoming_active in
     let (ba_fn, ba_period, ba_dperiod, ba_intensity, ba_dintensity) =
         ref ba_fn, ref (string_of_int ba_period),
         ref (string_of_int ba_dperiod), ref (string_of_float ba_intensity),
         ref (string_of_float ba_dintensity) in
     let (pa_fn, pa_period, pa_dperiod, pa_intensity, pa_dintensity) =
-        light#primary_active () in
+        light#primary_active in
     let (pa_fn, pa_period, pa_dperiod, pa_intensity, pa_dintensity) =
         ref pa_fn, ref (string_of_int pa_period),
         ref (string_of_int pa_dperiod), ref (string_of_float pa_intensity),
         ref (string_of_float pa_dintensity) in
     let (sa_fn, sa_period, sa_dperiod, sa_intensity, sa_dintensity) =
-        light#secondary_active () in
+        light#secondary_active in
     let (sa_fn, sa_period, sa_dperiod, sa_intensity, sa_dintensity) =
         ref sa_fn, ref (string_of_int sa_period),
         ref (string_of_int sa_dperiod), ref (string_of_float sa_intensity),
         ref (string_of_float sa_dintensity) in
     let (bi_fn, bi_period, bi_dperiod, bi_intensity, bi_dintensity) =
-        light#becoming_inactive () in
+        light#becoming_inactive in
     let (bi_fn, bi_period, bi_dperiod, bi_intensity, bi_dintensity) =
         ref bi_fn, ref (string_of_int bi_period),
         ref (string_of_int bi_dperiod), ref (string_of_float bi_intensity),
         ref (string_of_float bi_dintensity) in
     let (pi_fn, pi_period, pi_dperiod, pi_intensity, pi_dintensity) =
-        light#primary_inactive () in
+        light#primary_inactive in
     let (pi_fn, pi_period, pi_dperiod, pi_intensity, pi_dintensity) =
         ref pi_fn, ref (string_of_int pi_period),
         ref (string_of_int pi_dperiod), ref (string_of_float pi_intensity),
         ref (string_of_float pi_dintensity) in
     let (si_fn, si_period, si_dperiod, si_intensity, si_dintensity) =
-        light#secondary_inactive () in
+        light#secondary_inactive in
     let (si_fn, si_period, si_dperiod, si_intensity, si_dintensity) =
         ref si_fn, ref (string_of_int si_period),
         ref (string_of_int si_dperiod), ref (string_of_float si_intensity),
@@ -689,16 +689,16 @@ let map_manager redraw =
         "Map Manager"
 
 let random_dialog random redraw =
-    let index = ref (random#index ()) in
-    let volume = ref (random#volume () |> string_of_int) in
-    let dvolume = ref (random#dvolume () |> string_of_int) in
-    let period = ref (random#period () |> string_of_int) in
-    let dperiod = ref (random#dperiod () |> string_of_int) in
-    let pitch = ref (random#pitch () |> string_of_int) in
-    let dpitch = ref (random#dpitch () |> string_of_int) in
-    let nondirectional = ref (random#direction () = -1) in
-    let direction = ref (random#direction ()) in
-    let ddirection = ref (random#ddirection ()) in
+    let index = ref random#index in
+    let volume = ref (string_of_int random#volume) in
+    let dvolume = ref (string_of_int random#dvolume) in
+    let period = ref (string_of_int random#period) in
+    let dperiod = ref (string_of_int random#dperiod) in
+    let pitch = ref (string_of_int random#pitch) in
+    let dpitch = ref (string_of_int random#dpitch) in
+    let nondirectional = ref (random#direction = -1) in
+    let direction = ref random#direction in
+    let ddirection = ref random#ddirection in
     let descriptor = [
         `V [
             `H [`L "Type";
@@ -752,8 +752,8 @@ let make_random redraw =
         None
 
 let ambient_dialog ambient redraw =
-    let index = ref (ambient#index ()) in
-    let volume = ref (ambient#volume () |> string_of_int) in
+    let index = ref ambient#index in
+    let volume = ref (string_of_int ambient#volume) in
     let descriptor = [
         `H [
             `V [`L "Type";
@@ -788,19 +788,19 @@ let goto recenter =
         |0 ->
             let p = !MapFormat.points.(id) in
             DrawModeSettings.highlight := Point [id];
-            Some (p#vertex ())
+            Some p#vertex
         |1 ->
             let l = !MapFormat.lines.(id) in
             DrawModeSettings.highlight := Line [id];
-            let p0, p1 = l#endpoints () in
-            let p0x, p0y = !MapFormat.points.(p0)#vertex () in
-            let p1x, p1y = !MapFormat.points.(p1)#vertex () in
+            let p0, p1 = l#endpoints in
+            let p0x, p0y = !MapFormat.points.(p0)#vertex in
+            let p1x, p1y = !MapFormat.points.(p1)#vertex in
             Some ((p0x + p1x)/2, (p0y + p1y)/2)
         |2 ->
             let p = !MapFormat.polygons.(id) in
             DrawModeSettings.highlight := Poly [id];
             Some (GeomEdit.point_center
-                (Array.sub (p#endpoint_indices ()) 0 (p#vertex_count ())))
+                (Array.sub p#endpoint_indices 0 p#vertex_count))
         |_ -> raise (Failure "Invalid Goto kind!") end in
         match center with
         |Some (px, py) -> recenter (px, py)

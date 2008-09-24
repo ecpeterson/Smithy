@@ -42,7 +42,7 @@ let tool_begin_event toolbar orthodrawer x y button
         orthodrawer#draw ()
     |Lights_Liquid, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
-        let v = poly#media_lightsource () in
+        let v = poly#media_lightsource in
         toolbar#set_int v
     |Lights_Ceiling, 1, v, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
@@ -50,7 +50,7 @@ let tool_begin_event toolbar orthodrawer x y button
         orthodrawer#draw ()
     |Lights_Ceiling, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
-        let v = poly#ceiling_lightsource () in
+        let v = poly#ceiling_lightsource in
         toolbar#set_int v
     |Lights_Floor, 1, v, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
@@ -58,7 +58,7 @@ let tool_begin_event toolbar orthodrawer x y button
         orthodrawer#draw ()
     |Lights_Floor, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
-        let v = poly#floor_lightsource () in
+        let v = poly#floor_lightsource in
         toolbar#set_int v
     |Elevation_Ceiling, 1, _, v, Some p ->
         let poly = !MapFormat.polygons.(p) in
@@ -66,7 +66,7 @@ let tool_begin_event toolbar orthodrawer x y button
         orthodrawer#draw ()
     |Elevation_Ceiling, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
-        let v = poly#ceiling_height () in
+        let v = poly#ceiling_height in
         toolbar#set_float v
     |Elevation_Floor, 1, _, v, Some p ->
         let poly = !MapFormat.polygons.(p) in
@@ -74,7 +74,7 @@ let tool_begin_event toolbar orthodrawer x y button
         orthodrawer#draw ()
     |Elevation_Floor, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
-        let v = poly#floor_height () in
+        let v = poly#floor_height in
         toolbar#set_float v
     |Liquids, 1, v, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
@@ -82,7 +82,7 @@ let tool_begin_event toolbar orthodrawer x y button
         orthodrawer#draw ()
     |Liquids, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
-        let v = poly#media_index () in
+        let v = poly#media_index in
         toolbar#set_int v
     |Sounds_Ambient, 1, v, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
@@ -90,7 +90,7 @@ let tool_begin_event toolbar orthodrawer x y button
         orthodrawer#draw ()
     |Sounds_Ambient, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
-        let v = poly#ambient_sound_image_index () in
+        let v = poly#ambient_sound_image_index in
         toolbar#set_int v
     |Sounds_Random, 1, v, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
@@ -98,21 +98,21 @@ let tool_begin_event toolbar orthodrawer x y button
         orthodrawer#draw ()
     |Sounds_Random, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
-        let v = poly#random_sound_image_index () in
+        let v = poly#random_sound_image_index in
         toolbar#set_int v
     |Polygon_Types, 1, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
-        let ov = poly#kind () in
+        let ov = poly#kind in
         let v =
             CamlExt.of_enum MapTypes.poly_kind_descriptor toolbar#cb_index in
         poly#set_kind v;
         begin match ov, v with
         |MapTypes.Platform, MapTypes.Platform ->
             MapDialogs.platform_dialog
-                (!MapFormat.platforms.(poly#permutation ())) orthodrawer#draw;
+                !MapFormat.platforms.(poly#permutation) orthodrawer#draw;
             ()
         |MapTypes.Platform, _ ->
-            MapFormat.delete_platform (poly#permutation ());
+            MapFormat.delete_platform poly#permutation;
             orthodrawer#draw ()
         |_, MapTypes.Platform ->
             let plat = new MapTypes.platform in
@@ -124,7 +124,7 @@ let tool_begin_event toolbar orthodrawer x y button
         end
     |Polygon_Types, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
-        let v = CamlExt.to_enum MapTypes.poly_kind_descriptor (poly#kind ()) in
+        let v = CamlExt.to_enum MapTypes.poly_kind_descriptor poly#kind in
         toolbar#set_cb_index v
     |Draw_Mode, 1, _, _, _ ->
         (* in draw mode, we have to deal with what kind of tool to apply *)
@@ -245,7 +245,7 @@ let tool_in_event toolbar orthodrawer x0 y0 old_x old_y x y =
             let shift_points ns =
                 let point_index_vertex p =
                     let point = !MapFormat.points.(p) in
-                    point#vertex () in
+                    point#vertex in
                 let shift_point p =
                     let (px, py) = point_index_vertex p in
                     !MapFormat.points.(p)#set_vertex
@@ -255,7 +255,7 @@ let tool_in_event toolbar orthodrawer x0 y0 old_x old_y x y =
                 List.iter (fun p -> shift_point p) ns in
             let obj_index_point o =
                 let obj = !MapFormat.objs.(o) in
-                obj#point () in
+                obj#point in
             let shift_obj o dx dy=
                 let (ox, oy, oz) = obj_index_point o in
                 !MapFormat.objs.(o)#set_point ((ox + dx), (oy + dy), oz) in
@@ -288,7 +288,7 @@ let tool_in_event toolbar orthodrawer x0 y0 old_x old_y x y =
                 |None -> () in
             let anno_index_location a =
                 let anno = !MapFormat.annotations.(a) in
-                anno#location () in
+                anno#location in
             let shift_anno a dx dy=
                 let (ax, ay) = anno_index_location a in
                 !MapFormat.annotations.(a)#set_location (ax + dx, ay + dy) in
@@ -324,7 +324,7 @@ let tool_in_event toolbar orthodrawer x0 y0 old_x old_y x y =
                 shift_points ns
             |Line ns ->
                 let points = List.fold_left (fun x y ->
-                    let p0, p1 = !MapFormat.lines.(y)#endpoints () in
+                    let p0, p1 = !MapFormat.lines.(y)#endpoints in
                     p0 :: p1 :: x) [] ns in
                 shift_points (CamlExt.nub points)
             |Annotation ns ->
@@ -332,21 +332,21 @@ let tool_in_event toolbar orthodrawer x0 y0 old_x old_y x y =
             |Poly ns ->
                 let points = List.fold_left (fun x y ->
                     let poly = !MapFormat.polygons.(y) in
-                    let points = poly#endpoint_indices () in
-                    let points = Array.sub points 0 (poly#vertex_count ()) in
+                    let points = poly#endpoint_indices in
+                    let points = Array.sub points 0 poly#vertex_count in
                     Array.to_list points @ x) [] ns in
                 shift_points (CamlExt.nub points);
                 List.iter (fun o ->
                                shift_obj o (int_of_float delta_x)
                                            (int_of_float delta_y))
                           (CamlExt.array_grep_indices
-                               (fun obj -> List.mem (obj#polygon ()) ns)
+                               (fun obj -> List.mem obj#polygon ns)
                                !MapFormat.objs);
                 List.iter (fun a ->
                                shift_anno a (int_of_float delta_x)
                                             (int_of_float delta_y))
                           (CamlExt.array_grep_indices
-                               (fun anno -> List.mem (anno#polygon_index ()) ns)
+                               (fun anno -> List.mem anno#polygon_index ns)
                                !MapFormat.annotations)
             |Object ns ->
                 shift_objs ns
@@ -371,7 +371,7 @@ let tool_end_event toolbar orthodrawer x0 y0 x y (button: int) _ =
             |Object n ->
                 List.iter (fun n ->
                     let obj = !MapFormat.objs.(n) in
-                    let (x, y, _) = obj#point () in
+                    let (x, y, _) = obj#point in
                     let poly = MapFormat.get_enclosing_poly
                                                 (float x) (float y) in
                     match poly with
@@ -380,7 +380,7 @@ let tool_end_event toolbar orthodrawer x0 y0 x y (button: int) _ =
             |Annotation n ->
                 List.iter (fun n ->
                     let anno = !MapFormat.annotations.(n) in
-                    let (x, y) = anno#location () in
+                    let (x, y) = anno#location in
                     let poly = MapFormat.get_enclosing_poly
                                                 (float x) (float y) in
                     match poly with
