@@ -1,6 +1,7 @@
 (*** DrawModeWindows.ml contains the definitions of the actual GTK interface
  * and hooks used while in draw mode. ***)
 open DrawModeSettings
+open CamlExt
 
 let menu_xml =
 "<ui>\
@@ -281,12 +282,25 @@ object (self)
             toolbar#clicked tool;
             button#clicked ();
             () in
+        (* dispatch for deleting a highlighted map item *)
         let delete_cb _ =
-            (* dispatch for deleting a highlighted map item *)
+            (* after we delete a point, we need to figure out what to do next *)
+            let get_new_highlight n_list =
+                let ps = Array.fold_left (fun acc line ->
+                    let p0, p1 = line#endpoints in
+                    match List.mem p0 n_list, List.mem p1 n_list with
+                    |false, true -> p0 :: acc
+                    |true, false -> p1 :: acc
+                    |_-> acc) [] !MapFormat.lines |> nub |> List.sort compare in
+                match ps with [] -> No_Highlight | p :: _ ->
+                Point [(p - List.fold_left (fun n point ->
+                    if point < p then n + 1 else n) 0 n_list)] in
             begin match !highlight with
             |Point  (n :: ns) ->
-                List.iter MapFormat.delete_point (n :: ns);
-                highlight := (if n > 0 then Point  [n] else No_Highlight)
+                highlight := get_new_highlight (n :: ns);
+                List.iter MapFormat.delete_point (n :: ns)
+                ;(match !highlight with
+                |Point [n] -> print_endline (string_of_int n) |_ -> ())
             |Line   (n :: ns) ->
                 List.iter MapFormat.delete_line  (n :: ns);
                 highlight := (if n > 0 then Line   [n] else No_Highlight)
