@@ -826,38 +826,43 @@ let color_prefs_dialog redraw =
     let saturation = ref (string_of_float !Colors.poly_type_saturation) in
     let value = ref (string_of_float !Colors.poly_type_value) in
     let descriptor = [
-        `H [
-            `V [
-                `L "Background color";
-                `L "Grid color";
-                `L "Anchor point color";
-                `L "Point color";
-                `L "Solid line color";
-                `L "Transparent line color";
-                `L "Passable line color";
-                `L "Polygon color";
-                `L "Invalid polygon color";
-                `L "Highlight color";
-                `L "Highlight thickness";
-                `L "Click looseness";
-                `L "Polygon Type Saturation";
-                `L "Polygon Type Value";
-            ];
-            `V [
-                `O Colors.background_color;
-                `O Colors.grid_color;
-                `O Colors.anchor_point_color;
-                `O Colors.point_color;
-                `O Colors.solid_line_color;
-                `O Colors.transparent_line_color;
-                `O Colors.passable_line_color;
-                `O Colors.polygon_color;
-                `O Colors.invalid_polygon;
-                `O Colors.highlight_color;
-                `E thickness;
-                `E looseness;
-                `E saturation;
-                `E value ] ] ] in
+        `V [
+            `H [
+                `V [
+                    `L "Background color";
+                    `L "Grid color";
+                    `L "Anchor point color";
+                    `L "Point color";
+                    `L "Solid line color";
+                    `L "Transparent line color";
+                    `L "Passable line color";
+                    `L "Polygon color";
+                    `L "Invalid polygon color";
+                    `L "Highlight color";
+                ];
+                `V [
+                    `O Colors.background_color;
+                    `O Colors.grid_color;
+                    `O Colors.anchor_point_color;
+                    `O Colors.point_color;
+                    `O Colors.solid_line_color;
+                    `O Colors.transparent_line_color;
+                    `O Colors.passable_line_color;
+                    `O Colors.polygon_color;
+                    `O Colors.invalid_polygon;
+                    `O Colors.highlight_color ] ];
+            `H [
+                `V [
+                    `L "Highlight thickness";
+                    `L "Click looseness";
+                    `L "Polygon Type Saturation";
+                    `L "Polygon Type Value";
+                ];
+                `V [
+                    `E thickness;
+                    `E looseness;
+                    `E saturation;
+                    `E value ] ] ] ]; in
     let apply _ =
         DrawModeSettings.highlighted_point_thickness :=
             int_of_string !thickness;
