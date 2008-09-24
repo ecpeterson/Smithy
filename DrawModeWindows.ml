@@ -216,8 +216,9 @@ object (self)
                                 ~accel:"<Ctrl>h"
                                 (* XXX: move the redrawing stuff back to here,
                                  * don't pass orthodrawer into the dialog *)
-                                ~callback:(MapDialogs.map_height_dlg
-                                               orthodrawer);
+                                ~callback:(fun _ ->
+                                    MapDialogs.map_height_dlg orthodrawer#draw;
+                                    ());
             a "Goto"              ~label:"_Goto..."
                                 ~callback:(fun _ ->
                                     MapDialogs.goto orthodrawer#center_on;
