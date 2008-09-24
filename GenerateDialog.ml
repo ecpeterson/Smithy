@@ -14,10 +14,27 @@ type component =
     | `O of (float * float * float) ref
     | `R of (string * bool ref) list
     | `L of string
-    | `N of (string * (component list)) list * int ref ]
+    | `N of (string * (component list)) list * int ref
+    | `I of (float * float * float * int * Gtk.Tags.orientation) * float ref ]
 
 let rec build_dialog descriptor ~packing ~cleanup () =
     match descriptor with
+        |`I ((lower, upper, step_incr, disp_size, orient), v) :: descriptor ->
+            let adj = GData.adjustment ~value:!v ~lower
+                                       ~upper:(upper +. step_incr) ~step_incr
+                                       ~page_size:step_incr
+                                       ~page_incr:(upper -. lower) () in
+            let (pos, align) = begin match orient with
+            |`VERTICAL ->
+                (`BOTTOM, GBin.alignment ~height:disp_size ~packing ())
+            |`HORIZONTAL ->
+                (`RIGHT, GBin.alignment ~width:disp_size ~packing ()) end in
+            let slider = GRange.scale orient ~adjustment:adj ~value_pos:pos
+                                             ~digits:2 ~packing:align#add
+                                             ~inverted:true () in
+            build_dialog descriptor ~packing ~cleanup:(fun _ ->
+                v := adj#value;
+                cleanup ()) ()
         |`N (tabs, retvar) :: descriptor ->
             let notebook = GPack.notebook ~tab_pos:`TOP ~packing () in
             let cleanups = List.map (fun (text, components) ->

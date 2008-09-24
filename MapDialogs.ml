@@ -807,40 +807,17 @@ let goto recenter =
         |None -> () in
     GenerateDialog.generate_dialog descriptor apply "Goto"
 
-(* XXX: rewrite this to use GenerateDialogs - probably going to need to add
- * sliders to GenerateDialogs first *)
-let map_height_window = ref None
-let map_height_dlg drawer _ =
-    if !map_height_window = None then begin
-    let fadj = GData.adjustment ~value:!DrawModeSettings.floor_cutoff
-                                ~lower:(-9.0) ~upper:(9.01) ~step_incr:0.01
-                                ~page_incr:18.0 ~page_size:0.01 () in
-    let cadj = GData.adjustment ~value:!DrawModeSettings.ceiling_cutoff
-                                ~lower:(-9.0) ~upper:(9.01) ~step_incr:0.01
-                                ~page_incr:18.0 ~page_size:0.01 () in
-    fadj#connect#value_changed ~callback:(fun _ ->
-        DrawModeSettings.floor_cutoff := fadj#value;
-        drawer#draw ());
-    cadj#connect#value_changed ~callback:(fun _ ->
-        DrawModeSettings.ceiling_cutoff := cadj#value;
-        drawer#draw ());
-    let dialog = GWindow.window ~title:"Height Window" ~height:300
-                                ~show:false ~border_width:5
-                                ~resizable:false () in
-    dialog#event#connect#delete ~callback:(fun _ ->
-        map_height_window := None; false);
-    let hbox = GPack.hbox ~packing:dialog#add () in
-    let vbox = GPack.vbox ~packing:hbox#add () in
-    let floor_slider = GRange.scale `VERTICAL ~adjustment:fadj
-            ~value_pos:`LEFT ~digits:2 ~packing:vbox#add ~inverted:true () in
-    GMisc.label ~text:"Floor" ~packing:vbox#pack ();
-    let vbox = GPack.vbox ~packing:hbox#add () in
-    let ceiling_slider = GRange.scale `VERTICAL ~adjustment:cadj
-            ~value_pos:`RIGHT ~digits:2 ~packing:vbox#add ~inverted:true () in
-    GMisc.label ~text:"Ceiling" ~packing:vbox#pack ();
-    map_height_window := Some dialog;
-    dialog#show () end else
-        let Some dialog = !map_height_window in dialog#present ()
+let map_height_dlg redraw =
+    let descriptor =
+        [ `H [`V [`I ((-9.0, 9.0, 0.01, 300, `VERTICAL),
+                      DrawModeSettings.floor_cutoff);
+                  `L "Floor" ];
+              `V [`I ((-9.0, 9.0, 0.01, 300, `VERTICAL),
+                      DrawModeSettings.ceiling_cutoff);
+                  `L "Ceiling" ] ] ] in
+    let apply _ =
+        redraw () in
+    GenerateDialog.generate_dialog descriptor apply "Height Window"
 
 let color_prefs_dialog redraw =
     let thickness = ref (string_of_int
