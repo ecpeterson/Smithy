@@ -32,9 +32,10 @@ let rec build_dialog descriptor ~packing ~cleanup () =
             let slider = GRange.scale orient ~adjustment:adj ~value_pos:pos
                                              ~digits:2 ~packing:align#add
                                              ~inverted:true () in
-            build_dialog descriptor ~packing ~cleanup:(fun _ ->
+            adj#connect#value_changed ~callback:(fun _ ->
                 v := adj#value;
-                cleanup ()) ()
+                cleanup ());
+            build_dialog descriptor ~packing ~cleanup ()
         |`N (tabs, retvar) :: descriptor ->
             let notebook = GPack.notebook ~tab_pos:`TOP ~packing () in
             let cleanups = List.map (fun (text, components) ->
@@ -42,14 +43,13 @@ let rec build_dialog descriptor ~packing ~cleanup () =
                 let page = notebook#append_page ~tab_label:label#coerce in
                 let vbox = GPack.vbox ~border_width:2
                     ~packing:(fun x -> ignore (page x)) () in
-                build_dialog components ~packing:(vbox#pack)
-                                        ~cleanup:(fun _ -> ()) ())
+                build_dialog components ~packing:(vbox#pack) ~cleanup ())
                 tabs in
             notebook#goto_page !retvar;
-            build_dialog descriptor ~packing ~cleanup:(fun _ ->
-                List.iter (fun f -> f ()) cleanups;
-                retvar := notebook#current_page;
-                cleanup ()) ()
+            notebook#connect#switch_page ~callback:(fun new_page ->
+                retvar := new_page;
+                cleanup ());
+            build_dialog descriptor ~packing ~cleanup ()
         |`O rgb :: descriptor ->
             let (r, g, b) = !rgb in
             let color = Gdk.Color.alloc (Gdk.Color.get_system_colormap ())
@@ -57,57 +57,61 @@ let rec build_dialog descriptor ~packing ~cleanup () =
                               int_of_float (g *. 65535.0),
                               int_of_float (b *. 65535.0))) in
             let b = GButton.color_button ~color ~packing () in
-            build_dialog descriptor ~packing ~cleanup:(fun _ ->
+            b#connect#color_set ~callback:(fun _ ->
                 let (r, g, b) = Gdk.Color.red b#color,
                                 Gdk.Color.green b#color,
                                 Gdk.Color.blue b#color in
                 rgb := float r /. 65535.0, float g /. 65535.0,
                        float b /. 65535.0;
-                cleanup ()) ()
+                cleanup ());
+            build_dialog descriptor ~packing ~cleanup ()
         |`C (label, active) :: descriptor ->
             let b = GButton.check_button ~label ~active:!active ~packing () in
-            build_dialog descriptor ~packing ~cleanup:(fun _ ->
-                active := b#active; cleanup ()) ()
+            b#connect#toggled ~callback:(fun _ ->
+                active := b#active;
+                cleanup ());
+            build_dialog descriptor ~packing ~cleanup ()
         |`S return :: descriptor ->
             let spinner = new DialSlider.dialSlider ~packing ~size:100 () in
             spinner#set_theta !return;
-            build_dialog descriptor ~packing ~cleanup:(fun _ ->
-                return := spinner#theta; cleanup ()) ()
+            spinner#connect_valuechanged (fun _ ->
+                return := spinner#theta;
+                cleanup ());
+            build_dialog descriptor ~packing ~cleanup ()
         |`F (label, components) :: descriptor ->
             let f = GBin.frame ~label ~packing ~border_width:2 () in
             let v = GPack.vbox ~packing:f#add () in
-            let extra_cleanup = build_dialog components ~packing:v#add
-                                                        ~cleanup:ignore () in
-            build_dialog descriptor ~packing ~cleanup:(fun _ ->
-                extra_cleanup (); cleanup ()) ()
+            build_dialog components ~packing:v#add ~cleanup ();
+            build_dialog descriptor ~packing ~cleanup ()
         |`R ((first_label, first_setting) :: bdesc) :: descriptor ->
+            let callback setting button _ =
+                setting := button#active;
+                cleanup() in
             let vbox = GPack.vbox ~packing ~border_width:2 () in
             let first_button = GButton.radio_button ~label:first_label
                                 ~active:!first_setting ~packing:vbox#add () in
+            first_button#connect#toggled
+                ~callback:(callback first_setting first_button);
             let buttons = List.map (fun (label, setting) ->
-                GButton.radio_button ~label ~active:!setting
-                    ~group:first_button#group ~packing:vbox#add ()) bdesc in
-            build_dialog descriptor ~packing ~cleanup:(fun _ ->
-                List.iter2 (fun (_, setting) button -> setting:= button#active)
-                    ((first_label, first_setting) :: bdesc)
-                    (first_button :: buttons);
-                    cleanup ()) ()
+                let button = GButton.radio_button ~label ~active:!setting
+                    ~group:first_button#group ~packing:vbox#add () in
+                button#connect#toggled ~callback:(callback setting button);
+                button) bdesc in
+            build_dialog descriptor ~packing ~cleanup ()
         |`V components :: descriptor ->
             let vbox = GPack.vbox ~packing ~spacing:2 () in
-            let extra_cleanup = build_dialog components ~packing:vbox#add
-                                                        ~cleanup:ignore () in
-            build_dialog descriptor ~packing ~cleanup:(fun _ ->
-                extra_cleanup (); cleanup ()) ()
+            build_dialog components ~packing:vbox#add ~cleanup ();
+            build_dialog descriptor ~packing ~cleanup ()
         |`H components :: descriptor ->
             let hbox = GPack.hbox ~packing ~spacing:2 () in
-            let extra_cleanup = build_dialog components ~packing:hbox#add
-                                                        ~cleanup:ignore () in
-            build_dialog descriptor ~packing ~cleanup:(fun _ ->
-                extra_cleanup (); cleanup ()) ()
+            build_dialog components ~packing:hbox#add ~cleanup ();
+            build_dialog descriptor ~packing ~cleanup ()
         |`E str :: descriptor ->
             let entry = GEdit.entry ~packing ~text:!str () in
-            build_dialog descriptor ~packing ~cleanup:(fun _ ->
-                str := entry#text; cleanup ()) ()
+            entry#connect#changed ~callback:(fun _ ->
+                str := entry#text;
+                cleanup ());
+            build_dialog descriptor ~packing ~cleanup ()
         |`L str :: descriptor ->
             GMisc.label ~text:str ~xpad:2 ~packing ~justify:`FILL ();
             build_dialog descriptor ~packing ~cleanup ()
@@ -115,27 +119,19 @@ let rec build_dialog descriptor ~packing ~cleanup () =
             let cb = GEdit.combo_box_text ~packing ~strings () in
             let cb = (fun (x, _) -> x) cb in
             cb#set_active !ret;
-            build_dialog descriptor ~packing ~cleanup:(fun _ ->
-                ret := cb#active; cleanup ()) ()
-        |[] ->
-            cleanup
+            cb#connect#changed ~callback:(fun _ ->
+                ret := cb#active;
+                cleanup ());
+            build_dialog descriptor ~packing ~cleanup ()
+        |[] -> ()
 
 let generate_dialog descriptor apply title =
     let w = GWindow.dialog ~title ~border_width:2 ~resizable:false
                            ~position:`CENTER_ON_PARENT () in
-    let response = ref false in
-    let cleanup = build_dialog descriptor
-                      ~packing:w#vbox#add
-                      ~cleanup:(fun _ -> apply (); response := true) () in
-    w#add_button_stock `APPLY `APPLY;
-    w#add_button_stock `CANCEL `CANCEL;
-    w#add_button_stock `OK `OK;
-    w#set_default_response `OK;
-    let rec run _ =
-        begin match w#run () with
-        |`OK -> cleanup ()
-        |`APPLY -> cleanup (); run ()
-        |_ -> () end in
-    run ();
-    w#destroy ();
-    !response
+    build_dialog descriptor ~packing:w#vbox#add ~cleanup:apply ();
+    w#add_button_stock `CLOSE `CLOSE;
+    w#set_default_response `CLOSE;
+    (* so we get the initial state drawn *)
+    apply ();
+    w#run ();
+    w#destroy ()
