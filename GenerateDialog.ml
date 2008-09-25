@@ -108,9 +108,11 @@ let rec build_dialog descriptor ~packing ~cleanup () =
             build_dialog descriptor ~packing ~cleanup ()
         |`E str :: descriptor ->
             let entry = GEdit.entry ~packing ~text:!str () in
-            entry#connect#changed ~callback:(fun _ ->
+            let callback _ =
                 str := entry#text;
-                cleanup ());
+                cleanup () in
+            callback ();
+            entry#connect#changed ~callback;
             build_dialog descriptor ~packing ~cleanup ()
         |`L str :: descriptor ->
             GMisc.label ~text:str ~xpad:2 ~packing ~justify:`FILL ();
