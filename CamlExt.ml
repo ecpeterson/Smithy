@@ -285,3 +285,8 @@ let round float =
     let mantissa = float -. floor float in
     if mantissa >= 0.5 then int_of_float (ceil float)
                        else int_of_float (floor float)
+
+(* facings *)
+let twopi = 4.0 *. acos 0.0
+let ticks_of_rads rads = int_of_float (rads *. 512.0 /. twopi)
+let rads_of_ticks ticks = (float ticks) *. twopi /. 512.0

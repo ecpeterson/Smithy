@@ -223,7 +223,7 @@ let obj_dialog obj redraw =
     let group = ref (CamlExt.to_enum MapTypes.object_kind_descriptor
                                      obj#kind) in
     let monster_kind = ref obj#index in
-    let monster_facing = ref obj#facing in
+    let monster_facing = ref (rads_of_ticks obj#facing) in
     let monster_height = ref (string_of_int
                                     ((fun (_, _, x) -> x) obj#point)) in
     let monster_teleports_in = ref (List.mem Invisible_Or_Platform
@@ -261,7 +261,7 @@ let obj_dialog obj redraw =
     let sound_teleports_in = ref !monster_teleports_in in
     let sound_hangs = ref !monster_hangs in
     let sound_floats = ref !monster_floats in
-    let sound_light_vol = ref (!monster_facing <= 0) in
+    let sound_light_vol = ref (obj#facing <= 0) in
     let descriptor = [
         `N([("Monster", [
                 `H [
@@ -341,7 +341,7 @@ let obj_dialog obj redraw =
         begin match obj#kind with
             |Monster ->
                 obj#set_index !monster_kind;
-                obj#set_facing !monster_facing;
+                obj#set_facing (ticks_of_rads !monster_facing);
                 update_height !monster_height;
                 let flags = List.fold_left2 (fun mask (desc, _) flag ->
                         if flag then mask lor desc else mask)
@@ -367,7 +367,7 @@ let obj_dialog obj redraw =
                 update_flags [!item_teleports_in; !item_hangs; false; false;
                               false; !item_network_only]
             |Player ->
-                obj#set_facing !player_facing;
+                obj#set_facing (ticks_of_rads !player_facing);
                 update_height !player_height;
                 update_flags [false; !player_hangs; false; false; false; false]
             |Goal ->
@@ -490,7 +490,7 @@ let media_dialog media redraw =
     (* set up the dialog *)
     let kind = ref media#kind in
     let light_parameter = ref (string_of_int media#light_index) in
-    let direction = ref media#direction in
+    let direction = ref (rads_of_ticks media#direction) in
     let flow_strength = ref (string_of_int media#magnitude) in
     let low_tide = ref (string_of_int media#low) in
     let high_tide = ref (string_of_int media#high) in
@@ -525,7 +525,7 @@ let media_dialog media redraw =
         (* commit to the liquid *)
         media#set_kind !kind;
         media#set_light_index light_parameter;
-        media#set_direction !direction;
+        media#set_direction (ticks_of_rads !direction);
         media#set_magnitude flow_strength;
         media#set_low low_tide;
         media#set_high high_tide;
@@ -693,8 +693,8 @@ let random_dialog random redraw =
     let pitch = ref (string_of_int random#pitch) in
     let dpitch = ref (string_of_int random#dpitch) in
     let nondirectional = ref (random#direction = -1) in
-    let direction = ref random#direction in
-    let ddirection = ref random#ddirection in
+    let direction = ref (rads_of_ticks random#direction) in
+    let ddirection = ref (rads_of_ticks random#ddirection) in
     let descriptor = [
         `V [
             `H [`L "Type";
@@ -734,8 +734,8 @@ let random_dialog random redraw =
         random#set_pitch pitch;
         random#set_dpitch dpitch;
         if !nondirectional then random#set_direction (-1)
-        else random#set_direction !direction;
-        random#set_ddirection !ddirection;
+        else random#set_direction (ticks_of_rads !direction);
+        random#set_ddirection (ticks_of_rads !ddirection);
         redraw () in
     GenerateDialog.generate_dialog descriptor apply
         "Random Sound Parameters"

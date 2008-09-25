@@ -10,7 +10,7 @@ type component =
     | `E of string ref
     | `M of string list * int ref
     | `C of string * bool ref
-    | `S of int ref
+    | `S of float ref
     | `O of (float * float * float) ref
     | `R of (string * bool ref) list
     | `L of string

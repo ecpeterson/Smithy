@@ -2,11 +2,8 @@
  * headings similar to the widgets employed by Forge. ***)
 
 class dialSlider ?size:explicit_size
-                 ?ticks:(ticks = 512)
                  ?packing:(packing = ignore) () =
 object (self)
-    val twopi = 4.0 *. acos 0.0
-
     (* widgets *)
     val mutable eventbox = Obj.magic ()
     val mutable area = Obj.magic ()
@@ -15,8 +12,8 @@ object (self)
     val mutable drawable = Obj.magic ()
 
     (* actual data *)
-    val mutable valuechanged_callback = (fun (theta: int) -> ())
-    val mutable theta = 0
+    val mutable valuechanged_callback = (fun (theta: float) -> ())
+    val mutable theta = 0.0
 
     (* dimension information *)
     val mutable size = 0
@@ -26,11 +23,8 @@ object (self)
         let Some drawable_onscreen = drawable_onscreen in
         let x, y = drawable_onscreen#size in x / 2, y / 2
     method private center = size / 2
-    method private radians_of_ticks t =
-        ((float t) /. (float ticks)) *. twopi
-    method private point_on_circle tick =
+    method private point_on_circle rads =
         let r = float self#dial_radius in
-        let rads = self#radians_of_ticks tick in
         let x = r *. cos rads in
         let y = r *. sin rads in
         (self#center + (int_of_float x), self#center + (int_of_float y))
@@ -38,8 +32,8 @@ object (self)
         let cx, cy = self#wcenter in
         let x, y = (float (x - cx), float (y - cy)) in
         let theta = atan2 y x in
-        let theta = if theta < 0.0 then theta +. twopi else theta in
-        int_of_float (theta /. (twopi) *. (float ticks))
+        let theta = if theta < 0.0 then theta +. CamlExt.twopi else theta in
+        theta
 
     (* accessors *)
     method connect_valuechanged f = valuechanged_callback <- f
@@ -122,10 +116,10 @@ object (self)
         false
     method private scroll_callback scroll_descriptor =
         (match GdkEvent.Scroll.direction scroll_descriptor with
-        | `UP    -> theta <- (theta - 1) mod ticks
-        | `DOWN  -> theta <- (theta + 1) mod ticks
+        | `UP    -> theta <- theta -. CamlExt.twopi /. 512.0
+        | `DOWN  -> theta <- theta +. CamlExt.twopi /. 512.0
         | `LEFT | `RIGHT -> ());
-        if theta < 0 then theta <- theta + ticks;
+        if theta < 0.0 then theta <- theta +. CamlExt.twopi;
         valuechanged_callback theta;
         self#draw_callback (Obj.magic ());
         false
