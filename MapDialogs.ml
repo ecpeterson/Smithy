@@ -726,6 +726,7 @@ let random_dialog random redraw =
         let dperiod = int_of_string !dperiod in
         let pitch = int_of_string !pitch in
         let dpitch = int_of_string !dpitch in
+        random#set_index !index;
         random#set_volume volume;
         random#set_dvolume dvolume;
         random#set_period period;
