@@ -2,8 +2,10 @@ important
 =========
 editing:
 + add placement chunk dialog / functionality
++ add 'triggered by' functionality to the monster placement dialog
 interface:
 + /definitely/ stop using internal units in dialogs, ideally just write fixed-point readers and writers and stop using internal units in the program itself
++ display useful information in the statusbar
 
 less important
 =========
