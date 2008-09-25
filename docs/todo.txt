@@ -21,7 +21,6 @@ editing:
 interface:
 + write single level undo
 + write multiple level undo
-+ add apply or auto-apply to dialogs
 + allow shift-click on a highlighted item to unhighlight it
 + display highlighted objects somehow
 code:

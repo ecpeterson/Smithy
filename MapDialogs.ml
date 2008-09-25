@@ -536,10 +536,8 @@ let media_dialog media redraw =
 
 let make_media redraw =
     let m = new MapTypes.media in
-    if media_dialog m redraw then
-        Some (MapFormat.add_media m)
-    else
-        None
+    media_dialog m redraw;
+    MapFormat.add_media m
 
 let light_dialog light redraw =
     let preset = ref (CamlExt.to_enum light_kind_descriptor light#kind) in
@@ -663,10 +661,8 @@ let light_dialog light redraw =
 
 let make_light redraw =
     let l = new MapTypes.light in
-    if light_dialog l redraw then
-        Some (MapFormat.add_light l)
-    else
-        None
+    light_dialog l redraw;
+    MapFormat.add_light l
 
 let map_manager redraw =
     let descriptor = [
@@ -746,10 +742,8 @@ let random_dialog random redraw =
 
 let make_random redraw =
     let random = new MapTypes.random in
-    if random_dialog random redraw then
-        Some (MapFormat.add_random random)
-    else
-        None
+    random_dialog random redraw;
+    MapFormat.add_random random
 
 let ambient_dialog ambient redraw =
     let index = ref ambient#index in
@@ -769,10 +763,8 @@ let ambient_dialog ambient redraw =
 
 let make_ambient redraw =
     let ambient = new MapTypes.ambient in
-    if ambient_dialog ambient redraw then
-        Some (MapFormat.add_ambient ambient)
-    else
-        None
+    ambient_dialog ambient redraw;
+    MapFormat.add_ambient ambient
 
 let goto recenter =
     let kind = ref 2 in
