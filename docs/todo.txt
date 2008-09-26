@@ -3,9 +3,11 @@ important
 editing:
 + add placement chunk dialog / functionality
 + add 'triggered by' functionality to the monster placement dialog
++ bug: creating a single point and then drawing a polygon around it makes that polygon unfillable
 interface:
 + /definitely/ stop using internal units in dialogs, ideally just write fixed-point readers and writers and stop using internal units in the program itself
 + display useful information in the statusbar
++ it's ugly on windows, clean this up a bit
 
 less important
 =========
