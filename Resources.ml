@@ -15,7 +15,10 @@ let sceneryfile = "resources/flower.png"
 let goalfile = "resources/flag.png"
 let sound_sourcefile = "resources/sound.png"
 
-let preferences_file = (Sys.getenv "HOME") ^ "/.smithy"
+let preferences_file =
+    match Sys.os_type with
+    |"Unix" -> (Sys.getenv "HOME") ^ "/.smithy"
+    |"Win32" |"Cygwin" -> (Sys.getenv "AppData") ^ "\\smithy"
 
 let item_hash = Hashtbl.create 36
 let mk_item name file =
