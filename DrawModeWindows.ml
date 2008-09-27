@@ -53,7 +53,6 @@ let menu_xml =
         <menuitem action='SetLevelParams'/>\
         <menuitem action='SetItemParams'/>\
         <menuitem action='SetMonsterParams'/>\
-        <menuitem action='EditMapItemParams'/>\
         <separator/>\
         <menuitem action='RecenterLevel'/>\
         <menuitem action='Pave'/>\
