@@ -228,8 +228,12 @@ object (self)
                                     ())
                                 ~accel:"<Ctrl>m";
             a "SetItemParams"     ~label:"Set _Item Parameters..."
+                                ~callback:(fun _ ->
+                                    MapDialogs.item_parameters_dialog ())
                                 ~accel:"<Ctrl>i";
-            a "SetMonsterParams"  ~label:"Set _Monster Parameters...";
+            a "SetMonsterParams"  ~label:"Set _Monster Parameters..."
+                                ~callback:(fun _ ->
+                                    MapDialogs.monster_parameters_dialog ());
             a "EditMapItemParams" ~label:"Edit Map Item _Parameters...";
             a "RecenterLevel"     ~label:"_Recenter Level";
 

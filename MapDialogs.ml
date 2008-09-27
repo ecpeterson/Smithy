@@ -864,3 +864,81 @@ let color_prefs_dialog redraw =
         Colors.poly_type_value := float_of_string !value;
         redraw () in
     GenerateDialog.generate_dialog descriptor apply "Color Preferences"
+
+let plac_chunk_dialog what strings_list =
+    let columns = new GTree.column_list in
+    let obj_type    = columns#add Gobject.Data.string in
+    let init_count  = columns#add Gobject.Data.int in
+    let min_count   = columns#add Gobject.Data.int in
+    let max_count   = columns#add Gobject.Data.int in
+    let total_avail = columns#add Gobject.Data.int in
+    let appearance  = columns#add Gobject.Data.int in
+    let inf_avail   = columns#add Gobject.Data.boolean in
+    let random_loc  = columns#add Gobject.Data.boolean in
+    let ls = GTree.list_store columns in
+    List.iter (fun str -> let row = ls#append () in
+                          ls#set ~row ~column:obj_type    str;
+                          ls#set ~row ~column:init_count  0;
+                          ls#set ~row ~column:min_count   0;
+                          ls#set ~row ~column:max_count   0;
+                          ls#set ~row ~column:total_avail 0;
+                          ls#set ~row ~column:appearance  0;
+                          ls#set ~row ~column:inf_avail   false;
+                          ls#set ~row ~column:random_loc  false)
+              strings_list;
+    let dlg = GWindow.dialog ~title:(what^" Parameters") ~border_width:2
+                             ~resizable:false () in
+    let scroll = GBin.scrolled_window ~packing:dlg#vbox#add
+                                      ~height:200 ~hpolicy:`NEVER () in
+    let view = GTree.view ~model:ls ~packing:scroll#add
+                          ~rules_hint:true () in
+    let col = GTree.view_column ~title:(what^" Name")
+        ~renderer:(GTree.cell_renderer_text [],
+                                            ["text", obj_type]) () in
+    view#append_column col;
+    let col = GTree.view_column ~title:"Initial Count"
+        ~renderer:(GTree.cell_renderer_text [`EDITABLE true],
+                                            ["text", init_count]) () in
+    view#append_column col;
+    let col = GTree.view_column ~title:"Minimum"
+        ~renderer:(GTree.cell_renderer_text [`EDITABLE true],
+                                            ["text", min_count]) () in
+    view#append_column col;
+    let col = GTree.view_column ~title:"Maximum"
+        ~renderer:(GTree.cell_renderer_text [`EDITABLE true],
+                                            ["text", max_count]) () in
+    view#append_column col;
+    let col = GTree.view_column ~title:"Total Available"
+        ~renderer:(GTree.cell_renderer_text [`EDITABLE true],
+                                            ["text", total_avail]) () in
+    view#append_column col;
+    let col = GTree.view_column ~title:"Appearance (%)"
+        ~renderer:(GTree.cell_renderer_text [`EDITABLE true],
+                                            ["text", appearance]) () in
+    view#append_column col;
+    let col = GTree.view_column ~title:"Infinite Available"
+        ~renderer:(GTree.cell_renderer_toggle [`ACTIVATABLE true],
+                                            ["active", inf_avail]) () in
+    view#append_column col;
+    let col = GTree.view_column ~title:"Random Location"
+        ~renderer:(GTree.cell_renderer_toggle [`ACTIVATABLE true],
+                                            ["active", random_loc]) () in
+    view#append_column col;
+    dlg#add_button_stock `APPLY `APPLY;
+    dlg#add_button_stock `CANCEL `CANCEL;
+    dlg#add_button_stock `OK `OK;
+    dlg#set_default_response `OK;
+    let apply _ = () in
+    let rec run _ =
+        match dlg#run () with
+        |`OK -> apply ()
+        |`APPLY -> apply (); run ()
+        |_ -> () in
+    run ();
+    dlg#destroy ()
+
+let item_parameters_dialog _ =
+    plac_chunk_dialog "Item" ItemStrings.item_strings
+
+let monster_parameters_dialog _ =
+    plac_chunk_dialog "Monster" ItemStrings.monster_strings
