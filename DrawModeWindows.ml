@@ -234,7 +234,6 @@ object (self)
             a "SetMonsterParams"  ~label:"Set _Monster Parameters..."
                                 ~callback:(fun _ ->
                                     MapDialogs.monster_parameters_dialog ());
-            a "EditMapItemParams" ~label:"Edit Map Item _Parameters...";
             a "RecenterLevel"     ~label:"_Recenter Level";
 
             a "MergePoints"      ~label:"_Merge Selected Points"
