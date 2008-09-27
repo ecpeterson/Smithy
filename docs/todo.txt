@@ -22,6 +22,7 @@ editing:
 + read in optimized chunks
 + write out optimized chunks
 + don't leave objects outside of a polygon when moving the vertices of the polygon
++ recenter level is unimplemented
 interface:
 + write single level undo
 + write multiple level undo
