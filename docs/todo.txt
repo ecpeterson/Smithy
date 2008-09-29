@@ -9,7 +9,6 @@ interface:
 + /definitely/ stop using internal units in dialogs, ideally just write fixed-point readers and writers and stop using internal units in the program itself
 + display useful information in the statusbar
 + it's ugly on windows, clean this up a bit
-+ bug: nuke doesn't redraw
 + "save before exiting" dialog
 
 less important
