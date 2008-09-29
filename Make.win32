@@ -1,0 +1,4 @@
+OCAMLLDFLAGS = -ccopt -mwindows
+TRASH = smithy.exe
+
+include Makefile

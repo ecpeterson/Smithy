@@ -1,4 +1,5 @@
-OCAMLMAKEFILE = /usr/share/ocamlmakefile/OCamlMakefile
+include Make.config
+
 RESULT = smithy
 SOURCES = CamlExt.ml \
 	  Colors.ml \
@@ -21,8 +22,9 @@ SOURCES = CamlExt.ml \
 	  Smithy.ml
 LIBS = lablgtk
 INCDIRS = +lablgtk2
-OCAMLFLAGS = -g -w sy
-OCAMLLDFLAGS = -g
+OCAMLFLAGS = -w sy
+OCAMLBCFLAGS = -g
+OCAMLBLDFLAGS = -g
 
 include $(OCAMLMAKEFILE)
 
