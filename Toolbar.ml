@@ -45,8 +45,7 @@ object (self)
 
     (* private methods *)
     method draw_toolbar_init =
-        draw_toolbar <- GWindow.window ~title ~show:false
-                                       ~height:122 ~width:66 ~border_width:5
+        draw_toolbar <- GWindow.window ~title ~show:false ~type_hint:`MENU
                                        ~resizable:false ();
         draw_toolbar#set_transient_for main_window#as_window;
         ignore (draw_toolbar#event#connect#delete ~callback:(fun _ -> true));
