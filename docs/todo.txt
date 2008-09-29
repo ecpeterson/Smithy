@@ -10,6 +10,7 @@ interface:
 + display useful information in the statusbar
 + "save before exiting" dialog
 + bug: map height dialog doesn't actually work properly, and should be non-modal
++ bug: goto dialog needs error handling
 
 less important
 =========
