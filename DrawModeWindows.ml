@@ -123,6 +123,7 @@ object (self)
         hbox#pack ~expand:true orthodrawer#widget;
         let sb = GMisc.statusbar ~packing:vbox#pack () in
         status <- sb#new_context ~name:"Status";
+        self#set_no_hilight_status_bar ();
         let ui = GAction.ui_manager () in
         ui#insert_action_group menu_actions 0;
         ui#insert_action_group accel_actions 1;
@@ -349,4 +350,15 @@ object (self)
         accel_actions
 
     (* other public methods *)
+    method set_no_hilight_status_bar _ =
+        let level_name = !MapFormat.level_name in
+        let level_name = String.sub !MapFormat.level_name 0
+                                        (String.index level_name '\000') in
+        self#set_status
+            (Printf.sprintf "Level: %s   %d polygons, %d lights, %d objects"
+                           level_name
+                           (Array.length !MapFormat.polygons)
+                           (Array.length !MapFormat.lights)
+                           (Array.length !MapFormat.objs));
+        ()
 end

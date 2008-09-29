@@ -228,7 +228,9 @@ let draw orthodrawer =
 
 (* set up draw mode event hooks *)
 let init_draw_mode window =
-    window#orthodrawer#connect_draw draw;
+    window#orthodrawer#connect_draw (fun drawer ->
+        draw drawer;
+        window#set_no_hilight_status_bar ());
     window#orthodrawer#connect_mousedown (DrawModeEvent.tool_begin_event
                                        window#toolbar);
     window#orthodrawer#connect_mouseup   (DrawModeEvent.tool_end_event
