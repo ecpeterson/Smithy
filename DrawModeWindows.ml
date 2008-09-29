@@ -352,8 +352,9 @@ object (self)
     (* other public methods *)
     method set_no_hilight_status_bar _ =
         let level_name = !MapFormat.level_name in
-        let level_name = String.sub !MapFormat.level_name 0
-                                        (String.index level_name '\000') in
+        let level_name = try
+            String.sub !MapFormat.level_name 0 (String.index level_name '\000')
+        with Not_found -> level_name in
         self#set_status
             (Printf.sprintf "Level: %s   %d polygons, %d lights, %d objects"
                            level_name
