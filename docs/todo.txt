@@ -4,10 +4,13 @@ editing:
 + add placement chunk dialog / functionality
 + add 'triggered by' functionality to the monster placement dialog
 + bug: creating a single point and then drawing a polygon around it makes that polygon unfillable
++ bug: apparently constrain to grid is broken
 interface:
 + /definitely/ stop using internal units in dialogs, ideally just write fixed-point readers and writers and stop using internal units in the program itself
 + display useful information in the statusbar
 + it's ugly on windows, clean this up a bit
++ bug: nuke doesn't redraw
++ "save before exiting" dialog
 
 less important
 =========
@@ -26,7 +29,12 @@ editing:
 interface:
 + write single level undo
 + write multiple level undo
++ holding down space should temporarily enable hand mode
++ cursors for different tools
++ different draw modes should provide a list of already used values (for elevation, etc) - just use a editable combo box here
 + allow shift-click on a highlighted item to unhighlight it
++ arrow keys should move points/lines/polygons around
++ mark origin with an x
 + display highlighted objects somehow
 code:
 + comment those ridiculous algorithms
