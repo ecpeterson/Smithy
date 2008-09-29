@@ -196,12 +196,17 @@ object (self)
                 orthodrawer#draw ());
 
             a "Pave"        ~label:"_Pave Level"
-                            ~callback:MapFormat.pave;
+                            ~callback:(fun _ ->
+                                MapFormat.pave ();
+                                orthodrawer#draw ());
             a "Nuke"        ~label:"_Nuke Objects Only..."
-                            ~callback:MapFormat.nuke;
+                            ~callback:(fun _ ->
+                                MapFormat.nuke ();
+                                orthodrawer#draw ());
             a "NukeAndPave" ~label:"N_uke and Pave Level..."
-                            ~callback:MapFormat.nuke_and_pave;
-
+                            ~callback:(fun _ ->
+                                MapFormat.nuke_and_pave ();
+                                orthodrawer#draw ());
             a "ZoomIn"            ~label:"Zoom _In"
                                 ~accel:"<Ctrl>equal"
                                 ~callback:(fun _ -> orthodrawer#zoom 2.0);
