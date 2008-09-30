@@ -123,7 +123,6 @@ object (self)
         hbox#pack ~expand:true orthodrawer#widget;
         let sb = GMisc.statusbar ~packing:vbox#pack () in
         status <- sb#new_context ~name:"Status";
-        self#set_no_hilight_status_bar ();
         let ui = GAction.ui_manager () in
         ui#insert_action_group menu_actions 0;
         ui#insert_action_group accel_actions 1;
@@ -350,16 +349,55 @@ object (self)
         accel_actions
 
     (* other public methods *)
-    method set_no_hilight_status_bar _ =
-        let level_name = !MapFormat.level_name in
-        let level_name = try
-            String.sub !MapFormat.level_name 0 (String.index level_name '\000')
-        with Not_found -> level_name in
-        self#set_status
-            (Printf.sprintf "Level: %s   %d polygons, %d lights, %d objects"
-                           level_name
-                           (Array.length !MapFormat.polygons)
-                           (Array.length !MapFormat.lights)
-                           (Array.length !MapFormat.objs));
-        ()
+    method set_statusbar highlight =
+        let index_str highlight_type index =
+            highlight_type ^ " Index: " ^ (string_of_int index) in
+        match highlight with
+        |No_Highlight ->
+            let level_name = !MapFormat.level_name in
+            let level_name = try
+                String.sub !MapFormat.level_name 0
+                               (String.index level_name '\000')
+            with Not_found -> level_name in
+            self#set_status
+                (Printf.sprintf "Level: %s   %d polygons, %d lights, %d objects"
+                            level_name
+                            (Array.length !MapFormat.polygons)
+                            (Array.length !MapFormat.lights)
+                            (Array.length !MapFormat.objs));
+            ()
+        |Point pts ->
+            begin match pts with
+            |p::[] -> self#set_status (index_str "Point" p); ()
+            |_ -> () end
+        |Line lines ->
+            begin match lines with
+            |l::[] ->
+                (* XXX: lines in map files don't have lengths *)
+                let length = (float !MapFormat.lines.(l)#length) /. 1024.0 in
+                self#set_status ((index_str "Line" l) ^ "   " ^
+                                "Line length: " ^
+                                (string_of_float length) ^ " WU");
+                ()
+            |_ -> () end
+        |Poly polys ->
+            begin match polys with
+            |p::[] ->
+                let floor = !MapFormat.polygons.(p)#floor_height in
+                let ceiling = !MapFormat.polygons.(p)#ceiling_height in
+                self#set_status ((index_str "Polygon" p) ^ "   " ^
+                                 "Floor height: " ^
+                                 (string_of_float floor) ^ ", " ^
+                                 "Ceiling height: " ^
+                                 (string_of_float ceiling));
+                ()
+            |_ -> () end
+        |Object objs ->
+            begin match objs with
+            |o::[] -> self#set_status (index_str "Object" o); ()
+            |_ -> () end
+        |Annotation annos ->
+            begin match annos with
+            |a::[] -> self#set_status (index_str "Annotation" a); ()
+            |_ -> () end
 end
