@@ -8,6 +8,7 @@ let point_filter (x, y) =
          CamlExt.round (float y /. (float granularity)) * granularity)
     end else (x, y)
 
+let new_point = ref None
 (* this gets called on the mouse down event when drawing a line *)
 let start_line x y choose_distance =
     let do_new_point () =
@@ -15,7 +16,9 @@ let start_line x y choose_distance =
         let point = new MapTypes.point in
         let (px, py) = point_filter (int_of_float x, int_of_float y) in
         point#set_vertex (px, py);
-        MapFormat.add_point point in
+        let pi = MapFormat.add_point point in
+        new_point := Some pi;
+        pi in
     (* are we near a point? *)
     let (point_distance, nearest_point) = MapFormat.get_closest_point x y in
     (* how about a line? *)
@@ -53,6 +56,14 @@ let start_line x y choose_distance =
 let connect_line start_point x y choose_distance =
     (* utility to actually add the line *)
     let do_line target_point =
+        if start_point = target_point then
+            match !new_point with
+            |Some pi ->
+                MapFormat.delete_point pi;
+                new_point := None;
+                ()
+            |None -> ()
+        else
         let (p0x, p0y) = !MapFormat.points.(start_point)#vertex in
         let (p1x, p1y) = !MapFormat.points.(target_point)#vertex in
         let length = int_of_float (((float p0x -. (float p1x))**2.0 +.
@@ -60,7 +71,8 @@ let connect_line start_point x y choose_distance =
         let line = new MapTypes.line in
         line#set_endpoints (start_point, target_point);
         line#set_length length;
-        MapFormat.add_line line in
+        MapFormat.add_line line;
+        () in
     (* utility to add a new point and connect the line up to it *)
     let do_new_point () =
         let point = new MapTypes.point in
