@@ -3,7 +3,7 @@
 
 let point_filter (x, y) =
     if !DrawModeSettings.constrain_to_grid then begin
-        let granularity= 1024 / (CamlExt.pow 2 !DrawModeSettings.grid_factor) in
+        let granularity= 2048 / (CamlExt.pow 2 !DrawModeSettings.grid_factor) in
         (CamlExt.round (float x /. (float granularity)) * granularity,
          CamlExt.round (float y /. (float granularity)) * granularity)
     end else (x, y)
