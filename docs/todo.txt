@@ -32,7 +32,6 @@ interface:
 + different draw modes should provide a list of already used values (for elevation, etc) - just use a editable combo box here
 + allow shift-click on a highlighted item to unhighlight it
 + arrow keys should move points/lines/polygons around
-+ mark origin with an x
 + display highlighted objects somehow
 code:
 + comment those ridiculous algorithms
