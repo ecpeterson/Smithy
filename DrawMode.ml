@@ -31,6 +31,12 @@ let draw_grid orthodrawer =
         done;
     done
 
+let draw_origin orthodrawer =
+    orthodrawer#set_color !Colors.origin_color;
+    let ends = int_of_float (3.0 /. orthodrawer#scale) in
+    orthodrawer#line (ends, -ends) (-ends, ends);
+    orthodrawer#line (ends, ends) (-ends, -ends)
+
 let draw_points orthodrawer =
     orthodrawer#set_color !Colors.point_color;
     !MapFormat.points |> Array.map (fun x -> x#vertex)
@@ -217,6 +223,7 @@ let draw orthodrawer =
         with _ -> print_endline "Platforms!" end;
     begin try draw_annotations orthodrawer
         with _ -> print_endline "Annotations!" end;
+    draw_origin orthodrawer;
     (* draw the line we're in the middle of laying, if appropriate *)
     if !DrawModeEvent.draw_intermediate then begin
         orthodrawer#set_color !Colors.solid_line_color;

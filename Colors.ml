@@ -12,6 +12,7 @@ let passable_line_color    = ref (0.5, 1.0, 0.5)
 let highlight_color        = ref (1.0, 0.5, 0.0)
 let invalid_polygon        = ref (1.0, 0.5, 0.5)
 let annotation_color       = ref (0.0, 0.0, 0.0)
+let origin_color           = ref (0.0, 0.0, 0.0)
 
 (* these define S and V in the HSV calculation while in poly type edit mode *)
 let poly_type_saturation = ref 0.5
