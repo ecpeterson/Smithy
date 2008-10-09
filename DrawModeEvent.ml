@@ -7,13 +7,12 @@ open DrawModeSettings
  * initial click *)
 let start_point = ref 0
 let draw_intermediate = ref false
-let intermediate_x = ref 0
-let intermediate_y = ref 0
+let intermediate_x = ref 0.0
+let intermediate_y = ref 0.0
 
 (* while we're dragging our line around it would be nice to see it *)
 let intermediate_line x y =
-    intermediate_x := int_of_float x;
-    intermediate_y := int_of_float y
+    intermediate_x := x; intermediate_y := y
 
 (* an event utility *)
 let highlight_distance orthodrawer =
@@ -22,7 +21,6 @@ let highlight_distance orthodrawer =
 (* this gets called when we start applying a tool *)
 let tool_begin_event toolbar orthodrawer x y button
                      (state: Gdk.Tags.modifier list) =
-    let x, y = float x, float y in
     (* unwrap values actually useful to us *)
     let tool = !active_tool in
     (* get nearby objects, since tools frequently need them *)
@@ -182,9 +180,7 @@ let tool_begin_event toolbar orthodrawer x y button
         else if tool = TextTool then begin
             begin match poly with
                 |Some poly ->
-                    let annoidx = GeomEdit.make_annotation (int_of_float x)
-                                                           (int_of_float y)
-                                                           poly in
+                    let annoidx = GeomEdit.make_annotation x y poly in
                     MapDialogs.anno_dialog !MapFormat.annotations.(annoidx)
                         orthodrawer#draw
                 |_ -> () end;
@@ -217,8 +213,6 @@ let tool_begin_event toolbar orthodrawer x y button
 
 (* this gets called when we're dragging a tool around *)
 let tool_in_event toolbar orthodrawer x0 y0 old_x old_y x y =
-    let x0, y0, old_x, old_y, x, y = float x0, float y0, float old_x,
-                                     float old_y, float x, float y in
     (* extract values actually useful to us *)
     let tool = !active_tool in
     begin match !mode with
@@ -226,16 +220,14 @@ let tool_in_event toolbar orthodrawer x0 y0 old_x old_y x y =
         (* if we're panning, then pan *)
         if tool = PanTool then
             let xo, yo = orthodrawer#origin in
-            orthodrawer#set_origin ((int_of_float (float xo +. x0 -. x)),
-                                    (int_of_float (float yo +. y0 -. y)))
+            orthodrawer#set_origin (xo +. x0 -. x, yo +. y0 -. y)
         (* if we're using the arrow, drag *)
         else if tool = ArrowTool then begin
             let delta_x = (x -. old_x) in
             let delta_y = (y -. old_y) in
             (* utilities for easy dragging *)
             let has_enclosing_poly ix iy =
-                match MapFormat.get_enclosing_poly (float ix)
-                                                   (float iy) with
+                match MapFormat.get_enclosing_poly ix iy with
                 |Some p -> true
                 |None   -> false in
             let shift_points ns =
@@ -245,29 +237,23 @@ let tool_in_event toolbar orthodrawer x0 y0 old_x old_y x y =
                 let shift_point p =
                     let (px, py) = point_index_vertex p in
                     !MapFormat.points.(p)#set_vertex
-                        (int_of_float (float px +. delta_x),
-                         int_of_float (float py +. delta_y));
+                        (px +. delta_x, py +. delta_y);
                     MapFormat.recalculate_lengths p in
                 List.iter (fun p -> shift_point p) ns in
-            let obj_index_point o =
-                let obj = !MapFormat.objs.(o) in
-                obj#point in
             let shift_obj o dx dy=
-                let (ox, oy, oz) = obj_index_point o in
-                !MapFormat.objs.(o)#set_point ((ox + dx), (oy + dy), oz) in
+                let (ox, oy, oz) = !MapFormat.objs.(o)#point in
+                !MapFormat.objs.(o)#set_point ((ox +. dx), (oy +. dy), oz) in
             let shift_objs ns =
                 let objs_shift_valid ns =
                     let obj_place_valid o =
-                        let (ox, oy, _) = obj_index_point o in
-                        if (has_enclosing_poly (int_of_float x)
-                                               (int_of_float y)) then
-                            Some ((int_of_float x) - ox,
-                                  (int_of_float y) - oy)
+                        let (ox, oy, _) = !MapFormat.objs.(o)#point in
+                        if has_enclosing_poly x y then
+                            Some (x -. ox, y -. oy)
                         else
                             None in
                     let obj_shift_valid o dx dy =
-                        let (ox, oy, _) = obj_index_point o in
-                        has_enclosing_poly (ox + dx) (oy + dy) in
+                        let (ox, oy, _) = !MapFormat.objs.(o)#point in
+                        has_enclosing_poly (ox +. dx) (oy +. dy) in
                     match ns with
                     |x::xs ->
                         begin match (obj_place_valid x) with
@@ -286,21 +272,19 @@ let tool_in_event toolbar orthodrawer x0 y0 old_x old_y x y =
                 let anno = !MapFormat.annotations.(a) in
                 anno#location in
             let shift_anno a dx dy=
-                let (ax, ay) = anno_index_location a in
-                !MapFormat.annotations.(a)#set_location (ax + dx, ay + dy) in
+                let (ax, ay) = !MapFormat.annotations.(a)#location in
+                !MapFormat.annotations.(a)#set_location (ax +. dx, ay +. dy) in
             let shift_annos ns =
                 let annos_shift_valid ns =
                     let anno_place_valid a =
-                        let (ax, ay) = anno_index_location a in
-                        if (has_enclosing_poly (int_of_float x)
-                                               (int_of_float y)) then
-                            Some ((int_of_float x) - ax,
-                                  (int_of_float y) - ay)
+                        let (ax, ay) = !MapFormat.annotations.(a)#location in
+                        if has_enclosing_poly x y then
+                            Some (x -. ax, y -. ay)
                         else
                             None in
                     let anno_shift_valid a dx dy =
-                        let (ax, ay) = anno_index_location a in
-                        has_enclosing_poly (ax + dx) (ay + dy) in
+                        let (ax, ay) = !MapFormat.annotations.(a)#location in
+                        has_enclosing_poly (ax +. dx) (ay +. dy) in
                     match ns with
                     |x::xs ->
                         begin match (anno_place_valid x) with
@@ -332,15 +316,11 @@ let tool_in_event toolbar orthodrawer x0 y0 old_x old_y x y =
                     let points = Array.sub points 0 poly#vertex_count in
                     Array.to_list points @ x) [] ns in
                 shift_points (CamlExt.nub points);
-                List.iter (fun o ->
-                               shift_obj o (int_of_float delta_x)
-                                           (int_of_float delta_y))
+                List.iter (fun o -> shift_obj o delta_x delta_y)
                           (CamlExt.array_grep_indices
                                (fun obj -> List.mem obj#polygon ns)
                                !MapFormat.objs);
-                List.iter (fun a ->
-                               shift_anno a (int_of_float delta_x)
-                                            (int_of_float delta_y))
+                List.iter (fun a -> shift_anno a delta_x delta_y)
                           (CamlExt.array_grep_indices
                                (fun anno -> List.mem anno#polygon_index ns)
                                !MapFormat.annotations)
@@ -356,7 +336,6 @@ let tool_in_event toolbar orthodrawer x0 y0 old_x old_y x y =
 
 (* and this gets called when we release the mouse button and apply the tool *)
 let tool_end_event toolbar orthodrawer x0 y0 x y (button: int) _ =
-    let x0, y0, x, y = float x0, float y0, float x, float y in
     let tool = !active_tool in
     begin match !mode with
     |Draw_Mode ->
@@ -368,18 +347,14 @@ let tool_end_event toolbar orthodrawer x0 y0 x y (button: int) _ =
                 List.iter (fun n ->
                     let obj = !MapFormat.objs.(n) in
                     let (x, y, _) = obj#point in
-                    let poly = MapFormat.get_enclosing_poly
-                                                (float x) (float y) in
-                    match poly with
+                    match MapFormat.get_enclosing_poly x y with
                     |None -> MapFormat.delete_obj n
                     |Some a -> obj#set_polygon a) n
             |Annotation n ->
                 List.iter (fun n ->
                     let anno = !MapFormat.annotations.(n) in
                     let (x, y) = anno#location in
-                    let poly = MapFormat.get_enclosing_poly
-                                                (float x) (float y) in
-                    match poly with
+                    match MapFormat.get_enclosing_poly x y with
                     |None -> MapFormat.delete_annotation n
                     |Some a -> anno#set_polygon_index a) n
             (* if we resize a polygon so that an object or annotation is
@@ -393,8 +368,8 @@ let tool_end_event toolbar orthodrawer x0 y0 x y (button: int) _ =
         else if tool = ZoomTool then
             (* if we were using the zoom tool, apply the zoom *)
             match button with
-            |1 -> orthodrawer#zoom_at 2.0 (int_of_float x) (int_of_float y)
-            |3 -> orthodrawer#zoom_at 0.5 (int_of_float x) (int_of_float y)
+            |1 -> orthodrawer#zoom_at 2.0 x y
+            |3 -> orthodrawer#zoom_at 0.5 x y
             |_ -> ()
         else if tool = LineTool then begin
             (* if we were drawing a line, finalize it *)

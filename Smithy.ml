@@ -1,5 +1,6 @@
 (*** Smithy.ml contains the actual application framework, and in particular the
  * entry point for the program. ***)
+open CamlExt
 
 let okay_to_quit = ref true
 
@@ -16,12 +17,13 @@ let _ =
     let at_exit _ =
         if !okay_to_quit then begin
             okay_to_quit := false;
-            Preferences.save_prefs main_window;
+            Preferences.save_prefs main_window#orthodrawer#scale;
             GMain.Main.quit ()
         end in
     ignore (main_window#window#event#connect#delete ~callback:(fun _ -> false));
     ignore (main_window#window#connect#destroy ~callback:at_exit);
-    Preferences.load_prefs main_window;
+    let scale = Preferences.load_prefs () in
+    main_window#orthodrawer#set_scale scale;
     let args = Sys.argv in
     if Array.length args > 1 then
         MapFormat.read_from_file args.(Array.length args - 1);
