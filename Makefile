@@ -22,7 +22,7 @@ SOURCES = CamlExt.ml \
 	  Smithy.ml
 LIBS = lablgtk
 INCDIRS = +lablgtk2
-OCAMLFLAGS = -w sy
+OCAMLFLAGS = -w s -warn-error A
 OCAMLBCFLAGS = -g
 OCAMLBLDFLAGS = -g
 

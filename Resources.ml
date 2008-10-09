@@ -18,7 +18,8 @@ let sound_sourcefile = "resources/sound.png"
 let preferences_file =
     try (match Sys.os_type with
     |"Unix" -> (Sys.getenv "HOME") ^ "/.smithy"
-    |"Win32" |"Cygwin" -> (Sys.getenv "AppData") ^ "\\_smithy")
+    |"Win32" |"Cygwin" -> (Sys.getenv "AppData") ^ "\\_smithy"
+    |_ -> raise Not_found)
     with Not_found -> (if Sys.os_type = "Unix" then "." else "_") ^ "smithy"
 
 let item_hash = Hashtbl.create 36

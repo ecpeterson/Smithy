@@ -1,11 +1,12 @@
 (*** GeomEdit.ml contains lengthy algorithms that correspond to geometric
  * manipulations of map data. ***)
+open CamlExt
 
 let point_filter (x, y) =
     if !DrawModeSettings.constrain_to_grid then begin
         let granularity = !DrawModeSettings.grid_factor in
-        float (CamlExt.round (x /. granularity)) *. granularity,
-            float (CamlExt.round (y /. granularity)) *. granularity
+        float (round (x /. granularity)) *. granularity,
+            float (round (y /. granularity)) *. granularity
     end else (x, y)
 
 let new_point = ref None
@@ -182,12 +183,12 @@ let select_line_loop x y =
                 let p0_vtx = !MapFormat.points.(p0)#vertex in
                 let p1_vtx = !MapFormat.points.(p1)#vertex in
                 if p0 = prev || p1 = prev then neg_infinity else
-                if p0 = working then CamlExt.dotf (diff prev_vtx working_vtx)
-                                                  (diff p1_vtx working_vtx) /.
-                                        (CamlExt.norm (diff p1_vtx working_vtx))
-                                else CamlExt.dotf (diff prev_vtx working_vtx)
-                                                  (diff p0_vtx working_vtx) /.
-                                        (CamlExt.norm (diff p0_vtx working_vtx)))
+                if p0 = working then dotf (diff prev_vtx working_vtx)
+                                          (diff p1_vtx working_vtx) /.
+                                        (norm (diff p1_vtx working_vtx))
+                                else dotf (diff prev_vtx working_vtx)
+                                          (diff p0_vtx working_vtx) /.
+                                        (norm (diff p0_vtx working_vtx)))
             neighbors) in
         (* sort by ascending dot product *)
         let neighbors = List.sort (fun (_, x) (_, y) ->
@@ -195,17 +196,20 @@ let select_line_loop x y =
         (* then pop units off the top until we see one with appropriate cross
          * product, since that means the poly is winding how we want *)
         let rec get_first_neighbor lst =
-            match lst with (line_idx, dot_value) :: xs ->
-            let line = !MapFormat.lines.(line_idx) in
-            let (p0, p1) = line#endpoints in
-            let p0_vtx = !MapFormat.points.(p0)#vertex in
-            let p1_vtx = !MapFormat.points.(p1)#vertex in
-            let cross = if p0 = working then
-                     CamlExt.crossf (diff prev_vtx working_vtx)
-                                    (diff p1_vtx working_vtx)
-                else CamlExt.crossf (diff prev_vtx working_vtx)
-                                    (diff p0_vtx working_vtx) in
-            if cross >= 0.0 then (line_idx, dot_value) else get_first_neighbor xs in
+            match lst with
+            |(line_idx, dot_value) :: xs ->
+                let line = !MapFormat.lines.(line_idx) in
+                let (p0, p1) = line#endpoints in
+                let p0_vtx = !MapFormat.points.(p0)#vertex in
+                let p1_vtx = !MapFormat.points.(p1)#vertex in
+                let cross = if p0 = working then
+                        crossf (diff prev_vtx working_vtx)
+                               (diff p1_vtx working_vtx)
+                    else crossf (diff prev_vtx working_vtx)
+                                (diff p0_vtx working_vtx) in
+                if cross >= 0.0 then (line_idx, dot_value)
+                else get_first_neighbor xs
+            |[] -> raise (Failure "empty line list") in
         (* thus, tightest will be the next attached vertex which is winding in
          * the correct direction and winds the closest inwards to the line we
          * were just at.  this is how forge, pfhorge, and forgery all do it, so
@@ -256,13 +260,16 @@ let fill_poly x y =
      * start from) and returns an ordered point loop *)
     let rec build_point_loop line_loop point_loop =
         match (line_loop, point_loop) with
-            (line :: lines, point :: points) ->
+            |(line :: lines, point :: points) ->
                 let (p0, p1) = !MapFormat.lines.(line)#endpoints in
                 build_point_loop lines ((if p0 = point then p1 else p0) :: point_loop)
-            |([], _) -> point_loop in
+            |([], _) -> point_loop
+            |(_, []) -> raise (Failure "no point loop given") in
     (* figure out which way we should be winding, since the order of vertices in
      * a particular line is pretty meaningless *)
-    let line1 :: line2 :: remaining_lines = line_loop in
+    let line1, line2, remaining_lines = match line_loop with
+    |x :: y :: xs -> x, y, xs
+    |_ -> raise (Failure "not enough lines remaining") in
     let (p0, p1) = !MapFormat.lines.(line1)#endpoints in
     let (p2, p3) = !MapFormat.lines.(line2)#endpoints in
     let first_point = if p0 = p2 || p0 = p3 then p1 else p0 in
@@ -348,14 +355,16 @@ let merge_points ns () =
                 false !MapFormat.polygons)
     then begin
     (* sort ascending and pull the first one *)
-    let n :: ns = List.sort compare ns in
+    let n, ns = match List.sort compare ns with
+    |n :: ns -> n, ns
+    |[] -> raise (Failure "no points to merge") in
     (* sort the remainder descending *)
     let ns = List.sort (fun x y -> -(compare x y)) ns in
     (* suck the points in one pair at a time *)
     let rec do_merge ns =
         match ns with [] -> () | new_n :: ns ->
         (* is there a line between these two?  delete it *)
-        let line = CamlExt.array_find
+        let line = array_find
             (fun x -> x#endpoints = (n, new_n) ||
                       x#endpoints = (new_n, n)) !MapFormat.lines in
         if line <> Array.length !MapFormat.lines then
@@ -373,12 +382,12 @@ let merge_points ns () =
             x#set_endpoints (p0, p1)) !MapFormat.lines;
         (* update polygon endpoint array *)
         Array.iter (fun x ->
-            CamlExt.destructive_map (fun y ->
+            destructive_map (fun y ->
                     if y = new_n then n else if y > new_n then y - 1 else y)
                 x#endpoint_indices) !MapFormat.polygons;
         (* actually delete the point *)
         MapFormat.points :=
-            CamlExt.delete_from_array_and_resize !MapFormat.points new_n;
+            delete_from_array_and_resize !MapFormat.points new_n;
         do_merge ns in
     do_merge ns end
 

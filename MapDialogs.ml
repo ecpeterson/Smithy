@@ -1,8 +1,7 @@
 (*** MapDialogs.ml contains all the GTK user interfaces for map geometry
  * property editing. ***)
-
-open MapTypes
 open CamlExt
+open MapTypes
 open DrawModeSettings
 
 let point_dialog point redraw =
@@ -183,7 +182,7 @@ let platform_dialog plat redraw =
 
 let poly_dialog poly redraw =
     let old_kind = poly#kind in
-    let kind = ref (CamlExt.to_enum MapTypes.poly_kind_descriptor old_kind) in
+    let kind = ref (to_enum MapTypes.poly_kind_descriptor old_kind) in
     let media_index = ref (string_of_int poly#media_index) in
     let descriptor = [
         `H [
@@ -192,7 +191,7 @@ let poly_dialog poly redraw =
             `V [`M (ItemStrings.polygon_types, kind);
                 `E media_index ] ] ] in
     let apply _ =
-        let kind = CamlExt.of_enum MapTypes.poly_kind_descriptor !kind in
+        let kind = of_enum MapTypes.poly_kind_descriptor !kind in
         let media_index = int_of_string !media_index in
         begin match old_kind, kind with
             (* do we just want to open the platform dialog again? *)
@@ -207,7 +206,7 @@ let poly_dialog poly redraw =
             |(_, Platform) ->
                 let plat = new MapTypes.platform in
                 plat#set_polygon_index
-                    (CamlExt.find_in_array !MapFormat.polygons poly);
+                    (find_in_array !MapFormat.polygons poly);
                 platform_dialog plat redraw;
                 let plat_idx = MapFormat.add_platform plat in
                 poly#set_permutation plat_idx
@@ -220,8 +219,7 @@ let poly_dialog poly redraw =
     GenerateDialog.generate_dialog descriptor apply "Edit Polygon"
 
 let obj_dialog obj redraw =
-    let group = ref (CamlExt.to_enum MapTypes.object_kind_descriptor
-                                     obj#kind) in
+    let group = ref (to_enum MapTypes.object_kind_descriptor obj#kind) in
     let monster_kind = ref obj#index in
     let monster_facing = ref obj#facing in
     let monster_height = ref (string_of_float
@@ -335,9 +333,9 @@ let obj_dialog obj redraw =
                 (fun mask (desc, _) flag ->
                     if flag then mask lor desc else mask)
                 0 MapTypes.object_flags_descriptor list in
-            obj#set_flags (CamlExt.of_bitflag
+            obj#set_flags (of_bitflag
                 MapTypes.object_flags_descriptor flags) in
-        obj#set_kind (CamlExt.of_enum MapTypes.object_kind_descriptor !group);
+        obj#set_kind (of_enum MapTypes.object_kind_descriptor !group);
         begin match obj#kind with
             |Monster ->
                 obj#set_index !monster_kind;
@@ -348,8 +346,8 @@ let obj_dialog obj redraw =
                     0 MapTypes.object_flags_descriptor
                     [!monster_teleports_in; !monster_hangs; !monster_blind;
                     !monster_deaf; false; false] in
-                obj#set_flags (CamlExt.of_bitflag
-                                        MapTypes.object_flags_descriptor flags)
+                obj#set_flags
+                    (of_bitflag MapTypes.object_flags_descriptor flags)
             |Scenery ->
                 obj#set_index
                     (match !MapFormat.environment_code with
@@ -380,7 +378,7 @@ let obj_dialog obj redraw =
                 obj#set_facing
                     (if !sound_light_vol then float_of_string !sound_facing
                      else float_of_string !sound_facing *. (-1.) +. 1.)
-            |_ -> () end;
+        end;
         redraw () in
     GenerateDialog.generate_dialog descriptor apply "Edit Object"
 
@@ -405,8 +403,8 @@ let anno_dialog anno redraw =
 let info_dialog redraw =
     let level_name = ref !MapFormat.level_name in
     let environment_code =
-        ref (CamlExt.to_enum MapFormat.environment_descriptor
-                            !MapFormat.environment_code) in
+        ref (to_enum MapFormat.environment_descriptor
+                     !MapFormat.environment_code) in
     let landscape = ref !MapFormat.landscape in
     let solo = ref (List.mem MapFormat.Solo !MapFormat.entry_point_flags) in
     let coop = ref (List.mem MapFormat.Coop !MapFormat.entry_point_flags) in
@@ -466,23 +464,23 @@ let info_dialog redraw =
     let apply _ =
         MapFormat.level_name := !level_name;
         MapFormat.environment_code :=
-            CamlExt.of_enum MapFormat.environment_descriptor !environment_code;
+            of_enum MapFormat.environment_descriptor !environment_code;
         MapFormat.landscape := !landscape;
         MapFormat.entry_point_flags := List.fold_left2
             (fun mask (desc, _) flag -> if flag then mask lor desc else mask) 0
             MapFormat.entry_point_descriptor
             [!solo; !coop; !emfh; !ktmwtb; !koth; false; false; false] |>
-            CamlExt.of_bitflag MapFormat.entry_point_descriptor;
+            of_bitflag MapFormat.entry_point_descriptor;
         MapFormat.environment_flags := List.fold_left2
             (fun mask (desc, _) flag -> if flag then mask lor desc else mask) 0
             MapFormat.env_flags_descriptor
             [!vacuum; !magnetic; !rebellion; !low_gravity] |>
-            CamlExt.of_bitflag MapFormat.env_flags_descriptor;
+            of_bitflag MapFormat.env_flags_descriptor;
         MapFormat.mission_flags := List.fold_left2
             (fun mask (desc, _) flag -> if flag then mask lor desc else mask) 0
             MapFormat.mission_descriptor
             [!extermination; !exploration; !retrieval; !repair; !rescue] |>
-            CamlExt.of_bitflag MapFormat.mission_descriptor;
+            of_bitflag MapFormat.mission_descriptor;
         redraw () in
     GenerateDialog.generate_dialog descriptor apply "Level Parameters"
 
@@ -525,7 +523,7 @@ let media_dialog media redraw =
         (* commit to the liquid *)
         media#set_kind !kind;
         media#set_light_index light_parameter;
-        media#set_direction (!direction /. CamlExt.twopi);
+        media#set_direction (!direction /. twopi);
         media#set_magnitude flow_strength;
         media#set_low low_tide;
         media#set_high high_tide;
@@ -540,7 +538,7 @@ let make_media redraw =
     MapFormat.add_media m
 
 let light_dialog light redraw =
-    let preset = ref (CamlExt.to_enum light_kind_descriptor light#kind) in
+    let preset = ref (to_enum light_kind_descriptor light#kind) in
     let phase = ref (string_of_float light#phase) in
     let stateless = ref (List.mem MapTypes.Stateless_Light light#flags) in
     let active = ref (List.mem MapTypes.Active_Light light#flags) in
@@ -630,7 +628,7 @@ let light_dialog light redraw =
                                     ~modal:true ~title:Resources.warning () in
             dialog#run ();
             dialog#destroy () end else begin
-        light#set_kind (CamlExt.of_enum light_kind_descriptor !preset);
+        light#set_kind (of_enum light_kind_descriptor !preset);
         light#set_becoming_active (!ba_fn, float_of_string !ba_period,
             float_of_string !ba_dperiod, float_of_string !ba_intensity,
             float_of_string !ba_dintensity);
@@ -653,7 +651,7 @@ let light_dialog light redraw =
         List.fold_left2
             (fun mask (desc, _) flag -> if flag then mask lor desc else mask) 0
             MapTypes.light_flag_descriptor [!active; false; !stateless]
-            |> CamlExt.of_bitflag MapTypes.light_flag_descriptor
+            |> of_bitflag MapTypes.light_flag_descriptor
             |> light#set_flags
         end;
         redraw () in
