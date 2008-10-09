@@ -2,11 +2,10 @@
  * points, lines, polygons, and bitmaps under scaling and translation
  * transformations. ***)
 
-        open CamlExt
+open CamlExt
 class orthoDrawer ?width:explicit_width ?height:explicit_height
                   ?packing:(packing = ignore)
-                  ~xmin ~xmax ~ymin ~ymax
-                  ?xstart:(xstart = 0.0) ?ystart:(ystart = 0.0) () =
+                  ~xmin ~xmax ~ymin ~ymax () =
 object (self)
     (* widgets *)
     val mutable table = Obj.magic ()
@@ -28,9 +27,9 @@ object (self)
         (fun self x0 y0 x1 y1 x2 y2 -> ())
     val mutable draw_callback =
         (fun self -> ())
-    val mutable click0 = 0, 0
-    val mutable click1 = 0, 0
-    val mutable scale = 0.1
+    val mutable click0 = 0.0, 0.0
+    val mutable click1 = 0.0, 0.0
+    val mutable scale = 1.0
     val mutable suppress_draw = false
     (* XXX: if someone could tell me how to get the record fields out of
      * Gdk.GC.values, that would be a great help *)
@@ -43,14 +42,14 @@ object (self)
     method connect_draw f = draw_callback <- f
     method private set_origin_raw (x, y) =
         suppress_draw <- true;
-        hadj#set_value (float x);
-        vadj#set_value (float y);
+        hadj#set_value x;
+        vadj#set_value y;
         suppress_draw <- false
     method private set_scale_raw x =
         scale <- x
     method set_origin (x, y) = self#set_origin_raw (x, y); self#draw ()
     method set_scale x = self#set_scale_raw x; self#draw ()
-    method origin = (int_of_float hadj#value), (int_of_float vadj#value)
+    method origin = hadj#value, vadj#value
     method scale = scale
     method widget = table#coerce
 
@@ -117,12 +116,10 @@ object (self)
         suppress_draw <- false
     method private to_screen (x, y) =
         let xo, yo = self#origin in
-        (int_of_float (float (x - xo) *. scale),
-            int_of_float (float (y - yo) *. scale))
+        (x -. xo) *. scale, (y -. yo) *. scale
     method private to_map (x, y) =
         let xo, yo = self#origin in
-        (int_of_float (float x /. scale) + xo,
-            int_of_float (float y /. scale) + yo)
+        (x /. scale) +. xo, (y /. scale) +. yo
 
     (* event callbacks *)
     method private resize_callback geom_descriptor =
@@ -149,19 +146,18 @@ object (self)
         false
     method private scroll_callback scroll_descriptor =
         (* XXX: base this on something variable *)
-        let dx, dy = (int_of_float (32.0 /. scale)),
-                     (int_of_float (32.0 /. scale)) in
+        let dx, dy = 32.0 /. scale, 32.0 /. scale in
         let xo, yo = self#origin in
         let xo, yo = (match GdkEvent.Scroll.direction scroll_descriptor with
-        | `UP    -> xo, (yo - dy)
-        | `DOWN  -> xo, (yo + dy)
-        | `LEFT  -> (xo - dx), yo
-        | `RIGHT -> (xo + dx), yo) in
+        | `UP    -> xo, (yo -. dy)
+        | `DOWN  -> xo, (yo +. dy)
+        | `LEFT  -> (xo -. dx), yo
+        | `RIGHT -> (xo +. dx), yo) in
         self#set_origin (xo, yo);
         false
     method private mousedrag_callback mouse_descriptor =
-        let x = int_of_float (GdkEvent.Motion.x mouse_descriptor) in
-        let y = int_of_float (GdkEvent.Motion.y mouse_descriptor) in
+        let x = GdkEvent.Motion.x mouse_descriptor in
+        let y = GdkEvent.Motion.y mouse_descriptor in
         let x, y = self#to_map (x, y) in
         let (oldx, oldy) = click1 in
         click1 <- x, y;
@@ -169,8 +165,8 @@ object (self)
         mousedrag_callback self x0 y0 oldx oldy x y;
         false
     method private mousedown_callback mouse_descriptor =
-        let x = int_of_float (GdkEvent.Button.x mouse_descriptor) in
-        let y = int_of_float (GdkEvent.Button.y mouse_descriptor) in
+        let x = GdkEvent.Button.x mouse_descriptor in
+        let y = GdkEvent.Button.y mouse_descriptor in
         let button = GdkEvent.Button.button mouse_descriptor in
         let state = Gdk.Convert.modifier (GdkEvent.Button.state mouse_descriptor) in
         let x, y = self#to_map (x, y) in
@@ -179,8 +175,8 @@ object (self)
         mousedown_callback self x y button state;
         false
     method private mouseup_callback mouse_descriptor =
-        let x = int_of_float (GdkEvent.Button.x mouse_descriptor) in
-        let y = int_of_float (GdkEvent.Button.y mouse_descriptor) in
+        let x = GdkEvent.Button.x mouse_descriptor in
+        let y = GdkEvent.Button.y mouse_descriptor in
         let button = GdkEvent.Button.button mouse_descriptor in
         let state = Gdk.Convert.modifier (GdkEvent.Button.state mouse_descriptor) in
         let (x0, y0) = click0 in
@@ -191,34 +187,48 @@ object (self)
 
     (* other public methods *)
     method point (x, y) =
-        let (x, y) = self#to_screen (x, y) in
+        let x, y = self#to_screen (x, y) in
+        let x, y = int_of_float x, int_of_float y in
         drawable#point ~x ~y
 
-    method fat_point (x, y) thickness =
-        let (x, y) = self#to_screen (x, y) in
+    method fat_point ((x, y) : (float * float)) (thickness : int) =
+        let x, y = self#to_screen (x, y) in
+        let x, y = int_of_float x, int_of_float y in
         drawable#rectangle ~x:(x-thickness/2) ~y:(y-thickness/2)
                            ~width:thickness ~height:thickness ~filled:true ()
 
     method line (x0, y0) (x1, y1) =
         let (x0t, y0t) = self#to_screen (x0, y0) in
+        let x0t, y0t = int_of_float x0t, int_of_float y0t in
         let (x1t, y1t) = self#to_screen (x1, y1) in
+        let x1t, y1t = int_of_float x1t, int_of_float y1t in
         drawable#line ~x:x0t ~y:y0t ~x:x1t ~y:y1t
 
     method polygon filled points =
-        let points = List.map self#to_screen points in
+        let points = List.map (fun (x, y) ->
+            let x, y = self#to_screen (x, y) in
+            int_of_float x, int_of_float y) points in
         drawable#polygon ~filled points
 
     method points points =
-        let points = List.map self#to_screen points in
+        let points = List.map (fun (x, y) ->
+            let x, y = self#to_screen (x, y) in
+            int_of_float x, int_of_float y) points in
         drawable#points points
 
     method segments lines =
         let lines = List.map
-            (fun (p0, p1) -> (self#to_screen p0, self#to_screen p1)) lines in
+            (fun (p0, p1) ->
+                let p0x, p0y = self#to_screen p0 in
+                let p1x, p1y = self#to_screen p1 in
+                (int_of_float p0x, int_of_float p0y),
+                    (int_of_float p1x, int_of_float p1y)) lines in
         drawable#segments lines
 
     method linear_curve points =
-        let points = List.map self#to_screen points in
+        let points = List.map (fun (x, y) ->
+            let x, y = self#to_screen (x, y) in
+            int_of_float x, int_of_float y) points in
         drawable#lines points
 
     method image (im: GMisc.image) x y =
@@ -226,21 +236,20 @@ object (self)
         let pixbuf = im#pixbuf in
         let width = GdkPixbuf.get_width pixbuf in
         let height = GdkPixbuf.get_height pixbuf in
-        let (x, y) = (x - width / 2, y - height / 2) in
+        let (x, y) = (int_of_float x - width/2, int_of_float y - height/2) in
         drawable#put_pixbuf x y pixbuf
 
     method arrow x y facing =
         let (x, y) = self#to_screen (x, y) in
-        let twopi = 4.0 *. acos 0.0 in
-        let rads_of_ticks t = (float t) /. 512.0 *. twopi in
+        let x, y = int_of_float x, int_of_float y in
         let r = 8.0 in
-        let p1x = x + int_of_float (r *. cos (rads_of_ticks facing)) in
-        let p1y = y + int_of_float (r *. sin (rads_of_ticks facing)) in
+        let p1x = x + int_of_float (r *. cos (CamlExt.twopi *. facing)) in
+        let p1y = y + int_of_float (r *. sin (CamlExt.twopi *. facing)) in
         let r = 10.0 in
-        let p2x = x + int_of_float (r *. cos (rads_of_ticks (facing + 205))) in
-        let p2y = y + int_of_float (r *. sin (rads_of_ticks (facing + 205))) in
-        let p3x = x + int_of_float (r *. cos (rads_of_ticks (facing - 205))) in
-        let p3y = y + int_of_float (r *. sin (rads_of_ticks (facing - 205))) in
+        let p2x = x + int_of_float (r *. cos(facing +. 205./. CamlExt.twopi)) in
+        let p2y = y + int_of_float (r *. sin(facing +. 205./. CamlExt.twopi)) in
+        let p3x = x + int_of_float (r *. cos(facing -. 205./. CamlExt.twopi)) in
+        let p3y = y + int_of_float (r *. sin(facing -. 205./. CamlExt.twopi)) in
         let poly = [(p1x, p1y); (p2x, p2y); (p3x, p3y)] in
         drawable#polygon ~filled:true poly;
         drawable#set_foreground `BLACK;
@@ -266,16 +275,16 @@ object (self)
         scale <- new_scale;
         let xt2, yt2 = self#to_map (x, y) in
         let xnew, ynew =
-            (float x) /. orig_scale -. (float x) /. new_scale +. (float xo),
-            (float y) /. orig_scale -. (float y) /. new_scale +. (float yo) in
+            x /. orig_scale -. x /. new_scale +. xo,
+            y /. orig_scale -. y /. new_scale +. yo in
         let Some drawable_onscreen = drawable_onscreen in
         let width, height = drawable_onscreen#size in
         self#adjust_scroll_range width height;
-        self#set_origin ((int_of_float xnew), (int_of_float ynew));
+        self#set_origin (xnew, ynew);
 
     method zoom factor =
         let cx, cy = drawable#size in
-        let cx, cy = self#to_map ((cx / 2), (cy / 2)) in
+        let cx, cy = self#to_map (float cx /. 2., float cy /. 2.) in
         self#zoom_at factor cx cy
 
     method set_font name =
@@ -284,14 +293,14 @@ object (self)
         let x, y = self#to_screen (x, y) in
         Pango.Layout.set_text pango_layout str;
         let dx, dy = Pango.Layout.get_pixel_size pango_layout in
-        let x, y = x - dx/2, y - dy/2 in
+        let x, y = (int_of_float x) - dx/2, (int_of_float y) - dy/2 in
         drawable#put_layout ~x ~y pango_layout
     (* outputs at the lower-left corner *)
     method text str (x, y) =
         let x, y = self#to_screen (x, y) in
         Pango.Layout.set_text pango_layout str;
         let _, dy = Pango.Layout.get_pixel_size pango_layout in
-        let y = y - dy in
+        let x, y = int_of_float x, (int_of_float y) - dy in
         drawable#put_layout ~x ~y pango_layout
 
     method draw () = ignore (self#draw_callback (Obj.magic ()))
@@ -302,6 +311,6 @@ object (self)
         |Some drawable_onscreen ->
             let width, height = drawable_onscreen#size in
             let width, height = float width /. scale, float height /. scale in
-            self#set_origin (x - int_of_float width / 2,
-                             y - int_of_float height / 2)
+            self#set_origin (x -. width /. 2.0,
+                             y -. height /. 2.0)
 end

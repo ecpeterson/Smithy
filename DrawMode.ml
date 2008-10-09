@@ -8,40 +8,37 @@ open MapTypes
 let draw_grid orthodrawer =
     (* draw grid lines *)
     orthodrawer#set_color !Colors.grid_color;
-    (* 0 -> 2 WU, 1 -> 1 WU, ..., 4 -> 1/8 WU *)
-    let grid_size = 2048 / (pow 2 !grid_factor) in
-    for i = (-MapFormat.half_map_width / grid_size) to
-            (MapFormat.half_map_width / grid_size) do
-        let it = i * grid_size in
-        orthodrawer#line (-MapFormat.half_map_width, it)
+    let grid_size = !grid_factor in
+    for i = int_of_float (-1.0 *. MapFormat.half_map_width /. grid_size) to
+            int_of_float (MapFormat.half_map_width /. grid_size) do
+        let it = float i *. grid_size in
+        orthodrawer#line (-1. *. MapFormat.half_map_width, it)
                          ( MapFormat.half_map_width, it);
-        orthodrawer#line (it, -MapFormat.half_map_width)
+        orthodrawer#line (it, -1. *. MapFormat.half_map_width)
                          (it,  MapFormat.half_map_width);
     done;
     (* draw grid points *)
     orthodrawer#set_color !Colors.anchor_point_color;
-    let grid_size = if grid_size < 1024 then 1024 else grid_size in
-    for i = (-MapFormat.half_map_width / grid_size) to
-            (MapFormat.half_map_width / grid_size) do
-        for j = (-MapFormat.half_map_width / grid_size) to
-                (MapFormat.half_map_width / grid_size) do
-            let it, jt = (i * grid_size),
-                         (j * grid_size) in
+    let grid_size = if grid_size < 1. then 1. else grid_size in
+    for i = int_of_float (-1. *. MapFormat.half_map_width /. grid_size) to
+            int_of_float (MapFormat.half_map_width /. grid_size) do
+        for j = int_of_float (-1. *. MapFormat.half_map_width /. grid_size) to
+                int_of_float (MapFormat.half_map_width /. grid_size) do
+            let it, jt = (float i *. grid_size),
+                         (float j *. grid_size) in
             orthodrawer#fat_point (it, jt) 2
         done;
     done
 
 let draw_origin orthodrawer =
     orthodrawer#set_color !Colors.origin_color;
-    let ends = int_of_float (3.0 /. orthodrawer#scale) in
-    orthodrawer#line (ends, -ends) (-ends, ends);
-    orthodrawer#line (ends, ends) (-ends, -ends)
+    let ends = 3.0 /. orthodrawer#scale in
+    orthodrawer#line (ends, -1. *. ends) (-1. *. ends, ends);
+    orthodrawer#line (ends, ends) (-1. *. ends, -1. *. ends)
 
 let draw_points orthodrawer =
     orthodrawer#set_color !Colors.point_color;
-    !MapFormat.points |> Array.map (fun x -> x#vertex)
-                      |> Array.iter (fun (x, y) ->
-                                        orthodrawer#fat_point (x, y) 2)
+    Array.iter (fun p -> orthodrawer#fat_point p#vertex 2) !MapFormat.points
 
 let draw_lines orthodrawer =
     let draw_these f =

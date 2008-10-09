@@ -24,7 +24,7 @@ let empty_sd = sd_of_int 65535 (* -1 in 16-bit arithmetic *)
 (* a point object in the shapes file (compare with an EPNT entry for an
  * explanation of why this is an object) *)
 class point = object (self)
-    val mutable vertex = (0, 0)
+    val mutable vertex = (0.0, 0.0)
 
     method set_vertex x = vertex <- x
 
@@ -32,26 +32,26 @@ class point = object (self)
 end
 let pnts_reader fh =
     let point = new point in
-    let vertex_x = input_signed_word fh in
-    let vertex_y = input_signed_word fh in
+    let vertex_x = float (input_signed_word fh) /. 1024. in
+    let vertex_y = float (input_signed_word fh) /. 1024. in
     point#set_vertex (vertex_x, vertex_y);
     point
 let epnt_reader fh =
     let point = new point in
     let flags = input_word fh in
-    let highest_adjacent_floor_height = input_signed_word fh in
-    let lowest_adjacent_ceiling_height = input_signed_word fh in
-    let vertex_x = input_signed_word fh in
-    let vertex_y = input_signed_word fh in
+    let highest_adjacent_floor_height = float (input_signed_word fh) /. 1024. in
+    let lowest_adjacent_ceiling_height = float (input_signed_word fh)/. 1024. in
+    let vertex_x = float (input_signed_word fh) /. 1024. in
+    let vertex_y = float (input_signed_word fh) /. 1024. in
     point#set_vertex (vertex_x, vertex_y);
     let transformed_x = input_signed_word fh in
     let transformed_y = input_signed_word fh in
     let supporting_poly_index = input_signed_word fh in
     point
 let pnts_writer fh point =
-    let (x, y) = point#vertex  in
-    output_signed_word fh x;
-    output_signed_word fh y
+    let (x, y) = point#vertex in
+    output_signed_word fh (int_of_float (x *. 1024.));
+    output_signed_word fh (int_of_float (y *. 1024.))
 
 let empty_point = new point
 
@@ -65,8 +65,8 @@ class line = object
     val mutable endpoints = (0, 0)
     val mutable flags = [SOLID]
     val mutable length = 0
-    val mutable highest_adjacent_floor = 0
-    val mutable lowest_adjacent_ceiling = 0
+    val mutable highest_adjacent_floor = 0.0
+    val mutable lowest_adjacent_ceiling = 0.0
     val mutable cw_poly_side_index = -1
     val mutable ccw_poly_side_index = -1
     val mutable cw_poly_owner = -1
@@ -101,8 +101,8 @@ let lins_reader fh =
     line#set_endpoints (endpoint1, endpoint2);
     line#set_flags (to_lines_flag (input_word fh));
     line#set_length (input_signed_word fh);
-    line#set_highest_adjacent_floor (input_signed_word fh);
-    line#set_lowest_adjacent_ceiling (input_signed_word fh);
+    line#set_highest_adjacent_floor (float (input_signed_word fh) /. 1024.);
+    line#set_lowest_adjacent_ceiling (float (input_signed_word fh) /. 1024.);
     line#set_cw_poly_side_index (input_signed_word fh);
     line#set_ccw_poly_side_index (input_signed_word fh);
     line#set_cw_poly_owner (input_signed_word fh);
@@ -119,8 +119,9 @@ let lins_writer fh line =
     output_word fh (CamlExt.to_bitflag lines_flags_descriptor line#flags);
     (*output_signed_word fh length;*)
     output_signed_word fh 0; (* temporary to see if this fixes a1 *)
-    output_signed_word fh line#highest_adjacent_floor;
-    output_signed_word fh line#lowest_adjacent_ceiling;
+    output_signed_word fh (int_of_float (line#highest_adjacent_floor *. 1024.));
+    output_signed_word fh (int_of_float
+                                    (line#lowest_adjacent_ceiling *. 1024.));
     output_signed_word fh line#cw_poly_side_index;
     output_signed_word fh line#ccw_poly_side_index;
     output_signed_word fh line#cw_poly_owner;
@@ -174,10 +175,10 @@ let platform_flags_descriptor =
     0x04000000, Plat_Door]
 class platform = object
     val mutable kind = 0
-    val mutable speed = 0
-    val mutable delay = 0
-    val mutable maximum_height = 0
-    val mutable minimum_height = 0
+    val mutable speed = 0.0
+    val mutable delay = 0.0
+    val mutable maximum_height = 0.0
+    val mutable minimum_height = 0.0
     val mutable flags = [Plat_Initially_Active; Plat_Initially_Extended;
                          Plat_From_Floor]
     val mutable polygon_index = 0
@@ -204,10 +205,10 @@ end
 let plat_reader fh =
     let plat = new platform in
     plat#set_kind (input_word fh);
-    plat#set_speed (input_word fh);
-    plat#set_delay (input_word fh);
-    plat#set_maximum_height (input_signed_word fh);
-    plat#set_minimum_height (input_signed_word fh);
+    plat#set_speed (float (input_word fh) /. 1024.0 *. 30.0);
+    plat#set_delay (float (input_word fh) /. 30.0);
+    plat#set_maximum_height (float (input_signed_word fh) /. 1024.);
+    plat#set_minimum_height (float (input_signed_word fh) /. 1024.);
     plat#set_flags
         (CamlExt.of_bitflag platform_flags_descriptor (input_dword fh));
     plat#set_polygon_index (input_word fh);
@@ -219,10 +220,10 @@ let plat_reader fh =
     plat
 let plat_writer fh plat =
     output_word fh plat#kind;
-    output_word fh plat#speed;
-    output_word fh plat#delay;
-    output_signed_word fh plat#maximum_height;
-    output_signed_word fh plat#minimum_height;
+    output_word fh (int_of_float (plat#speed *. 1024. /. 30.));
+    output_word fh (int_of_float (plat#delay *. 30.));
+    output_signed_word fh (int_of_float (plat#maximum_height *. 1024.));
+    output_signed_word fh (int_of_float (plat#minimum_height *. 1024.));
     output_dword fh
         (CamlExt.to_bitflag platform_flags_descriptor plat#flags);
     output_word fh plat#polygon_index;
@@ -234,18 +235,18 @@ let opt_plat_reader fh =
     plat#set_kind (input_word fh);
     plat#set_flags
         (CamlExt.of_bitflag platform_flags_descriptor (input_dword fh));
-    plat#set_speed (input_word fh);
-    plat#set_delay (input_word fh);
-    let min_floor_height = input_signed_word fh in
-    let max_floor_height = input_signed_word fh in
-    let min_ceiling_height = input_signed_word fh in
-    let max_ceiling_height = input_signed_word fh in
+    plat#set_speed (float (input_word fh) *. 1024. /. 30.);
+    plat#set_delay (float (input_word fh) *. 30.);
+    let min_floor_height = (float (input_signed_word fh) /. 1024.) in
+    let max_floor_height = (float (input_signed_word fh) /. 1024.) in
+    let min_ceiling_height = (float (input_signed_word fh) /. 1024.) in
+    let max_ceiling_height = (float (input_signed_word fh) /. 1024.) in
     (* TODO: i'm not sure this is right *)
     plat#set_minimum_height
-        (List.fold_left min ( 0xffff) [min_floor_height; max_floor_height;
+        (List.fold_left min infinity [min_floor_height; max_floor_height;
                                        min_ceiling_height; max_ceiling_height]);
     plat#set_maximum_height
-        (List.fold_left max (-0xffff) [min_floor_height; max_floor_height;
+        (List.fold_left max (neg_infinity) [min_floor_height; max_floor_height;
                                        min_ceiling_height; max_ceiling_height]);
     plat#set_polygon_index (input_word fh);
     seek_in fh (pos_in fh + 74); (* dynamic data we don't care about *)
@@ -283,7 +284,7 @@ class polygon = object
     val mutable ceiling_height = 1.0
     val mutable floor_lightsource = 0
     val mutable ceiling_lightsource = 0
-    val mutable area = 0
+    val mutable area = 0.0
     val mutable first_object = -1
     val mutable first_exclusion_zone_index = 0
     val mutable line_exclusion_zone_count = 0
@@ -293,10 +294,10 @@ class polygon = object
     val mutable adjacent_polygon_indices = [|0;0;0;0;0;0;0;0|]
     val mutable first_neighbor_index = 0
     val mutable neighbor_count = 0
-    val mutable center = (0, 0)
+    val mutable center = (0.0, 0.0)
     val mutable side_indices = [|0;0;0;0;0;0;0;0|]
-    val mutable floor_origin = (0, 0)
-    val mutable ceiling_origin = (0, 0)
+    val mutable floor_origin = (0.0, 0.0)
+    val mutable ceiling_origin = (0.0, 0.0)
     val mutable media_index = -1
     val mutable media_lightsource = 0
     val mutable sound_source_indices = 0
@@ -334,7 +335,7 @@ class polygon = object
     method set_sound_source_indices x = sound_source_indices <- x
     method set_ambient_sound_image_index x = ambient_sound_image_index <- x
     method set_random_sound_image_index x = random_sound_image_index <- x
-    
+
     method kind = kind
     method flags = flags
     method permutation = permutation
@@ -385,7 +386,7 @@ let poly_reader fh =
     poly#set_ceiling_height (float (input_signed_word fh) /. 1024.0);
     poly#set_floor_lightsource (input_signed_word fh);
     poly#set_ceiling_lightsource (input_signed_word fh);
-    poly#set_area (input_dword fh);
+    poly#set_area (float (input_dword fh) /. 1024. /. 1024.);
     poly#set_first_object (input_signed_word fh);
     poly#set_first_exclusion_zone_index (input_word fh);
     poly#set_line_exclusion_zone_count (input_word fh);
@@ -397,17 +398,17 @@ let poly_reader fh =
     done;
     poly#set_first_neighbor_index (input_word fh);
     poly#set_neighbor_count (input_word fh);
-    let centerx = input_word fh in
-    let centery = input_word fh in
+    let centerx = float (input_word fh) /. 1024. in
+    let centery = float (input_word fh) /. 1024. in
     poly#set_center (centerx, centery);
     for j = 0 to vertices_per_poly - 1 do
         poly#side_indices.(j) <- input_word fh
     done;
-    let floor_originx = input_word fh in
-    let floor_originy = input_word fh in
+    let floor_originx = float (input_word fh) /. 1024. in
+    let floor_originy = float (input_word fh) /. 1024. in
     poly#set_floor_origin (floor_originx, floor_originy);
-    let ceiling_originx = input_word fh in
-    let ceiling_originy = input_word fh in
+    let ceiling_originx = float (input_word fh) /. 1024. in
+    let ceiling_originy = float (input_word fh) /. 1024. in
     poly#set_ceiling_origin (ceiling_originx, ceiling_originy);
     poly#set_media_index (input_signed_word fh);
     poly#set_media_lightsource (input_signed_word fh);
@@ -430,7 +431,7 @@ let poly_writer fh poly =
     output_signed_word fh (int_of_float (poly#ceiling_height *. 1024.0));
     output_signed_word fh poly#floor_lightsource;
     output_signed_word fh poly#ceiling_lightsource;
-    output_dword fh poly#area;
+    output_dword fh (int_of_float (poly#area *. 1024. *. 1024.));
     output_signed_word fh poly#first_object;
     output_word fh poly#first_exclusion_zone_index;
     output_word fh poly#line_exclusion_zone_count;
@@ -441,15 +442,15 @@ let poly_writer fh poly =
     output_word fh poly#first_neighbor_index;
     output_word fh poly#neighbor_count;
     let (centerx, centery) = poly#center in
-    output_word fh centerx;
-    output_word fh centery;
+    output_word fh (int_of_float (centerx *. 1024.));
+    output_word fh (int_of_float (centery *. 1024.));
     Array.iter (fun x -> output_word fh x) poly#side_indices;
     let (fox, foy) = poly#floor_origin in
-    output_word fh fox;
-    output_word fh foy;
+    output_word fh (int_of_float (fox *. 1024.));
+    output_word fh (int_of_float (foy *. 1024.));
     let (cox, coy) = poly#ceiling_origin in
-    output_word fh cox;
-    output_word fh coy;
+    output_word fh (int_of_float (cox *. 1024.));
+    output_word fh (int_of_float (coy *. 1024.));
     output_signed_word fh poly#media_index;
     output_signed_word fh poly#media_lightsource;
     output_word fh poly#sound_source_indices;
@@ -611,7 +612,7 @@ let sids_writer fh side =
 let empty_side = new side
 
 type light_spec = int * int * int * float * float
-let empty_ls = 0, 30, 0, 0.0, 0.0
+let empty_ls = 0, 30.0, 0.0, 0.0, 0.0
 type light_kind = Normal_Light | Strobe_Light | Media_Light
 let light_kind_descriptor = 0, [Normal_Light; Strobe_Light; Media_Light]
 type light_flag = Active_Light | Slaved_Intensities | Stateless_Light
@@ -621,7 +622,7 @@ let light_flag_descriptor = [1, Active_Light; 2, Slaved_Intensities;
 class light = object
     val mutable kind = Normal_Light
     val mutable flags = ([] : light_flag list)
-    val mutable phase = 0
+    val mutable phase = 0.0
     val mutable primary_active = empty_ls
     val mutable secondary_active = empty_ls
     val mutable becoming_active = empty_ls
@@ -656,14 +657,14 @@ let lite_reader fh =
     let light = new light in
     let input_ls fh =
         let kind = input_word fh in
-        let period = input_word fh in
-        let delta_period = input_word fh in
-        let intensity = input_fixed fh in
-        let delta_intensity = input_fixed fh in
+        let period = float (input_word fh) /. 30. in
+        let delta_period = float (input_word fh) /. 30. in
+        let intensity = float (input_dword fh) /. 65536. in
+        let delta_intensity = float (input_dword fh) /. 65536. in
         (kind, period, delta_period, intensity, delta_intensity) in
     light#set_kind (CamlExt.of_enum light_kind_descriptor (input_word fh));
     light#set_flags (CamlExt.of_bitflag light_flag_descriptor (input_word fh));
-    light#set_phase (input_word fh);
+    light#set_phase (float (input_word fh) /. 30.0);
     light#set_primary_active (input_ls fh);
     light#set_secondary_active (input_ls fh);
     light#set_becoming_active (input_ls fh);
@@ -678,13 +679,13 @@ let lite_reader fh =
 let lite_writer fh light =
     let output_ls fh (x, y, z, s, t) =
         output_word fh x;
-        output_word fh y;
-        output_word fh z;
-        output_fixed fh s;
-        output_fixed fh t in
+        output_word fh (int_of_float (y *. 30.));
+        output_word fh (int_of_float (z *. 30.));
+        output_dword fh (int_of_float (s *. 65536.));
+        output_dword fh (int_of_float (t *. 65536.)) in
     output_word fh (CamlExt.to_enum light_kind_descriptor light#kind);
     output_word fh (CamlExt.to_bitflag light_flag_descriptor light#flags);
-    output_word fh light#phase;
+    output_word fh (int_of_float (light#phase *. 30.0));
     output_ls fh light#primary_active;
     output_ls fh light#secondary_active;
     output_ls fh light#becoming_active;
@@ -705,9 +706,9 @@ let object_flags_descriptor = [1, Invisible_Or_Platform; 2, Hangs_From_Ceiling;
 class obj = object
     val mutable kind = Player
     val mutable index = 0
-    val mutable facing = 0
+    val mutable facing = 0.0
     val mutable polygon = 0
-    val mutable point = (0, 0, 0)
+    val mutable point = (0.0, 0.0, 0.0)
     val mutable flags = ([] : object_flags list)
 
     method set_kind x = kind <- x
@@ -728,23 +729,23 @@ let objs_reader fh =
     let obj = new obj in
     obj#set_kind (CamlExt.of_enum object_kind_descriptor (input_word fh));
     obj#set_index (input_word fh);
-    obj#set_facing (input_signed_word fh);
+    obj#set_facing (float (input_signed_word fh) /. 512.);
     obj#set_polygon (input_word fh);
-    let px = input_signed_word fh in
-    let py = input_signed_word fh in
-    let pz = input_signed_word fh in
+    let px = float (input_signed_word fh) /. 1024. in
+    let py = float (input_signed_word fh) /. 1024. in
+    let pz = float (input_signed_word fh) /. 1024. in
     obj#set_point (px, py, pz);
     obj#set_flags (CamlExt.of_bitflag object_flags_descriptor (input_word fh));
     obj
 let objs_writer fh obj =
     output_word fh (CamlExt.to_enum object_kind_descriptor obj#kind);
     output_word fh obj#index;
-    output_signed_word fh obj#facing;
+    output_signed_word fh (int_of_float (obj#facing *. 512.));
     output_word fh obj#polygon;
     let (x, y, z) = obj#point in
-    output_signed_word fh x;
-    output_signed_word fh y;
-    output_signed_word fh z;
+    output_signed_word fh (int_of_float (x *. 1024.));
+    output_signed_word fh (int_of_float (y *. 1024.));
+    output_signed_word fh (int_of_float (z *. 1024.));
     output_word fh (CamlExt.to_bitflag object_flags_descriptor obj#flags)
 let empty_obj = new obj
 
@@ -754,12 +755,12 @@ class media = object
     val mutable kind = 0
     val mutable flags = ([] : media_flags list)
     val mutable light_index = 0
-    val mutable direction = 0
-    val mutable magnitude = 0
-    val mutable low = 0
-    val mutable high = 0
-    val mutable origin = (0, 0)
-    val mutable height = 0
+    val mutable direction = 0.0
+    val mutable magnitude = 0.0
+    val mutable low = 0.0
+    val mutable high = 0.0
+    val mutable origin = (0.0, 0.0)
+    val mutable height = 0.0
     val mutable minimum_light_intensity = 0.0
     val mutable texture = empty_sd
     val mutable transfer_mode = 0
@@ -795,14 +796,15 @@ let medi_reader fh =
     media#set_kind (input_word fh);
     media#set_flags (CamlExt.of_bitflag media_flags_descriptor (input_word fh));
     media#set_light_index (input_word fh);
-    media#set_direction (input_word fh); (* not sure if this is right *)
-    media#set_magnitude (input_signed_word fh);
-    media#set_low (input_signed_word fh);
-    media#set_high (input_signed_word fh);
+    media#set_direction (float (input_word fh) /. 512. *. CamlExt.twopi);
+    (* TODO: are these reasonable units? *)
+    media#set_magnitude (float (input_signed_word fh) /. 1024.);
+    media#set_low (float (input_signed_word fh) /. 1024.);
+    media#set_high (float (input_signed_word fh) /. 1024.);
     let ox = input_signed_word fh in
     let oy = input_signed_word fh in
-    media#set_origin (ox, oy);
-    media#set_height (input_signed_word fh);
+    media#set_origin (float ox /. 1024., float oy /. 1024.);
+    media#set_height (float (input_signed_word fh) /. 1024.);
     media#set_minimum_light_intensity (input_fixed fh);
     media#set_texture (sd_of_int (input_word fh));
     media#set_transfer_mode (input_word fh);
@@ -812,15 +814,15 @@ let medi_writer fh media =
     output_word fh media#kind;
     output_word fh (CamlExt.to_bitflag media_flags_descriptor media#flags);
     output_word fh media#light_index;
-    output_word fh media#direction;
-    output_signed_word fh media#magnitude;
-    output_signed_word fh media#low;
-    output_signed_word fh media#high;
+    output_word fh (int_of_float (media#direction *. 512. /. CamlExt.twopi));
+    output_signed_word fh (int_of_float (media#magnitude *. 1024.));
+    output_signed_word fh (int_of_float (media#low *. 1024.));
+    output_signed_word fh (int_of_float (media#high *. 1024.));
     let (ox, oy) = media#origin in
-    output_signed_word fh ox;
-    output_signed_word fh oy;
-    output_signed_word fh media#height;
-    output_fixed fh media#minimum_light_intensity;
+    output_signed_word fh (int_of_float (ox *. 1024.));
+    output_signed_word fh (int_of_float (oy *. 1024.));
+    output_signed_word fh (int_of_float (media#height *. 1024.));
+    output_dword fh (int_of_float (media#minimum_light_intensity /. 65536.));
     output_word fh (int_of_sd media#texture);
     output_word fh media#transfer_mode;
     ignore (output_padding fh 4)
@@ -832,7 +834,7 @@ class placement = object
     val mutable minimum_count = 0
     val mutable maximum_count = 0
     val mutable random_count = 0
-    val mutable random_chance = 0
+    val mutable random_chance = 0.0
 
     method flags = flags
     method initial_count = initial_count
@@ -855,7 +857,7 @@ let plac_reader fh =
     plac#set_minimum_count (input_word fh);
     plac#set_maximum_count (input_word fh);
     plac#set_random_count (input_word fh);
-    plac#set_random_chance (input_word fh);
+    plac#set_random_chance (float (input_word fh) /. 1024.);
     plac
 
 let plac_writer fh plac =
@@ -864,13 +866,13 @@ let plac_writer fh plac =
     output_word fh plac#minimum_count;
     output_word fh plac#maximum_count;
     output_word fh plac#random_count;
-    output_word fh plac#random_chance
+    output_word fh (int_of_float (plac#random_chance *. 1024.))
 let empty_placement = new placement
 
 class ambient = object
     val mutable flags = 0
     val mutable index = 0
-    val mutable volume = 0
+    val mutable volume = 0.0
 
     method flags = flags
     method index = index
@@ -884,28 +886,28 @@ let ambi_reader fh =
     let ambient = new ambient in
     ambient#set_flags (input_word fh);
     ambient#set_index (input_word fh);
-    ambient#set_volume (input_word fh);
+    ambient#set_volume (float (input_word fh) /. 1024.);
     seek_in fh (pos_in fh + 10); (* ignore 5 words *)
     ambient
 let ambi_writer fh ambient =
     output_word fh ambient#flags;
     output_word fh ambient#index;
-    output_word fh ambient#volume;
+    output_word fh (int_of_float (ambient#volume *. 1024.));
     output_padding fh 10
 let empty_ambient = new ambient
 
 class random = object
     val mutable flags = 0
     val mutable index = 0
-    val mutable volume = 0
-    val mutable dvolume = 0
-    val mutable period = 0
-    val mutable dperiod = 0
-    val mutable direction = 0
-    val mutable ddirection = 0
-    val mutable pitch = 0
-    val mutable dpitch = 0
-    val mutable phase = 0
+    val mutable volume = 0.0
+    val mutable dvolume = 0.0
+    val mutable period = 0.0
+    val mutable dperiod = 0.0
+    val mutable direction = 0.0
+    val mutable ddirection = 0.0
+    val mutable pitch = 0.0
+    val mutable dpitch = 0.0
+    val mutable phase = 0.0
 
     method flags = flags
     method index = index
@@ -935,36 +937,36 @@ let bonk_reader fh =
     let random = new random in
     random#set_flags (input_word fh);
     random#set_index (input_word fh);
-    random#set_volume (input_word fh);
-    random#set_dvolume (input_word fh);
-    random#set_period (input_word fh);
-    random#set_dperiod (input_word fh);
-    random#set_direction (input_word fh);
-    random#set_ddirection (input_word fh);
-    random#set_pitch (input_dword fh);
-    random#set_dpitch (input_dword fh);
-    random#set_phase (input_word fh);
+    random#set_volume (float (input_word fh) /. 1024.);
+    random#set_dvolume (float (input_word fh) /. 1024.);
+    random#set_period (float (input_word fh) /. 30.);
+    random#set_dperiod (float (input_word fh) /. 30.);
+    random#set_direction (float (input_word fh) *. CamlExt.twopi /. 512.);
+    random#set_ddirection (float (input_word fh) *. CamlExt.twopi /. 512.);
+    random#set_pitch (float (input_dword fh) /. 65536.);
+    random#set_dpitch (float (input_dword fh) /. 65536.);
+    random#set_phase (float (input_word fh) /. 30.);
     ignore (input_dword fh); (* kill six bytes *)
     ignore (input_word fh);
     random
 let bonk_writer fh random =
     output_word fh random#flags;
     output_word fh random#index;
-    output_word fh random#volume;
-    output_word fh random#dvolume;
-    output_word fh random#period;
-    output_word fh random#dperiod;
-    output_word fh random#direction;
-    output_word fh random#ddirection;
-    output_dword fh random#pitch;
-    output_dword fh random#dpitch;
-    output_word fh random#phase;
+    output_word fh (int_of_float (random#volume *. 1024.));
+    output_word fh (int_of_float (random#dvolume *. 1024.));
+    output_word fh (int_of_float (random#period *. 30.));
+    output_word fh (int_of_float (random#dperiod *. 30.));
+    output_word fh (int_of_float (random#direction *. 512. /. CamlExt.twopi));
+    output_word fh (int_of_float (random#ddirection *. 512. /. CamlExt.twopi));
+    output_dword fh (int_of_float (random#pitch *. 65536.));
+    output_dword fh (int_of_float (random#dpitch *. 65535.));
+    output_word fh (int_of_float (random#phase *. 30.));
     output_padding fh 6
 let empty_random = new random
 
 class annotation = object
     val mutable kind = 0
-    val mutable location = (0, 0)
+    val mutable location = (0.0, 0.0)
     val mutable polygon_index = 0
     val mutable text = ""
 
@@ -982,8 +984,8 @@ let empty_annotation = new annotation
 let note_reader fh =
     let annotation = new annotation in
     annotation#set_kind (input_word fh);
-    let x = input_signed_word fh in
-    let y = input_signed_word fh in
+    let x = float (input_signed_word fh) /. 1024. in
+    let y = float (input_signed_word fh) /. 1024. in
     annotation#set_location (x, y);
     annotation#set_polygon_index (input_word fh);
     let text = String.create 64 in
@@ -993,6 +995,7 @@ let note_reader fh =
 let note_writer fh annotation =
     output_word fh annotation#kind;
     let x, y = annotation#location in
-    output_word fh x; output_word fh y;
+    output_word fh (int_of_float (x *. 1024.));
+    output_word fh (int_of_float (y *. 1024.));
     output_word fh annotation#polygon_index;
     output_string_n fh annotation#text 64

@@ -8,7 +8,7 @@ type tool = ArrowTool | LineTool |
             TextTool  | ObjTool
 
 let active_tool = ref ArrowTool
-let grid_factor = ref 0
+let grid_factor = ref 0.5
 let display_grid = ref true
 let constrain_to_grid = ref false
 let show_monsters = ref true

@@ -3,9 +3,9 @@
 
 let point_filter (x, y) =
     if !DrawModeSettings.constrain_to_grid then begin
-        let granularity= 2048 / (CamlExt.pow 2 !DrawModeSettings.grid_factor) in
-        (CamlExt.round (float x /. (float granularity)) * granularity,
-         CamlExt.round (float y /. (float granularity)) * granularity)
+        let granularity = !DrawModeSettings.grid_factor in
+        float (CamlExt.round (x /. granularity)) *. granularity,
+            float (CamlExt.round (y /. granularity)) *. granularity
     end else (x, y)
 
 let new_point = ref None
@@ -14,7 +14,7 @@ let start_line x y choose_distance =
     let do_new_point () =
         (* spawn a new point, select it *)
         let point = new MapTypes.point in
-        let (px, py) = point_filter (int_of_float x, int_of_float y) in
+        let (px, py) = point_filter (x, y) in
         point#set_vertex (px, py);
         let pi = MapFormat.add_point point in
         new_point := Some pi;
@@ -37,7 +37,7 @@ let start_line x y choose_distance =
             let (p0, p1) = line#endpoints in
             MapFormat.delete_line nearest_line;
             let point = new MapTypes.point in
-            let (px, py) = point_filter (int_of_float x, int_of_float y) in
+            let (px, py) = point_filter (x, y) in
             point#set_vertex (px, py);
             let pi = MapFormat.add_point point in
             let line1 = new MapTypes.line in
@@ -66,8 +66,8 @@ let connect_line start_point x y choose_distance =
         else
         let (p0x, p0y) = !MapFormat.points.(start_point)#vertex in
         let (p1x, p1y) = !MapFormat.points.(target_point)#vertex in
-        let length = int_of_float (((float p0x -. (float p1x))**2.0 +.
-                                    (float p0y -. (float p1y))**2.0)**0.5) in
+        let length = int_of_float (((p0x -. p1x)**2.0 +.
+                                    (p0y -. p1y)**2.0)**0.5) in
         let line = new MapTypes.line in
         line#set_endpoints (start_point, target_point);
         line#set_length length;
@@ -76,7 +76,7 @@ let connect_line start_point x y choose_distance =
     (* utility to add a new point and connect the line up to it *)
     let do_new_point () =
         let point = new MapTypes.point in
-        let (px, py) = point_filter (int_of_float x, int_of_float y) in
+        let (px, py) = point_filter (x, y) in
         point#set_vertex (px, py);
         do_line (MapFormat.add_point point) in
     (* get the closest point/line to our click *)
@@ -94,7 +94,7 @@ let connect_line start_point x y choose_distance =
             let (p0, p1) = line#endpoints in
             MapFormat.delete_line nearest_line;
             let point = new MapTypes.point in
-            let (px, py) = point_filter (int_of_float x, int_of_float y) in
+            let (px, py) = point_filter (x, y) in
             point#set_vertex (px, py);
             let pi = MapFormat.add_point point in
             let line1 = new MapTypes.line in
@@ -122,8 +122,8 @@ let select_line_loop x y =
             let (p0, p1) = line#endpoints in
             let (p0x, p0y) = !MapFormat.points.(p0)#vertex in
             let (p1x, p1y) = !MapFormat.points.(p1)#vertex in
-            let u = (float (y - p0y)) /. (float (p1y - p0y)) in
-            let x_intersect = p0x + (int_of_float (u *. (float p1x -. (float p0x)))) in
+            let u = (float y -. p0y) /. (p1y -. p0y) in
+            let x_intersect = int_of_float (p0x +. (u *. (p1x -. p0x))) in
             (* u \in [0, 1] ? *)
             if u >= 0.0 && u <= 1.0 && x_intersect > x then true
             else false in
@@ -139,9 +139,7 @@ let select_line_loop x y =
         let get_intersection_point line =
             let (p0, p1) = line#endpoints in
             let (p0x, p0y) = !MapFormat.points.(p0)#vertex in
-            let (p0x, p0y) = (float p0x, float p0y) in
             let (p1x, p1y) = !MapFormat.points.(p1)#vertex in
-            let (p1x, p1y) = (float p1x, float p1y) in
             (float y -. p0y) *. (p1x -. p0x) /. (p1y -. p0y) +. p0x in
         (* the actual sorting function *)
         let sort_helper l1 l2 =
@@ -166,7 +164,7 @@ let select_line_loop x y =
     (* builds a line loop from a starting line, the core algorithm *)
     let rec build_loop target prev working rec_depth starter =
         (* local utility function *)
-        let diff (x0, y0) (x1, y1) = float x0 -. (float x1), float y0 -. (float y1) in
+        let diff (x0, y0) (x1, y1) = x0 -. x1, y0 -. y1 in
         (* prev_vtx is the vertex we had one step ago, and working_vtx is the
          * vertex we're on now. *)
         let prev_vtx = !MapFormat.points.(prev)#vertex in
@@ -329,7 +327,7 @@ let make_object x y poly =
     with _ -> () end;
     increment_obj obj;
     obj#set_polygon poly;
-    obj#set_point (x, y, 0);
+    obj#set_point (float x, float y, 0.0);
     (* do we need to update the container polygon's information? *)
     clone_idx := MapFormat.add_object obj;
     !clone_idx
@@ -389,5 +387,5 @@ let point_center arr =
     let (x, y) =
         Array.fold_left (fun (x, y) p ->
             let xn, yn = !MapFormat.points.(p)#vertex in
-            x + xn, y + yn) (0, 0) arr in
-    x / (Array.length arr), y / (Array.length arr)
+            x +. xn, y +. yn) (0., 0.) arr in
+    x /. (float (Array.length arr)), y /. (float (Array.length arr))

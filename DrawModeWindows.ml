@@ -278,10 +278,10 @@ object (self)
 
     method initialize_orthodrawer window =
         new OrthoDrawer.orthoDrawer
-            ~xmin:(0.0 -. float MapFormat.half_map_width)
-            ~xmax:(float MapFormat.half_map_width)
-            ~ymin:(0.0 -. float MapFormat.half_map_width)
-            ~ymax:(float MapFormat.half_map_width) ()
+            ~xmin:(0.0 -. MapFormat.half_map_width)
+            ~xmax:MapFormat.half_map_width
+            ~ymin:(0.0 -. MapFormat.half_map_width)
+            ~ymax:MapFormat.half_map_width ()
 
     method initialize_accelerators =
         let tool_cb tool _ =
@@ -340,11 +340,11 @@ object (self)
             a "Delete"    ~accel:"Delete"    ~callback:delete_cb;
             a "Backspace" ~accel:"BackSpace" ~callback:delete_cb;
 
-            a "Grid_1_8"  ~accel:"1" ~callback:(grid_cb 4);
-            a "Grid_1_4"  ~accel:"2" ~callback:(grid_cb 3);
-            a "Grid_1_2"  ~accel:"3" ~callback:(grid_cb 2);
-            a "Grid_1"    ~accel:"4" ~callback:(grid_cb 1);
-            a "Grid_2"    ~accel:"5" ~callback:(grid_cb 0);
+            a "Grid_1_8"  ~accel:"1" ~callback:(grid_cb 0.125);
+            a "Grid_1_4"  ~accel:"2" ~callback:(grid_cb 0.25);
+            a "Grid_1_2"  ~accel:"3" ~callback:(grid_cb 0.5);
+            a "Grid_1"    ~accel:"4" ~callback:(grid_cb 1.0);
+            a "Grid_2"    ~accel:"5" ~callback:(grid_cb 2.0);
         ];
         accel_actions
 
@@ -374,7 +374,7 @@ object (self)
             begin match lines with
             |l::[] ->
                 (* XXX: lines in map files don't have lengths *)
-                let length = (float !MapFormat.lines.(l)#length) /. 1024.0 in
+                let length = (float !MapFormat.lines.(l)#length) in
                 self#set_status ((index_str "Line" l) ^ "   " ^
                                 "Line length: " ^
                                 (string_of_float length) ^ " WU");

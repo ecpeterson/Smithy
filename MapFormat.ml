@@ -6,8 +6,8 @@ open CamlExt
 open MapTypes
 
 (* how wide is a map? *)
-let map_width = 65536
-let half_map_width = map_width / 2
+let map_width = 64.
+let half_map_width = map_width /. 2.
 
 (* more magic numbers *)
 let offset_of_first_chunk = 128
@@ -309,7 +309,7 @@ let add_annotation = add_builder annotations
 let get_closest_object x0 y0 =
     array_fold_left_indexed (fun (accd, acci) this_obj i ->
         let (xi, yi, _) = this_obj#point in
-        let this_distance = distance (float xi, float yi) (x0, y0) in
+        let this_distance = distance (xi, yi) (x0, y0) in
         if this_distance < accd then (this_distance, i) else (accd, acci))
             (infinity, 0) !objs
 
@@ -317,7 +317,7 @@ let get_closest_object x0 y0 =
 let get_closest_point x0 y0 =
     array_fold_left_indexed (fun (accd, acci) this_point i ->
         match this_point#vertex with (xi, yi) ->
-        let this_distance = distance (float xi, float yi) (x0, y0) in
+        let this_distance = distance (xi, yi) (x0, y0) in
         if this_distance < accd then (this_distance, i) else (accd, acci))
             (infinity, 0) !points
 
@@ -325,7 +325,7 @@ let get_closest_point x0 y0 =
 let get_closest_annotation x0 y0 =
     array_fold_left_indexed (fun (accd, acci) this_anno i ->
         match this_anno#location with (xi, yi) ->
-        let this_distance = distance (float xi, float yi) (x0, y0) in
+        let this_distance = distance (xi, yi) (x0, y0) in
         if this_distance < accd then (this_distance, i) else (accd, acci))
             (infinity, 0) !annotations
 
@@ -343,7 +343,7 @@ let get_closest_line x0 y0 =
             let (p0i, p1i) = this_line#endpoints in
             let (p0x, p0y) = !points.(p0i)#vertex in
             let (p1x, p1y) = !points.(p1i)#vertex in
-            let d = line_distance (float p0x, float p0y) (float p1x, float p1y) (x0, y0) in
+            let d = line_distance (p0x, p0y) (p1x, p1y) (x0, y0) in
             if d < accd then (d, i) else (accd, acci))
         (infinity, 0) !lines
 
@@ -396,8 +396,8 @@ let get_enclosing_poly x0 y0 =
         let next = (if i = (List.length points) - 1 then 0 else i + 1) in
         let (p0x, p0y) = List.nth points i in
         let (p1x, p1y) = List.nth points next in
-        let p0 = (float p0x -. x0, float p0y -. y0) in
-        let p1 = (float p1x -. x0, float p1y -. y0) in
+        let p0 = (p0x -. x0, p0y -. y0) in
+        let p1 = (p1x -. x0, p1y -. y0) in
         sum_angles points (x0, y0) (i+1) (angle p0 p1 +. acc) in
     (* iterate through the map's polygons until we find one that works *)
     let rec g_e_p_aux x0 y0 i =
@@ -410,15 +410,14 @@ let get_enclosing_poly x0 y0 =
             g_e_p_aux x0 y0 (i+1)
         else
             Some i in
-    g_e_p_aux (x0 +. 1.0) (y0 +. 1.0) 0
+    g_e_p_aux x0 y0 0
 
 (* when we move a point, we'll want to recalcuate the lengths of lines
  * attached to it.  this takes care of that entire process *)
 let recalculate_lengths point =
     let line_length = Array.length !lines in
     let length (x0, y0) (x1, y1) =
-        int_of_float (((float x0 -. (float x1))**2.0 +.
-                       (float y0 -. (float y1))**2.0)**0.5) in
+        int_of_float (((x0 -. x1)**2.0 +. (y0 -. y1)**2.0)**0.5) in
     let rec line_loop n =
         if n = line_length then () else
         let line = !lines.(n) in

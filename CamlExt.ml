@@ -14,6 +14,8 @@ let (@) a b = fun x -> a (b x)
 let (|>) x y = y x (* left-associative *)
 let (@>) x y = y x (* right-assocative *)
 
+let twopi = atan 1.0 *. 8.0
+
 (** reading wider integers out of binary files **)
 let byte_cap = 256
 let word_cap = 65536
@@ -208,18 +210,18 @@ let vertex_array_is_concave vertices =
         let (p0x, p0y) = List.nth vertices n in
         let (p1x, p1y) = List.nth vertices next1 in
         let (p2x, p2y) = List.nth vertices next2 in
-        let p0 = (p1x - p0x, p1y - p0y) in
-        let p1 = (p2x - p1x, p2y - p1y) in
-        if comp (cross p0 p1) then
+        let p0 = (p1x -. p0x, p1y -. p0y) in
+        let p1 = (p2x -. p1x, p2y -. p1y) in
+        if comp (crossf p0 p1) then
             loop_compare vertices comp (n+1)
         else
             false end in
     (* if all the crosses are nonpositive, we have a clockwise point loop *)
     let vertex_array_is_cw vertices =
-        loop_compare vertices (fun x -> x <= 0) 0 in
+        loop_compare vertices (fun x -> x <= 0.0) 0 in
     (* if all the crosses are nonnegative, we have a ccw point loop *)
     let vertex_array_is_ccw vertices =
-        loop_compare vertices (fun x -> x >= 0) 0 in
+        loop_compare vertices (fun x -> x >= 0.0) 0 in
     (* and we want to test for loops that are neither completely cw nor ccw *)
     not (vertex_array_is_cw vertices) && not (vertex_array_is_ccw vertices)
 

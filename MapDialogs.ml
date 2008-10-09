@@ -7,7 +7,7 @@ open DrawModeSettings
 
 let point_dialog point redraw =
     let px, py = point#vertex in
-    let px, py = ref (string_of_int px), ref (string_of_int py) in
+    let px, py = ref (string_of_float px), ref (string_of_float py) in
     let descriptor = [
         `H [
             `V [`L "X Coord";
@@ -15,7 +15,7 @@ let point_dialog point redraw =
             `V [`E px;
                 `E py ] ] ] in
     let apply _ =
-        point#set_vertex (int_of_string !px, int_of_string !py);
+        point#set_vertex (float_of_string !px, float_of_string !py);
         redraw () in
     GenerateDialog.generate_dialog descriptor apply "Edit Point"
 
@@ -45,12 +45,12 @@ let line_dialog line redraw =
 
 let platform_dialog plat redraw =
     let kind = ref plat#kind in
-    let speed = ref (string_of_int plat#speed) in
-    let delay = ref (string_of_int plat#delay) in
-    let automin = ref (plat#minimum_height = -1) in
-    let minheight = ref (string_of_int plat#minimum_height) in
-    let automax = ref (plat#maximum_height = -1) in
-    let maxheight = ref (string_of_int plat#maximum_height) in
+    let speed = ref (string_of_float plat#speed) in
+    let delay = ref (string_of_float plat#delay) in
+    let automin = ref (plat#minimum_height = -1.0) in
+    let minheight = ref (string_of_float plat#minimum_height) in
+    let automax = ref (plat#maximum_height = -1.0) in
+    let maxheight = ref (string_of_float plat#maximum_height) in
     let flags = plat#flags in
     let is_door = ref (List.mem Plat_Door flags) in
     let initially_active = ref(List.mem Plat_Initially_Active flags) in
@@ -155,16 +155,16 @@ let platform_dialog plat redraw =
                     `C ("Locked Door", locked);
                     `C ("Secret", secret) ]) ] ] ] in
     let apply _ =
-        let speed = int_of_string !speed in
-        let delay = int_of_string !delay in
-        let minheight = int_of_string !minheight in
-        let maxheight = int_of_string !maxheight in
+        let speed = float_of_string !speed in
+        let delay = float_of_string !delay in
+        let minheight = float_of_string !minheight in
+        let maxheight = float_of_string !maxheight in
         let tag = int_of_string !tag in
         plat#set_kind !kind;
         plat#set_speed speed;
         plat#set_delay delay;
-        plat#set_maximum_height (if !automax then -1 else maxheight);
-        plat#set_minimum_height (if !automin then -1 else minheight);
+        plat#set_maximum_height (if !automax then -1.0 else maxheight);
+        plat#set_minimum_height (if !automin then -1.0 else minheight);
         plat#set_tag tag;
         plat#set_flags (List.fold_left2 (fun build_mask (_, new_mask) flag ->
             if flag then new_mask :: build_mask else build_mask)
@@ -223,8 +223,8 @@ let obj_dialog obj redraw =
     let group = ref (CamlExt.to_enum MapTypes.object_kind_descriptor
                                      obj#kind) in
     let monster_kind = ref obj#index in
-    let monster_facing = ref (rads_of_ticks obj#facing) in
-    let monster_height = ref (string_of_int
+    let monster_facing = ref obj#facing in
+    let monster_height = ref (string_of_float
                                     ((fun (_, _, x) -> x) obj#point)) in
     let monster_teleports_in = ref (List.mem Invisible_Or_Platform
                                              obj#flags) in
@@ -255,13 +255,13 @@ let obj_dialog obj redraw =
     let player_height = ref !monster_height in
     let player_hangs = ref !monster_hangs in
     let goal_kind = ref (string_of_int obj#index) in
-    let sound_facing = ref (string_of_int obj#facing) in
+    let sound_facing = ref (string_of_float obj#facing) in
     let sound_kind = ref !monster_kind in
     let sound_height = ref !monster_height in
     let sound_teleports_in = ref !monster_teleports_in in
     let sound_hangs = ref !monster_hangs in
     let sound_floats = ref !monster_floats in
-    let sound_light_vol = ref (obj#facing <= 0) in
+    let sound_light_vol = ref (obj#facing <= 0.0) in
     let descriptor = [
         `N([("Monster", [
                 `H [
@@ -329,7 +329,7 @@ let obj_dialog obj redraw =
     let apply _ =
         let update_height h =
             let (x, y, z) = obj#point in
-            obj#set_point (x, y, int_of_string h) in
+            obj#set_point (x, y, float_of_string h) in
         let update_flags list =
             let flags = List.fold_left2
                 (fun mask (desc, _) flag ->
@@ -341,7 +341,7 @@ let obj_dialog obj redraw =
         begin match obj#kind with
             |Monster ->
                 obj#set_index !monster_kind;
-                obj#set_facing (ticks_of_rads !monster_facing);
+                obj#set_facing !monster_facing;
                 update_height !monster_height;
                 let flags = List.fold_left2 (fun mask (desc, _) flag ->
                         if flag then mask lor desc else mask)
@@ -367,7 +367,7 @@ let obj_dialog obj redraw =
                 update_flags [!item_teleports_in; !item_hangs; false; false;
                               false; !item_network_only]
             |Player ->
-                obj#set_facing (ticks_of_rads !player_facing);
+                obj#set_facing !player_facing;
                 update_height !player_height;
                 update_flags [false; !player_hangs; false; false; false; false]
             |Goal ->
@@ -378,15 +378,15 @@ let obj_dialog obj redraw =
                 update_flags [!sound_teleports_in; !sound_hangs; false; false;
                             !sound_floats; false];
                 obj#set_facing
-                    (if !sound_light_vol then int_of_string !sound_facing
-                     else int_of_string !sound_facing * -1 + 1)
+                    (if !sound_light_vol then float_of_string !sound_facing
+                     else float_of_string !sound_facing *. (-1.) +. 1.)
             |_ -> () end;
         redraw () in
     GenerateDialog.generate_dialog descriptor apply "Edit Object"
 
 let anno_dialog anno redraw =
     let px, py = anno#location in
-    let px, py = (string_of_int px), (string_of_int py) in
+    let px, py = (string_of_float px), (string_of_float py) in
     let poly = anno#polygon_index in
     let poly = string_of_int poly in
     let pos_str = "At X,Y: " ^ px ^ "," ^ py ^ " (Polygon: " ^ poly ^ ")" in
@@ -490,10 +490,10 @@ let media_dialog media redraw =
     (* set up the dialog *)
     let kind = ref media#kind in
     let light_parameter = ref (string_of_int media#light_index) in
-    let direction = ref (rads_of_ticks media#direction) in
-    let flow_strength = ref (string_of_int media#magnitude) in
-    let low_tide = ref (string_of_int media#low) in
-    let high_tide = ref (string_of_int media#high) in
+    let direction = ref media#direction in
+    let flow_strength = ref (string_of_float media#magnitude) in
+    let low_tide = ref (string_of_float media#low) in
+    let high_tide = ref (string_of_float media#high) in
     let obstructed = ref (List.mem MapTypes.Liquid_Obstructs_Sounds
                                    media#flags) in
     let descriptor = [
@@ -518,14 +518,14 @@ let media_dialog media redraw =
             `C ("Liquid's sound obstructed by floor", obstructed) ] ] in
     let apply _ =
         (* convert all values so we don't have a partial commit *)
-        let low_tide = int_of_string !low_tide in
-        let high_tide = int_of_string !high_tide in
         let light_parameter = int_of_string !light_parameter in
-        let flow_strength = int_of_string !flow_strength in
+        let low_tide = float_of_string !low_tide in
+        let high_tide = float_of_string !high_tide in
+        let flow_strength = float_of_string !flow_strength in
         (* commit to the liquid *)
         media#set_kind !kind;
         media#set_light_index light_parameter;
-        media#set_direction (ticks_of_rads !direction);
+        media#set_direction (!direction /. CamlExt.twopi);
         media#set_magnitude flow_strength;
         media#set_low low_tide;
         media#set_high high_tide;
@@ -541,44 +541,44 @@ let make_media redraw =
 
 let light_dialog light redraw =
     let preset = ref (CamlExt.to_enum light_kind_descriptor light#kind) in
-    let phase = ref (string_of_int light#phase) in
+    let phase = ref (string_of_float light#phase) in
     let stateless = ref (List.mem MapTypes.Stateless_Light light#flags) in
     let active = ref (List.mem MapTypes.Active_Light light#flags) in
     let (ba_fn, ba_period, ba_dperiod, ba_intensity, ba_dintensity) =
         light#becoming_active in
     let (ba_fn, ba_period, ba_dperiod, ba_intensity, ba_dintensity) =
-        ref ba_fn, ref (string_of_int ba_period),
-        ref (string_of_int ba_dperiod), ref (string_of_float ba_intensity),
+        ref ba_fn, ref (string_of_float ba_period),
+        ref (string_of_float ba_dperiod), ref (string_of_float ba_intensity),
         ref (string_of_float ba_dintensity) in
     let (pa_fn, pa_period, pa_dperiod, pa_intensity, pa_dintensity) =
         light#primary_active in
     let (pa_fn, pa_period, pa_dperiod, pa_intensity, pa_dintensity) =
-        ref pa_fn, ref (string_of_int pa_period),
-        ref (string_of_int pa_dperiod), ref (string_of_float pa_intensity),
+        ref pa_fn, ref (string_of_float pa_period),
+        ref (string_of_float pa_dperiod), ref (string_of_float pa_intensity),
         ref (string_of_float pa_dintensity) in
     let (sa_fn, sa_period, sa_dperiod, sa_intensity, sa_dintensity) =
         light#secondary_active in
     let (sa_fn, sa_period, sa_dperiod, sa_intensity, sa_dintensity) =
-        ref sa_fn, ref (string_of_int sa_period),
-        ref (string_of_int sa_dperiod), ref (string_of_float sa_intensity),
+        ref sa_fn, ref (string_of_float sa_period),
+        ref (string_of_float sa_dperiod), ref (string_of_float sa_intensity),
         ref (string_of_float sa_dintensity) in
     let (bi_fn, bi_period, bi_dperiod, bi_intensity, bi_dintensity) =
         light#becoming_inactive in
     let (bi_fn, bi_period, bi_dperiod, bi_intensity, bi_dintensity) =
-        ref bi_fn, ref (string_of_int bi_period),
-        ref (string_of_int bi_dperiod), ref (string_of_float bi_intensity),
+        ref bi_fn, ref (string_of_float bi_period),
+        ref (string_of_float bi_dperiod), ref (string_of_float bi_intensity),
         ref (string_of_float bi_dintensity) in
     let (pi_fn, pi_period, pi_dperiod, pi_intensity, pi_dintensity) =
         light#primary_inactive in
     let (pi_fn, pi_period, pi_dperiod, pi_intensity, pi_dintensity) =
-        ref pi_fn, ref (string_of_int pi_period),
-        ref (string_of_int pi_dperiod), ref (string_of_float pi_intensity),
+        ref pi_fn, ref (string_of_float pi_period),
+        ref (string_of_float pi_dperiod), ref (string_of_float pi_intensity),
         ref (string_of_float pi_dintensity) in
     let (si_fn, si_period, si_dperiod, si_intensity, si_dintensity) =
         light#secondary_inactive in
     let (si_fn, si_period, si_dperiod, si_intensity, si_dintensity) =
-        ref si_fn, ref (string_of_int si_period),
-        ref (string_of_int si_dperiod), ref (string_of_float si_intensity),
+        ref si_fn, ref (string_of_float si_period),
+        ref (string_of_float si_dperiod), ref (string_of_float si_intensity),
         ref (string_of_float si_dintensity) in
     let frame_descriptor title fn period dperiod intensity dintensity =
         `F (title, [
@@ -619,10 +619,10 @@ let light_dialog light redraw =
                 frame_descriptor "Secondary Inactive" si_fn si_period si_dperiod
                                  si_intensity si_dintensity ] ] ] in
     let apply _ =
-        if ((int_of_string !pa_period) = 0 &&
-            (int_of_string !sa_period) = 0) ||
-        ((int_of_string !pi_period) = 0 &&
-            (int_of_string !si_period) = 0) then begin
+        if ((float_of_string !pa_period) = 0.0 &&
+            (float_of_string !sa_period) = 0.0) ||
+        ((float_of_string !pi_period) = 0.0 &&
+            (float_of_string !si_period) = 0.0) then begin
             let dialog = GWindow.message_dialog
                                     ~message:"Can't set both periods to zero!"
                                     ~message_type:`ERROR
@@ -631,25 +631,25 @@ let light_dialog light redraw =
             dialog#run ();
             dialog#destroy () end else begin
         light#set_kind (CamlExt.of_enum light_kind_descriptor !preset);
-        light#set_becoming_active (!ba_fn, int_of_string !ba_period,
-            int_of_string !ba_dperiod, float_of_string !ba_intensity,
+        light#set_becoming_active (!ba_fn, float_of_string !ba_period,
+            float_of_string !ba_dperiod, float_of_string !ba_intensity,
             float_of_string !ba_dintensity);
-        light#set_primary_active (!pa_fn, int_of_string !pa_period,
-            int_of_string !pa_dperiod, float_of_string !pa_intensity,
+        light#set_primary_active (!pa_fn, float_of_string !pa_period,
+            float_of_string !pa_dperiod, float_of_string !pa_intensity,
             float_of_string !pa_dintensity);
-        light#set_secondary_active (!sa_fn, int_of_string !sa_period,
-            int_of_string !sa_dperiod, float_of_string !sa_intensity,
+        light#set_secondary_active (!sa_fn, float_of_string !sa_period,
+            float_of_string !sa_dperiod, float_of_string !sa_intensity,
             float_of_string !sa_dintensity);
-        light#set_becoming_inactive (!bi_fn, int_of_string !bi_period,
-            int_of_string !bi_dperiod, float_of_string !bi_intensity,
+        light#set_becoming_inactive (!bi_fn, float_of_string !bi_period,
+            float_of_string !bi_dperiod, float_of_string !bi_intensity,
             float_of_string !bi_dintensity);
-        light#set_primary_inactive (!pi_fn, int_of_string !pi_period,
-            int_of_string !pi_dperiod, float_of_string !pi_intensity,
+        light#set_primary_inactive (!pi_fn, float_of_string !pi_period,
+            float_of_string !pi_dperiod, float_of_string !pi_intensity,
             float_of_string !pi_dintensity);
-        light#set_secondary_inactive (!si_fn, int_of_string !si_period,
-            int_of_string !si_dperiod, float_of_string !si_intensity,
+        light#set_secondary_inactive (!si_fn, float_of_string !si_period,
+            float_of_string !si_dperiod, float_of_string !si_intensity,
             float_of_string !si_dintensity);
-        light#set_phase (int_of_string !phase);
+        light#set_phase (float_of_string !phase);
         List.fold_left2
             (fun mask (desc, _) flag -> if flag then mask lor desc else mask) 0
             MapTypes.light_flag_descriptor [!active; false; !stateless]
@@ -665,12 +665,13 @@ let make_light redraw =
     MapFormat.add_light l
 
 let map_manager redraw =
+    let lg x = (log x) /. (log 2.0) in
+    let gf = ref (1 - (int_of_float (lg !grid_factor))) in
     let descriptor = [
         `V [
             `H [
                 `L "Grid Size";
-                `M (["2 WU"; "1 WU"; "1/2 WU"; "1/4 WU"; "1/8 WU"],
-                    grid_factor) ];
+                `M (["2 WU"; "1 WU"; "1/2 WU"; "1/4 WU"; "1/8 WU"], gf) ];
             `C ("Display Grid", display_grid);
             `C ("Constrain to Grid", constrain_to_grid);
             `C ("Show Monsters", show_monsters);
@@ -681,20 +682,21 @@ let map_manager redraw =
             `C ("Show Sounds", show_sounds);
             `C ("Show Annotations", show_annotations);
             `C ("Visual Mode Crosshairs", vm_crosshair) ] ] in
-    GenerateDialog.generate_dialog descriptor (fun _ -> redraw ())
+    GenerateDialog.generate_dialog descriptor (fun _ ->
+            grid_factor := 2.0 ** (1.0 -. (float !gf)); redraw ())
         "Map Manager"
 
 let random_dialog random redraw =
     let index = ref random#index in
-    let volume = ref (string_of_int random#volume) in
-    let dvolume = ref (string_of_int random#dvolume) in
-    let period = ref (string_of_int random#period) in
-    let dperiod = ref (string_of_int random#dperiod) in
-    let pitch = ref (string_of_int random#pitch) in
-    let dpitch = ref (string_of_int random#dpitch) in
-    let nondirectional = ref (random#direction = -1) in
-    let direction = ref (rads_of_ticks random#direction) in
-    let ddirection = ref (rads_of_ticks random#ddirection) in
+    let volume = ref (string_of_float random#volume) in
+    let dvolume = ref (string_of_float random#dvolume) in
+    let period = ref (string_of_float random#period) in
+    let dperiod = ref (string_of_float random#dperiod) in
+    let pitch = ref (string_of_float random#pitch) in
+    let dpitch = ref (string_of_float random#dpitch) in
+    let nondirectional = ref (random#direction = -1.0) in
+    let direction = ref random#direction in
+    let ddirection = ref random#ddirection in
     let descriptor = [
         `V [
             `H [`L "Type";
@@ -720,12 +722,12 @@ let random_dialog random redraw =
                     `S ddirection;
                     `L "D Direction" ] ] ] ] in
     let apply _ =
-        let volume = int_of_string !volume in
-        let dvolume = int_of_string !dvolume in
-        let period = int_of_string !period in
-        let dperiod = int_of_string !dperiod in
-        let pitch = int_of_string !pitch in
-        let dpitch = int_of_string !dpitch in
+        let volume = float_of_string !volume in
+        let dvolume = float_of_string !dvolume in
+        let period = float_of_string !period in
+        let dperiod = float_of_string !dperiod in
+        let pitch = float_of_string !pitch in
+        let dpitch = float_of_string !dpitch in
         random#set_index !index;
         random#set_volume volume;
         random#set_dvolume dvolume;
@@ -733,9 +735,9 @@ let random_dialog random redraw =
         random#set_dperiod dperiod;
         random#set_pitch pitch;
         random#set_dpitch dpitch;
-        if !nondirectional then random#set_direction (-1)
-        else random#set_direction (ticks_of_rads !direction);
-        random#set_ddirection (ticks_of_rads !ddirection);
+        if !nondirectional then random#set_direction (-1.0)
+        else random#set_direction !direction;
+        random#set_ddirection !ddirection;
         redraw () in
     GenerateDialog.generate_dialog descriptor apply
         "Random Sound Parameters"
@@ -748,7 +750,7 @@ let make_random redraw =
 
 let ambient_dialog ambient redraw =
     let index = ref ambient#index in
-    let volume = ref (string_of_int ambient#volume) in
+    let volume = ref (string_of_float ambient#volume) in
     let descriptor = [
         `H [
             `V [`L "Type";
@@ -756,7 +758,7 @@ let ambient_dialog ambient redraw =
             `V [`M (ItemStrings.sound_strings, index);
                 `E volume ] ] ] in
     let apply _ =
-        ambient#set_volume (int_of_string !volume);
+        ambient#set_volume (float_of_string !volume);
         ambient#set_index !index;
         redraw () in
     GenerateDialog.generate_dialog descriptor apply
@@ -788,7 +790,7 @@ let goto recenter =
             let p0, p1 = l#endpoints in
             let p0x, p0y = !MapFormat.points.(p0)#vertex in
             let p1x, p1y = !MapFormat.points.(p1)#vertex in
-            Some ((p0x + p1x)/2, (p0y + p1y)/2)
+            Some ((p0x +. p1x) /. 2., (p0y +. p1y) /. 2.)
         |2 ->
             let p = !MapFormat.polygons.(id) in
             DrawModeSettings.highlight := Poly [id];
