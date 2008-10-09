@@ -2,7 +2,7 @@
  * state, like colors or file dialog paths. ***)
 
 let load_prefs _ =
-    let scale = try
+    try
         let fh = open_in_bin Resources.preferences_file in
         DrawModeSettings.grid_factor := Marshal.from_channel fh;
         DrawModeSettings.display_grid := Marshal.from_channel fh;
@@ -23,12 +23,15 @@ let load_prefs _ =
         Colors.poly_type_value := Marshal.from_channel fh;
         let scale = (Marshal.from_channel fh) in
         FileDialogs.path := Marshal.from_channel fh;
+        let width = (Marshal.from_channel fh) in
+        let height = (Marshal.from_channel fh) in
         close_in fh;
-        scale
-    with _ -> print_endline "Failed to load preferences!"; 32. in
-    scale
+        scale, width, height
+    with _ ->
+        print_endline "Failed to load preferences!";
+        32., 500, 300
 
-let save_prefs scale =
+let save_prefs scale width height =
     try
         let fh = open_out_bin Resources.preferences_file in
         Marshal.to_channel fh !DrawModeSettings.grid_factor [];
@@ -48,7 +51,9 @@ let save_prefs scale =
         Marshal.to_channel fh !Colors.invalid_polygon [];
         Marshal.to_channel fh !Colors.poly_type_saturation [];
         Marshal.to_channel fh !Colors.poly_type_value [];
-        Marshal.to_channel fh (scale) [];
+        Marshal.to_channel fh scale [];
         Marshal.to_channel fh !FileDialogs.path [];
+        Marshal.to_channel fh width [];
+        Marshal.to_channel fh height [];
         close_out fh
     with _ -> print_endline "Failed to write preferences!"

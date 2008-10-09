@@ -98,6 +98,7 @@ object (self)
     val mutable orthodrawer = Obj.magic ()
     val mutable toolbar     = Obj.magic ()
     val mutable status      = Obj.magic ()
+    val mutable size        = (width, height)
 
     (* actual data *)
 
@@ -110,11 +111,19 @@ object (self)
     method set_status x =
         status#pop ();
         status#push x
+    method width = fst size
+    method height = snd size
 
     (* constructor *)
     initializer
         window <- GWindow.window ~width ~height ~title ~show
                                  ~allow_shrink:true ();
+        ignore (window#event#connect#configure ~callback:(fun geom ->
+            let new_width = GdkEvent.Configure.width geom in
+            let new_height = GdkEvent.Configure.height geom in
+            size <- (new_width, new_height);
+            false
+        ));
         let menu_actions = self#initialize_menu_bar window in
         let accel_actions = self#initialize_accelerators in
         orthodrawer <- self#initialize_orthodrawer window;
