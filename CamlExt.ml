@@ -10,7 +10,7 @@ let rec pow n a = if a = 0 then 1 else n * (pow n (a - 1))
 
 (* some haskell wishes *)
 let ($) a b = a b
-let (@) a b = fun x -> a (b x)
+(*let (@) a b = fun x -> a (b x)*)
 let (|>) x y = y x (* left-associative *)
 let (@>) x y = y x (* right-assocative *)
 
@@ -292,3 +292,8 @@ let round float =
 let twopi = 4.0 *. acos 0.0
 let ticks_of_rads rads = int_of_float (rads *. 512.0 /. twopi)
 let rads_of_ticks ticks = (float ticks) *. twopi /. 512.0
+
+let of_opt x =
+    match x with
+    |Some y -> y
+    |None -> raise (Failure "Unexpected None")

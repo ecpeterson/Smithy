@@ -1,8 +1,8 @@
 (*** OrthoDrawer.ml contains a GTK widget class that allows 2D drawing of
  * points, lines, polygons, and bitmaps under scaling and translation
  * transformations. ***)
-
 open CamlExt
+
 class orthoDrawer ?width:explicit_width ?height:explicit_height
                   ?packing:(packing = ignore)
                   ~xmin ~xmax ~ymin ~ymax () =
@@ -73,12 +73,10 @@ object (self)
 
         hadj <- GData.adjustment ();
         vadj <- GData.adjustment ();
-        let hscroll = GRange.scrollbar `HORIZONTAL
-                          ~packing:(table#attach ~left:0 ~top:1)
-                          ~adjustment:hadj () in
-        let vscroll = GRange.scrollbar `VERTICAL
-                          ~packing:(table#attach ~left:1 ~top:0)
-                          ~adjustment:vadj () in
+        GRange.scrollbar `HORIZONTAL ~packing:(table#attach ~left:0 ~top:1)
+                                     ~adjustment:hadj ();
+        GRange.scrollbar `VERTICAL ~packing:(table#attach ~left:1 ~top:0)
+                                   ~adjustment:vadj ();
 
         area#event#add [`BUTTON_MOTION; `BUTTON_PRESS; `BUTTON_RELEASE;
                         `STRUCTURE; `EXPOSURE; `SCROLL; `POINTER_MOTION_HINT];
@@ -133,14 +131,14 @@ object (self)
         begin match drawable_onscreen with
         |None ->
             drawable_onscreen <- Some (new GDraw.drawable (area#misc#window));
-            let Some drawable_onscreen = drawable_onscreen in
+            let drawable_onscreen = of_opt drawable_onscreen in
             let width, height = drawable_onscreen#size in
             buffer <- GDraw.pixmap ~width ~height ();
             drawable <- new GDraw.drawable (buffer#pixmap);
         |Some x -> ()
         end;
         draw_callback self;
-        let Some drawable_onscreen = drawable_onscreen in
+        let drawable_onscreen = of_opt drawable_onscreen in
         drawable_onscreen#put_pixmap ~x:0 ~y:0 buffer#pixmap;
         end;
         false
@@ -243,13 +241,13 @@ object (self)
         let (x, y) = self#to_screen (x, y) in
         let x, y = int_of_float x, int_of_float y in
         let r = 8.0 in
-        let p1x = x + int_of_float (r *. cos (CamlExt.twopi *. facing)) in
-        let p1y = y + int_of_float (r *. sin (CamlExt.twopi *. facing)) in
+        let p1x = x + int_of_float (r *. cos (twopi *. facing)) in
+        let p1y = y + int_of_float (r *. sin (twopi *. facing)) in
         let r = 10.0 in
-        let p2x = x + int_of_float (r *. cos(facing +. 205./. CamlExt.twopi)) in
-        let p2y = y + int_of_float (r *. sin(facing +. 205./. CamlExt.twopi)) in
-        let p3x = x + int_of_float (r *. cos(facing -. 205./. CamlExt.twopi)) in
-        let p3y = y + int_of_float (r *. sin(facing -. 205./. CamlExt.twopi)) in
+        let p2x = x + int_of_float (r *. cos(facing +. 205./. twopi)) in
+        let p2y = y + int_of_float (r *. sin(facing +. 205./. twopi)) in
+        let p3x = x + int_of_float (r *. cos(facing -. 205./. twopi)) in
+        let p3y = y + int_of_float (r *. sin(facing -. 205./. twopi)) in
         let poly = [(p1x, p1y); (p2x, p2y); (p3x, p3y)] in
         drawable#polygon ~filled:true poly;
         drawable#set_foreground `BLACK;
@@ -273,11 +271,10 @@ object (self)
         let orig_scale = scale in
         let new_scale = orig_scale *. factor in
         scale <- new_scale;
-        let xt2, yt2 = self#to_map (x, y) in
         let xnew, ynew =
             x /. orig_scale -. x /. new_scale +. xo,
             y /. orig_scale -. y /. new_scale +. yo in
-        let Some drawable_onscreen = drawable_onscreen in
+        let drawable_onscreen = of_opt drawable_onscreen in
         let width, height = drawable_onscreen#size in
         self#adjust_scroll_range width height;
         self#set_origin (xnew, ynew);

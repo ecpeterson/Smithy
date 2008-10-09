@@ -79,7 +79,7 @@ let draw_polygons orthodrawer =
             (MapFormat.get_poly_ring poly) in
         begin match !mode with
         |Draw_Mode ->
-            if CamlExt.vertex_array_is_concave vertex_array then
+            if vertex_array_is_concave vertex_array then
                 orthodrawer#set_color !Colors.invalid_polygon
             else
                 orthodrawer#set_color !Colors.polygon_color;
@@ -90,11 +90,10 @@ let draw_polygons orthodrawer =
             let n = poly#floor_height /. 18.0 +. 0.5 in
             orthodrawer#set_color (n, n, n)
         |Polygon_Types ->
-            let kind = float (CamlExt.to_enum poly_kind_descriptor
-                                              poly#kind) in
-            CamlExt.hsv_to_rgb (kind /. max,
-                                !Colors.poly_type_saturation,
-                                !Colors.poly_type_value)
+            let kind = float (to_enum poly_kind_descriptor poly#kind) in
+            hsv_to_rgb (kind /. max,
+                        !Colors.poly_type_saturation,
+                        !Colors.poly_type_value)
                 |> orthodrawer#set_color;
         |Liquids ->
             if poly#media_index = -1 then

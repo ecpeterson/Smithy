@@ -1,5 +1,6 @@
 (*** DrawModeEvent.ml contains routines that handle the keyboard and mouse
  * events encounted by the application while in draw mode. ***)
+open CamlExt
 open DrawModeWindows
 open DrawModeSettings
 
@@ -102,7 +103,7 @@ let tool_begin_event toolbar orthodrawer x y button
         let poly = !MapFormat.polygons.(p) in
         let ov = poly#kind in
         let v =
-            CamlExt.of_enum MapTypes.poly_kind_descriptor toolbar#cb_index in
+            of_enum MapTypes.poly_kind_descriptor toolbar#cb_index in
         poly#set_kind v;
         begin match ov, v with
         |MapTypes.Platform, MapTypes.Platform ->
@@ -122,7 +123,7 @@ let tool_begin_event toolbar orthodrawer x y button
         end
     |Polygon_Types, 3, _, _, Some p ->
         let poly = !MapFormat.polygons.(p) in
-        let v = CamlExt.to_enum MapTypes.poly_kind_descriptor poly#kind in
+        let v = to_enum MapTypes.poly_kind_descriptor poly#kind in
         toolbar#set_cb_index v
     |Draw_Mode, 1, _, _, _ ->
         (* in draw mode, we have to deal with what kind of tool to apply *)
@@ -133,26 +134,26 @@ let tool_begin_event toolbar orthodrawer x y button
             (* the arrow tool selects things on mouse down, and multiple things
              * when shift is being held *)
             |true, Point n when point_d < highlight_distance orthodrawer ->
-                    highlight := Point (CamlExt.nub (point_i :: n))
+                    highlight := Point (nub (point_i :: n))
             |_ when point_d < highlight_distance orthodrawer ->
                     highlight := Point [point_i]
             |true, Object n when obj_d < highlight_distance orthodrawer ->
-                    highlight := Object (CamlExt.nub (obj_i :: n))
+                    highlight := Object (nub (obj_i :: n))
             |_ when obj_d < highlight_distance orthodrawer ->
                     highlight := Object [obj_i]
             |true, Annotation n when anno_d < highlight_distance orthodrawer ->
-                    highlight := Annotation (CamlExt.nub (anno_i :: n))
+                    highlight := Annotation (nub (anno_i :: n))
             |_ when anno_d < highlight_distance orthodrawer ->
                     highlight := Annotation [anno_i]
             |true, Line n when line_d < highlight_distance orthodrawer ->
-                    highlight := Line (CamlExt.nub (line_i :: n))
+                    highlight := Line (nub (line_i :: n))
             |_ when line_d < highlight_distance orthodrawer ->
                     highlight := Line [line_i]
             |true, Poly m when poly <> None ->
-                    let Some n = poly in
-                    highlight := Poly (CamlExt.nub (n :: m))
+                    let n = of_opt poly in
+                    highlight := Poly (nub (n :: m))
             |_ when poly <> None ->
-                    let Some n = poly in
+                    let n = of_opt poly in
                     highlight := Poly [n]
             |_ ->
                     highlight := No_Highlight
@@ -203,7 +204,7 @@ let tool_begin_event toolbar orthodrawer x y button
                 MapDialogs.line_dialog !MapFormat.lines.(line_i)
                                        orthodrawer#draw
             else if poly <> None then
-                let Some n = poly in
+                let n = of_opt poly in
                 MapDialogs.poly_dialog !MapFormat.polygons.(n)
                                        orthodrawer#draw);
             ()
@@ -268,9 +269,6 @@ let tool_in_event toolbar orthodrawer x0 y0 old_x old_y x y =
                 match objs_shift_valid ns with
                 |Some (dx, dy) -> List.iter (fun o -> shift_obj o dx dy) ns
                 |None -> () in
-            let anno_index_location a =
-                let anno = !MapFormat.annotations.(a) in
-                anno#location in
             let shift_anno a dx dy=
                 let (ax, ay) = !MapFormat.annotations.(a)#location in
                 !MapFormat.annotations.(a)#set_location (ax +. dx, ay +. dy) in
@@ -306,7 +304,7 @@ let tool_in_event toolbar orthodrawer x0 y0 old_x old_y x y =
                 let points = List.fold_left (fun x y ->
                     let p0, p1 = !MapFormat.lines.(y)#endpoints in
                     p0 :: p1 :: x) [] ns in
-                shift_points (CamlExt.nub points)
+                shift_points (nub points)
             |Annotation ns ->
                 shift_annos ns
             |Poly ns ->
@@ -315,13 +313,13 @@ let tool_in_event toolbar orthodrawer x0 y0 old_x old_y x y =
                     let points = poly#endpoint_indices in
                     let points = Array.sub points 0 poly#vertex_count in
                     Array.to_list points @ x) [] ns in
-                shift_points (CamlExt.nub points);
+                shift_points (nub points);
                 List.iter (fun o -> shift_obj o delta_x delta_y)
-                          (CamlExt.array_grep_indices
+                          (array_grep_indices
                                (fun obj -> List.mem obj#polygon ns)
                                !MapFormat.objs);
                 List.iter (fun a -> shift_anno a delta_x delta_y)
-                          (CamlExt.array_grep_indices
+                          (array_grep_indices
                                (fun anno -> List.mem anno#polygon_index ns)
                                !MapFormat.annotations)
             |Object ns ->

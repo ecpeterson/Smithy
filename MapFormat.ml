@@ -1,7 +1,6 @@
 (*** MapFormat.ml contains various bits of constant information about the
  * Marathon map format, along with routines to read and write the information to
  * disk. ***)
-
 open CamlExt
 open MapTypes
 
@@ -168,8 +167,8 @@ let read_info fh length =
     environment_flags := of_bitflag env_flags_descriptor (input_word fh);
     ignore (input_dword fh); ignore (input_dword fh); (* skip 8 bytes *)
     really_input fh !level_name 0 66;
-    entry_point_flags := CamlExt.of_bitflag entry_point_descriptor
-                                            (input_dword fh)
+    entry_point_flags := of_bitflag entry_point_descriptor
+                                    (input_dword fh)
 
     (* write out a map info chunk *)
 let write_info fh =
@@ -186,18 +185,18 @@ let write_info fh =
     output_word fh (to_bitflag env_flags_descriptor !environment_flags);
     output_padding fh 8;
     output_string_n fh !level_name 66;
-    output_dword fh (CamlExt.to_bitflag entry_point_descriptor
-                                        !entry_point_flags)
+    output_dword fh (to_bitflag entry_point_descriptor
+                                !entry_point_flags)
 
 (* read in a set of chunks from an initialized file pointer *)
 let rec read_chunks fh =
     (* read in chunk header *)
-    let chunk_start = pos_in fh in
+    let _chunk_start = pos_in fh in
     let chunk_name = String.make 4 '\000' in
     really_input fh chunk_name 0 4;
     let next_offset = input_dword fh in
     let length = input_dword fh in
-    let offset = input_dword fh in
+    let _offset = input_dword fh in
     (* match against chunk type *)
     begin match chunk_name with
         |"PNTS" -> read_points fh length
@@ -466,7 +465,6 @@ let delete_annotation n =
 let delete_side n =
     let side = !sides.(n) in
     let parent_poly = !polygons.(side#polygon_index) in
-    let parent_line = !lines.(side#line_index) in
     let poly_side_array = parent_poly#side_indices in
     (* get rid of this side from the parent array, filling in the empty end
      * slot with a -1 value, signalling emptiness *)
@@ -487,7 +485,7 @@ let delete_side n =
 
 (* deletes a polygon and performs cleanup *)
 let delete_poly n =
-    let poly = !polygons.(n) in
+    (*let poly = !polygons.(n) in*)
     (*let lsides = poly#side_indices () in*)
     (* deletes a whole sides array *)
     (*let rec trash_sides m =*)
@@ -524,7 +522,7 @@ let delete_poly n =
         if pi > n then side#set_polygon_index (pi - 1)) !sides;
     (* clean up the objects *)
     let rec clean_objs () =
-        let target = CamlExt.array_find (fun x -> x#polygon = n) !objs in
+        let target = array_find (fun x -> x#polygon = n) !objs in
         if target < Array.length !objs then begin
             delete_obj target;
             clean_objs ()
@@ -534,8 +532,7 @@ let delete_poly n =
         let i = x#polygon in if i > n then x#set_polygon (i-1)) !objs;
     (* clean up the platforms *)
     let rec clean_platforms () =
-        let target = CamlExt.array_find (fun x -> x#polygon_index = n)
-                                        !platforms in
+        let target = array_find (fun x -> x#polygon_index = n) !platforms in
         if target < Array.length !platforms then begin
             delete_platform target;
             clean_platforms ()
@@ -581,11 +578,11 @@ let rec delete_line n =
     (** delete unused points **)
     let p0, p1 = line#endpoints in
     let p0, p1 = max p0 p1, min p0 p1 in
-    let i0 = CamlExt.array_find (fun x ->
+    let i0 = array_find (fun x ->
         let np0, np1 = x#endpoints in np0 = p0 || np1 = p0) !lines in
     if i0 = Array.length !lines then
         delete_point_no_bs p0;
-    let i1 = CamlExt.array_find (fun x ->
+    let i1 = array_find (fun x ->
         let np0, np1 = x#endpoints in np0 = p1 || np1 = p1) !lines in
     if i1 = Array.length !lines then
         delete_point_no_bs p1
@@ -662,7 +659,7 @@ let pave _ =
              * purposes of Lua Visual Mode we want it anyway *)
             MapTypes.High_Side);
         add_side side end in
-    CamlExt.array_fold_left_indexed (fun () line idx ->
+    array_fold_left_indexed (fun () line idx ->
         let cw_poly, ccw_poly = line#cw_poly_owner, line#ccw_poly_owner in
         line#set_cw_poly_side_index (make_side line idx cw_poly ccw_poly);
         line#set_ccw_poly_side_index (make_side line idx ccw_poly cw_poly))

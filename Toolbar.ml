@@ -1,5 +1,5 @@
-open DrawModeSettings
 open CamlExt
+open DrawModeSettings
 
 class toolbar ~main_window ~title ~show () =
 object (self)

@@ -1,5 +1,6 @@
 (*** DialSlider.ml contains a GTK widget class used to pick directional
  * headings similar to the widgets employed by Forge. ***)
+open CamlExt
 
 class dialSlider ?size:explicit_size
                  ?packing:(packing = ignore) () =
@@ -20,7 +21,7 @@ object (self)
     method private ball_radius = size / 8
     method private dial_radius = size / 2 - self#ball_radius
     method private wcenter =
-        let Some drawable_onscreen = drawable_onscreen in
+        let drawable_onscreen = of_opt drawable_onscreen in
         let x, y = drawable_onscreen#size in x / 2, y / 2
     method private center = size / 2
     method private point_on_circle rads =
@@ -32,7 +33,7 @@ object (self)
         let cx, cy = self#wcenter in
         let x, y = (float (x - cx), float (y - cy)) in
         let theta = atan2 y x in
-        let theta = if theta < 0.0 then theta +. CamlExt.twopi else theta in
+        let theta = if theta < 0.0 then theta +. twopi else theta in
         theta
 
     (* accessors *)
@@ -72,7 +73,7 @@ object (self)
         |None ->
             area#misc#realize ();
             drawable_onscreen <- Some (new GDraw.drawable (area#misc#window));
-            let Some drawable_onscreen = drawable_onscreen in
+            let drawable_onscreen = of_opt drawable_onscreen in
             let width, height = drawable_onscreen#size in
             let explicit_size = (match explicit_size with
                                  |None -> 0
@@ -82,7 +83,7 @@ object (self)
             drawable <- new GDraw.drawable (buffer#pixmap);
         |Some x -> ()
         end;
-        let Some drawable_onscreen = drawable_onscreen in
+        let drawable_onscreen = of_opt drawable_onscreen in
         let width, height = size, size in
         drawable#set_foreground (`COLOR (area#misc#style#bg `NORMAL));
         drawable#rectangle ~x:0 ~y:0 ~width ~height ~filled:true ();
@@ -116,10 +117,10 @@ object (self)
         false
     method private scroll_callback scroll_descriptor =
         (match GdkEvent.Scroll.direction scroll_descriptor with
-        | `UP    -> theta <- theta -. CamlExt.twopi /. 512.0
-        | `DOWN  -> theta <- theta +. CamlExt.twopi /. 512.0
+        | `UP    -> theta <- theta -. twopi /. 512.0
+        | `DOWN  -> theta <- theta +. twopi /. 512.0
         | `LEFT | `RIGHT -> ());
-        if theta < 0.0 then theta <- theta +. CamlExt.twopi;
+        if theta < 0.0 then theta <- theta +. twopi;
         valuechanged_callback theta;
         self#draw_callback (Obj.magic ());
         false

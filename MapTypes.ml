@@ -1,7 +1,6 @@
 (*** MapTypes.ml contains various datatypes natural to the Marathon map format,
  * mostly used for mapping directly over the structs stored in Marathon map
  * files ***)
-
 open CamlExt
 
 let vertices_per_poly = 8
@@ -38,15 +37,17 @@ let pnts_reader fh =
     point
 let epnt_reader fh =
     let point = new point in
-    let flags = input_word fh in
-    let highest_adjacent_floor_height = float (input_signed_word fh) /. 1024. in
-    let lowest_adjacent_ceiling_height = float (input_signed_word fh)/. 1024. in
+    let _flags = input_word fh in
+    let _highest_adjacent_floor_height =
+        float (input_signed_word fh) /. 1024. in
+    let _lowest_adjacent_ceiling_height =
+        float (input_signed_word fh)/. 1024. in
     let vertex_x = float (input_signed_word fh) /. 1024. in
     let vertex_y = float (input_signed_word fh) /. 1024. in
     point#set_vertex (vertex_x, vertex_y);
-    let transformed_x = input_signed_word fh in
-    let transformed_y = input_signed_word fh in
-    let supporting_poly_index = input_signed_word fh in
+    let _transformed_x = input_signed_word fh in
+    let _transformed_y = input_signed_word fh in
+    let _supporting_poly_index = input_signed_word fh in
     point
 let pnts_writer fh point =
     let (x, y) = point#vertex in
@@ -95,7 +96,7 @@ end
 let empty_line = new line
 let lins_reader fh =
     let line = new line in
-    let to_lines_flag = CamlExt.of_bitflag lines_flags_descriptor in
+    let to_lines_flag = of_bitflag lines_flags_descriptor in
     let endpoint1 = input_word fh in
     let endpoint2 = input_word fh in
     line#set_endpoints (endpoint1, endpoint2);
@@ -116,7 +117,7 @@ let lins_writer fh line =
     let (endpoint1, endpoint2) = line#endpoints in
     output_word fh endpoint1;
     output_word fh endpoint2;
-    output_word fh (CamlExt.to_bitflag lines_flags_descriptor line#flags);
+    output_word fh (to_bitflag lines_flags_descriptor line#flags);
     (*output_signed_word fh length;*)
     output_signed_word fh 0; (* temporary to see if this fixes a1 *)
     output_signed_word fh (int_of_float (line#highest_adjacent_floor *. 1024.));
@@ -210,7 +211,7 @@ let plat_reader fh =
     plat#set_maximum_height (float (input_signed_word fh) /. 1024.);
     plat#set_minimum_height (float (input_signed_word fh) /. 1024.);
     plat#set_flags
-        (CamlExt.of_bitflag platform_flags_descriptor (input_dword fh));
+        (of_bitflag platform_flags_descriptor (input_dword fh));
     plat#set_polygon_index (input_word fh);
     plat#set_tag (input_word fh);
     ignore (input_dword fh);
@@ -225,7 +226,7 @@ let plat_writer fh plat =
     output_signed_word fh (int_of_float (plat#maximum_height *. 1024.));
     output_signed_word fh (int_of_float (plat#minimum_height *. 1024.));
     output_dword fh
-        (CamlExt.to_bitflag platform_flags_descriptor plat#flags);
+        (to_bitflag platform_flags_descriptor plat#flags);
     output_word fh plat#polygon_index;
     output_word fh plat#tag;
     ignore (output_padding fh 14)
@@ -234,7 +235,7 @@ let opt_plat_reader fh =
     let plat = new platform in
     plat#set_kind (input_word fh);
     plat#set_flags
-        (CamlExt.of_bitflag platform_flags_descriptor (input_dword fh));
+        (of_bitflag platform_flags_descriptor (input_dword fh));
     plat#set_speed (float (input_word fh) *. 1024. /. 30.);
     plat#set_delay (float (input_word fh) *. 30.);
     let min_floor_height = (float (input_signed_word fh) /. 1024.) in
@@ -662,8 +663,8 @@ let lite_reader fh =
         let intensity = float (input_dword fh) /. 65536. in
         let delta_intensity = float (input_dword fh) /. 65536. in
         (kind, period, delta_period, intensity, delta_intensity) in
-    light#set_kind (CamlExt.of_enum light_kind_descriptor (input_word fh));
-    light#set_flags (CamlExt.of_bitflag light_flag_descriptor (input_word fh));
+    light#set_kind (of_enum light_kind_descriptor (input_word fh));
+    light#set_flags (of_bitflag light_flag_descriptor (input_word fh));
     light#set_phase (float (input_word fh) /. 30.0);
     light#set_primary_active (input_ls fh);
     light#set_secondary_active (input_ls fh);
@@ -683,8 +684,8 @@ let lite_writer fh light =
         output_word fh (int_of_float (z *. 30.));
         output_dword fh (int_of_float (s *. 65536.));
         output_dword fh (int_of_float (t *. 65536.)) in
-    output_word fh (CamlExt.to_enum light_kind_descriptor light#kind);
-    output_word fh (CamlExt.to_bitflag light_flag_descriptor light#flags);
+    output_word fh (to_enum light_kind_descriptor light#kind);
+    output_word fh (to_bitflag light_flag_descriptor light#flags);
     output_word fh (int_of_float (light#phase *. 30.0));
     output_ls fh light#primary_active;
     output_ls fh light#secondary_active;
@@ -727,7 +728,7 @@ class obj = object
 end
 let objs_reader fh =
     let obj = new obj in
-    obj#set_kind (CamlExt.of_enum object_kind_descriptor (input_word fh));
+    obj#set_kind (of_enum object_kind_descriptor (input_word fh));
     obj#set_index (input_word fh);
     obj#set_facing (float (input_signed_word fh) /. 512.);
     obj#set_polygon (input_word fh);
@@ -735,10 +736,10 @@ let objs_reader fh =
     let py = float (input_signed_word fh) /. 1024. in
     let pz = float (input_signed_word fh) /. 1024. in
     obj#set_point (px, py, pz);
-    obj#set_flags (CamlExt.of_bitflag object_flags_descriptor (input_word fh));
+    obj#set_flags (of_bitflag object_flags_descriptor (input_word fh));
     obj
 let objs_writer fh obj =
-    output_word fh (CamlExt.to_enum object_kind_descriptor obj#kind);
+    output_word fh (to_enum object_kind_descriptor obj#kind);
     output_word fh obj#index;
     output_signed_word fh (int_of_float (obj#facing *. 512.));
     output_word fh obj#polygon;
@@ -746,7 +747,7 @@ let objs_writer fh obj =
     output_signed_word fh (int_of_float (x *. 1024.));
     output_signed_word fh (int_of_float (y *. 1024.));
     output_signed_word fh (int_of_float (z *. 1024.));
-    output_word fh (CamlExt.to_bitflag object_flags_descriptor obj#flags)
+    output_word fh (to_bitflag object_flags_descriptor obj#flags)
 let empty_obj = new obj
 
 type media_flags = Liquid_Obstructs_Sounds
@@ -794,9 +795,9 @@ end
 let medi_reader fh =
     let media = new media in
     media#set_kind (input_word fh);
-    media#set_flags (CamlExt.of_bitflag media_flags_descriptor (input_word fh));
+    media#set_flags (of_bitflag media_flags_descriptor (input_word fh));
     media#set_light_index (input_word fh);
-    media#set_direction (float (input_word fh) /. 512. *. CamlExt.twopi);
+    media#set_direction (float (input_word fh) /. 512. *. twopi);
     (* TODO: are these reasonable units? *)
     media#set_magnitude (float (input_signed_word fh) /. 1024.);
     media#set_low (float (input_signed_word fh) /. 1024.);
@@ -812,9 +813,9 @@ let medi_reader fh =
     media
 let medi_writer fh media =
     output_word fh media#kind;
-    output_word fh (CamlExt.to_bitflag media_flags_descriptor media#flags);
+    output_word fh (to_bitflag media_flags_descriptor media#flags);
     output_word fh media#light_index;
-    output_word fh (int_of_float (media#direction *. 512. /. CamlExt.twopi));
+    output_word fh (int_of_float (media#direction *. 512. /. twopi));
     output_signed_word fh (int_of_float (media#magnitude *. 1024.));
     output_signed_word fh (int_of_float (media#low *. 1024.));
     output_signed_word fh (int_of_float (media#high *. 1024.));
@@ -941,8 +942,8 @@ let bonk_reader fh =
     random#set_dvolume (float (input_word fh) /. 1024.);
     random#set_period (float (input_word fh) /. 30.);
     random#set_dperiod (float (input_word fh) /. 30.);
-    random#set_direction (float (input_word fh) *. CamlExt.twopi /. 512.);
-    random#set_ddirection (float (input_word fh) *. CamlExt.twopi /. 512.);
+    random#set_direction (float (input_word fh) *. twopi /. 512.);
+    random#set_ddirection (float (input_word fh) *. twopi /. 512.);
     random#set_pitch (float (input_dword fh) /. 65536.);
     random#set_dpitch (float (input_dword fh) /. 65536.);
     random#set_phase (float (input_word fh) /. 30.);
@@ -956,8 +957,8 @@ let bonk_writer fh random =
     output_word fh (int_of_float (random#dvolume *. 1024.));
     output_word fh (int_of_float (random#period *. 30.));
     output_word fh (int_of_float (random#dperiod *. 30.));
-    output_word fh (int_of_float (random#direction *. 512. /. CamlExt.twopi));
-    output_word fh (int_of_float (random#ddirection *. 512. /. CamlExt.twopi));
+    output_word fh (int_of_float (random#direction *. 512. /. twopi));
+    output_word fh (int_of_float (random#ddirection *. 512. /. twopi));
     output_dword fh (int_of_float (random#pitch *. 65536.));
     output_dword fh (int_of_float (random#dpitch *. 65535.));
     output_word fh (int_of_float (random#phase *. 30.));

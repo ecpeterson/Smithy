@@ -1,6 +1,5 @@
 (*** GenerateDialog.ml contains routines that allow automatic dialog
  * generation, execution, and result storage. ***)
-
 open CamlExt
 
 type component =
@@ -29,22 +28,21 @@ let rec build_dialog descriptor ~packing ~cleanup () =
                 (`BOTTOM, GBin.alignment ~height:disp_size ~packing ())
             |`HORIZONTAL ->
                 (`RIGHT, GBin.alignment ~width:disp_size ~packing ()) end in
-            let slider = GRange.scale orient ~adjustment:adj ~value_pos:pos
-                                             ~digits:2 ~packing:align#add
-                                             ~inverted:true () in
+            GRange.scale orient ~adjustment:adj ~value_pos:pos ~digits:2
+                                ~packing:align#add ~inverted:true ();
             adj#connect#value_changed ~callback:(fun _ ->
                 v := adj#value;
                 cleanup ());
             build_dialog descriptor ~packing ~cleanup ()
         |`N (tabs, retvar) :: descriptor ->
             let notebook = GPack.notebook ~tab_pos:`TOP ~packing () in
-            let cleanups = List.map (fun (text, components) ->
+            List.map (fun (text, components) ->
                 let label = GMisc.label ~text () in
                 let page = notebook#append_page ~tab_label:label#coerce in
                 let vbox = GPack.vbox ~border_width:2
                     ~packing:(fun x -> ignore (page x)) () in
                 build_dialog components ~packing:(vbox#pack) ~cleanup ())
-                tabs in
+                tabs;
             notebook#goto_page !retvar;
             notebook#connect#switch_page ~callback:(fun new_page ->
                 retvar := new_page;
@@ -92,11 +90,11 @@ let rec build_dialog descriptor ~packing ~cleanup () =
                                 ~active:!first_setting ~packing:vbox#add () in
             first_button#connect#toggled
                 ~callback:(callback first_setting first_button);
-            let buttons = List.map (fun (label, setting) ->
+            List.map (fun (label, setting) ->
                 let button = GButton.radio_button ~label ~active:!setting
                     ~group:first_button#group ~packing:vbox#add () in
                 button#connect#toggled ~callback:(callback setting button);
-                button) bdesc in
+                button) bdesc;
             build_dialog descriptor ~packing ~cleanup ()
         |`V components :: descriptor ->
             let vbox = GPack.vbox ~packing ~spacing:2 () in
@@ -126,6 +124,7 @@ let rec build_dialog descriptor ~packing ~cleanup () =
                 cleanup ());
             build_dialog descriptor ~packing ~cleanup ()
         |[] -> ()
+        |_ -> raise (Failure "Invalid dialog descriptor")
 
 let generate_dialog descriptor apply title =
     let w = GWindow.dialog ~title ~border_width:2 ~resizable:false
