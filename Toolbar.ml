@@ -70,21 +70,30 @@ object (self) inherit toolbar ~main_window ~title ()
         false
 end
 
-class entryToolbar ~main_window ~title ~label ~strings () =
+class entryToolbar ~main_window ~title ~label ~updater () =
 object (self) inherit toolbar ~main_window ~title ()
-    val mutable entry = Obj.magic ()
+    val mutable cb_descriptor = Obj.magic ()
 
+    method entry = fst cb_descriptor
     method float_entry =
-        try float_of_string entry#entry#text
+        try float_of_string self#entry#entry#text
         with _ -> 0.0
     method set_float f =
-        entry#entry#set_text (string_of_float f)
+        self#entry#entry#set_text (string_of_float f)
 
     initializer
         let hbox = GPack.hbox ~border_width:2 ~packing:vbox#add () in
         GMisc.label ~text:label ~packing:hbox#add ();
-        entry <- fst (GEdit.combo_box_entry_text ~packing:hbox#add ~strings ());
+        cb_descriptor <- GEdit.combo_box_entry_text ~packing:hbox#add ();
+        self#update_list;
         ()
+
+    method update_list =
+        let (entry, (store, column)) = cb_descriptor in
+        store#clear ();
+        List.iter (fun str ->
+            let row = store#append () in
+            store#set ~row ~column str) (updater ())
 end
 
 class selectionToolbar ~main_window ~title ~label ~strings () =
@@ -102,18 +111,18 @@ object (self) inherit toolbar ~main_window ~title ()
         ()
 end
 
-class creationToolbar ~main_window ~title ~label ~strings () =
-object (self) inherit entryToolbar ~main_window ~title ~label ~strings ()
+class creationToolbar ~main_window ~title ~label ~updater () =
+object (self) inherit entryToolbar ~main_window ~title ~label ~updater ()
     val mutable newbutton  = Obj.magic ()
     val mutable editbutton = Obj.magic ()
 
     method newbutton = newbutton
     method editbutton = editbutton
     method int_entry =
-        try int_of_string entry#entry#text
+        try int_of_string self#entry#entry#text
         with _ -> 0
     method set_int i =
-        entry#entry#set_text (string_of_int i)
+        self#entry#entry#set_text (string_of_int i)
 
     initializer
         let hbox = GPack.hbox ~border_width:2 ~packing:vbox#add () in
@@ -159,6 +168,19 @@ object (self)
     method draw_toolbar      = draw_toolbar
     method error_toolbar     = error_toolbar
 
+    method update_list =
+        match !mode with
+        |Elevation_Floor
+        |Elevation_Ceiling ->
+            entry_toolbar#update_list
+        |Lights_Floor
+        |Lights_Ceiling
+        |Lights_Liquid
+        |Liquids
+        |Sounds_Ambient
+        |Sounds_Random ->
+            creation_toolbar#update_list
+        |_ -> ()
     method float_entry    = entry_toolbar#float_entry
     method set_float      = entry_toolbar#set_float
     method cb_index       = selection_toolbar#cb_index
@@ -172,14 +194,14 @@ object (self)
     method connect_edit f = edit_callback <- f
 
     initializer
-        entry_toolbar     <- new entryToolbar     ~main_window ~title ~label:""
-                                                  ~strings:[] ();
+        entry_toolbar     <- new entryToolbar ~main_window ~title ~label:""
+                                              ~updater:(fun _ -> []) ();
         selection_toolbar <- new selectionToolbar ~main_window ~title ~label:""
                                                   ~strings:[] ();
-        creation_toolbar  <- new creationToolbar  ~main_window ~title ~label:""
-                                                  ~strings:[] ();
-        draw_toolbar      <- new drawToolbar      ~main_window ~title ();
-        error_toolbar     <- new errorToolbar     ~main_window ~title ();
+        creation_toolbar  <- new creationToolbar ~main_window ~title ~label:""
+                                                 ~updater:(fun _ -> []) ();
+        draw_toolbar      <- new drawToolbar ~main_window ~title ();
+        error_toolbar     <- new errorToolbar ~main_window ~title ();
         if show then self#show ();
         ()
 
@@ -189,11 +211,11 @@ object (self)
         |Elevation_Floor ->
             entry_toolbar <- new entryToolbar
                 ~main_window ~title ~label:"Floor Elevation"
-                ~strings:[] ()
+                ~updater:MapFormat.floor_heights ()
         |Elevation_Ceiling ->
             entry_toolbar <- new entryToolbar
                 ~main_window ~title ~label:"Ceiling Elevation"
-                ~strings:[] ()
+                ~updater:MapFormat.ceiling_heights ()
         |Polygon_Types ->
             selection_toolbar <- new selectionToolbar
                 ~main_window ~title ~label:"Polygon Type"
@@ -201,27 +223,27 @@ object (self)
         |Lights_Floor ->
             creation_toolbar <- new creationToolbar
                 ~main_window ~title ~label:"Floor Light"
-                ~strings:[] ()
+                ~updater:MapFormat.floor_lights ()
         |Lights_Ceiling ->
             creation_toolbar <- new creationToolbar
                 ~main_window ~title ~label:"Ceiling Light"
-                ~strings:[] ()
+                ~updater:MapFormat.ceiling_lights ()
         |Lights_Liquid ->
             creation_toolbar <- new creationToolbar
                 ~main_window ~title ~label:"Liquid Light"
-                ~strings:[] ()
+                ~updater:MapFormat.liquid_lights ()
         |Liquids ->
             creation_toolbar <- new creationToolbar
                 ~main_window ~title ~label:"Liquid"
-                ~strings:[] ()
+                ~updater:MapFormat.liquids ()
         |Sounds_Ambient ->
             creation_toolbar <- new creationToolbar
                 ~main_window ~title ~label:"Ambient Sound"
-                ~strings:[] ()
+                ~updater:MapFormat.ambient_sounds ()
         |Sounds_Random ->
             creation_toolbar <- new creationToolbar
                 ~main_window ~title ~label:"Random Sound"
-                ~strings:[] ()
+                ~updater:MapFormat.random_sounds ()
         |Draw_Mode ->
             draw_toolbar <- new drawToolbar ~main_window ~title ()
         |_ ->

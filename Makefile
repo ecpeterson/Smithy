@@ -8,10 +8,10 @@ SOURCES = CamlExt.ml \
 	  OrthoDrawer.ml \
 	  Resources.ml \
 	  MapTypes.ml \
+	  MapFormat.ml \
 	  GenerateDialog.ml \
 	  DrawModeSettings.ml \
 	  Toolbar.ml \
-	  MapFormat.ml \
 	  GeomEdit.ml \
 	  FileDialogs.ml \
 	  MapDialogs.ml \
