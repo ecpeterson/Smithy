@@ -310,7 +310,7 @@ object (self)
         (* dispatch for deleting a highlighted map item *)
         let delete_cb _ =
             (* after we delete a point, we need to figure out what to do next *)
-            let get_new_highlight n_list =
+            let get_new_point_highlight n_list =
                 let ps = Array.fold_left (fun acc line ->
                     let p0, p1 = line#endpoints in
                     match List.mem p0 n_list, List.mem p1 n_list with
@@ -320,24 +320,52 @@ object (self)
                 match ps with [] -> No_Highlight | p :: _ ->
                 Point [(p - List.fold_left (fun n point ->
                     if point < p then n + 1 else n) 0 n_list)] in
+            let get_new_line_highlight n_list =
+                let pts = nub (Array.fold_left (fun acc line ->
+                    let p0, p1 = line#endpoints in
+                    let l = find_in_array !MapFormat.lines line in
+                    if List.mem l n_list then p0 :: p1 :: acc
+                    else acc) [] !MapFormat.lines |> nub |> List.sort compare) in
+                match get_new_point_highlight pts with
+                |Point (p :: ps) ->
+                    let lines = Array.fold_left (fun acc line ->
+                        let p0, p1 = line#endpoints in
+                        if p0 = p || p1 = p then
+                            (find_in_array !MapFormat.lines line) :: acc
+                        else
+                            acc) [] !MapFormat.lines |> nub |> List.sort compare in
+                    begin match lines with [] -> No_Highlight | l :: _ ->
+                        Line [(l - List.fold_left (fun n line ->
+                            if line < l then n + 1 else n) 0 n_list)] end
+                |_ -> No_Highlight in
             begin match !highlight with
             |Point  (n :: ns) ->
-                highlight := get_new_highlight (n :: ns);
+                highlight := get_new_point_highlight (n :: ns);
                 List.iter MapFormat.delete_point (n :: ns)
-                ;(match !highlight with
-                |Point [n] -> print_endline (string_of_int n) |_ -> ())
             |Line   (n :: ns) ->
+                highlight := get_new_line_highlight (n :: ns);
                 List.iter MapFormat.delete_line  (n :: ns);
-                highlight := (if n > 0 then Line   [n] else No_Highlight)
             |Poly   (n :: ns) ->
                 List.iter MapFormat.delete_poly  (n :: ns);
-                highlight := (if n > 0 then Poly   [n] else No_Highlight)
+                highlight :=
+                    (if n >= 0 && n < (Array.length !MapFormat.polygons) then
+                        Poly [n]
+                    else
+                        No_Highlight)
             |Object (n :: ns) ->
                 List.iter MapFormat.delete_obj   (n :: ns);
-                highlight := (if n > 0 then Object [n] else No_Highlight)
-            |Annotation ns ->
-                List.iter MapFormat.delete_annotation ns;
-                highlight := No_Highlight
+                highlight :=
+                    (if n >= 0 && n < (Array.length !MapFormat.objs) then
+                        Object [n]
+                    else
+                        No_Highlight)
+            |Annotation (n :: ns) ->
+                List.iter MapFormat.delete_annotation (n :: ns);
+                highlight :=
+                    (if n >= 0 && n < (Array.length !MapFormat.annotations) then
+                        Annotation [n]
+                    else
+                        No_Highlight)
             |No_Highlight |_ -> () end;
             orthodrawer#draw (); () in
         let grid_cb factor _ =
