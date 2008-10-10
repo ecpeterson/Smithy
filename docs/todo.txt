@@ -5,7 +5,6 @@ editing:
 + add 'triggered by' functionality to the monster placement dialog
 + bug: lines read in from map files don't have their length set
 interface:
-+ /definitely/ stop using internal units in dialogs, ideally just write fixed-point readers and writers and stop using internal units in the program itself
 + "save before exiting" dialog
 + bug: map height dialog doesn't actually work properly, and should be non-modal
 + bug: goto dialog needs error handling
@@ -47,8 +46,6 @@ not important
 editing:
 + make the filename string in the map header actually meaningful
 interface:
-+ apparently we're leaving locations and sizes of fresh windows up to the wm,
-which causes bad behavior on other machines.  figure it out
 code:
 + some kind of plugin interface would be pretty sweet
 + put strings into Resources.ml or some similar thing for purposes of i18n
