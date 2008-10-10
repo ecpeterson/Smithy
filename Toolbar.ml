@@ -119,8 +119,6 @@ object (self) inherit entryToolbar ~main_window ~title ~label ~strings ()
         let hbox = GPack.hbox ~border_width:2 ~packing:vbox#add () in
         newbutton  <- GButton.button ~label:"New"  ~packing:hbox#add ();
         editbutton <- GButton.button ~label:"Edit" ~packing:hbox#add ();
-        editbutton#connect#clicked ~callback:(fun _ -> print_endline
-        "internal"; ());
         ()
 end
 
@@ -165,8 +163,6 @@ object (self)
     method set_float      = entry_toolbar#set_float
     method cb_index       = selection_toolbar#cb_index
     method set_cb_index   = selection_toolbar#set_cb_index
-    method newbutton      = creation_toolbar#newbutton
-    method editbutton     = creation_toolbar#editbutton
     method int_entry      = creation_toolbar#int_entry
     method set_int        = creation_toolbar#set_int
     method button_of_tool = draw_toolbar#button_of_tool
@@ -234,6 +230,8 @@ object (self)
         self#show ();
         ()
 
+    (* yes, all this is necessary, since gtk has no concept of how big the
+     * window manager decorations are *)
     method show _ =
         self#window#event#connect#configure ~callback:(fun geom ->
             let new_x = GdkEvent.Configure.x geom in
@@ -249,8 +247,12 @@ object (self)
                 reposition <- false end;
             position <- (new_x, new_y);
             false);
-        self#newbutton#connect#clicked  ~callback:(fun _ -> new_callback ());
-        self#editbutton#connect#clicked ~callback:(fun _ -> edit_callback ());
+        if self#window = creation_toolbar#window then begin
+            creation_toolbar#newbutton#connect#clicked ~callback:(fun _ ->
+                new_callback ());
+            creation_toolbar#editbutton#connect#clicked ~callback:(fun _ ->
+                edit_callback ());
+            () end;
         if not need_init_pos then begin
             self#window#move ~x:(fst position) ~y:(snd position);
             reposition <- true end;
