@@ -240,6 +240,14 @@ let init_draw_mode window =
                                        window#toolbar);
     window#orthodrawer#connect_mousedrag (DrawModeEvent.tool_in_event
                                        window#toolbar);
+    window#orthodrawer#connect_spacedown (fun _ ->
+        window#orthodrawer#set_cursor (List.assoc PanTool tool_cursors));
+    window#orthodrawer#connect_spaceup (fun _ ->
+        match !mode with
+        |Draw_Mode ->
+            window#orthodrawer#set_cursor (List.assoc !active_tool tool_cursors)
+        |_ ->
+            window#orthodrawer#set_cursor `ARROW);
     window#toolbar#connect_new (fun _ ->
         DrawModeEvent.make_new_item window#toolbar window#orthodrawer; ());
     window#toolbar#connect_edit (fun _ ->

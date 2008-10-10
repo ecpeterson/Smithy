@@ -25,6 +25,10 @@ object (self)
         (fun self x0 y0 x1 y1 button state -> ())
     val mutable mousedrag_callback =
         (fun self x0 y0 x1 y1 x2 y2 -> ())
+    val mutable spacedown_callback =
+        (fun _ -> ())
+    val mutable spaceup_callback =
+        (fun _ -> ())
     val mutable draw_callback =
         (fun self -> ())
     val mutable click0 = 0.0, 0.0
@@ -34,11 +38,14 @@ object (self)
     (* XXX: if someone could tell me how to get the record fields out of
      * Gdk.GC.values, that would be a great help *)
     val mutable current_color = (`RGB (0, 0, 0))
+    val mutable space = false
 
     (* accessors *)
     method connect_mousedown f = mousedown_callback <- f
     method connect_mouseup f = mouseup_callback <- f
     method connect_mousedrag f = mousedrag_callback <- f
+    method connect_spacedown f = spacedown_callback <- f
+    method connect_spaceup f = spaceup_callback <- f
     method connect_draw f = draw_callback <- f
     method private set_origin_raw (x, y) =
         suppress_draw <- true;
@@ -54,6 +61,7 @@ object (self)
     method widget = table#coerce
     method set_cursor cursor =
         Gdk.Window.set_cursor area#misc#window (Gdk.Cursor.create cursor)
+    method space = space
 
     (* constructor *)
     initializer
@@ -82,12 +90,18 @@ object (self)
 
         area#event#add [`BUTTON_MOTION; `BUTTON_PRESS; `BUTTON_RELEASE;
                         `STRUCTURE; `EXPOSURE; `SCROLL; `POINTER_MOTION_HINT];
+        eventbox#misc#set_can_focus true;
+        eventbox#misc#connect#realize ~callback:eventbox#misc#grab_focus;
         ignore (eventbox#event#connect#motion_notify
                     ~callback:self#mousedrag_callback);
         ignore (eventbox#event#connect#button_press
                     ~callback:self#mousedown_callback);
         ignore (eventbox#event#connect#button_release
                     ~callback:self#mouseup_callback);
+        ignore (eventbox#event#connect#key_press
+                    ~callback:self#keydown_callback);
+        ignore (eventbox#event#connect#key_release
+                    ~callback:self#keyup_callback);
         ignore (area#event#connect#configure ~callback:self#resize_callback);
         ignore (area#event#connect#expose ~callback:self#draw_callback);
         ignore (area#event#connect#scroll ~callback:self#scroll_callback);
@@ -183,6 +197,18 @@ object (self)
         let x, y = self#to_map (x, y) in
         click1 <- x, y;
         mouseup_callback self x0 y0 x y button state;
+        false
+    method private keydown_callback key_descriptor =
+        let key = GdkEvent.Key.string key_descriptor in
+        if key = " " then begin
+            space <- true;
+            spacedown_callback () end;
+        false
+    method private keyup_callback key_descriptor =
+        let key = GdkEvent.Key.string key_descriptor in
+        if key = " " then begin
+            space <- false;
+            spaceup_callback () end;
         false
 
     (* other public methods *)
