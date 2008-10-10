@@ -33,11 +33,15 @@ let load_prefs _ =
         close_in fh;
         scale, width, height
     with
+    (* hmmm, and windows also doesn't like calling print_endline from within
+     * exception handlers (the app just terminates silently) *)
     |Failure str ->
-        print_endline str;
+        if Sys.os_type = "Unix" then
+            print_endline str;
         32., 500, 300
     |_ ->
-        print_endline "Failed to load preferences!";
+        if Sys.os_type = "Unix" then
+            print_endline "Failed to load preferences!";
         32., 500, 300
 
 let save_prefs scale width height =
