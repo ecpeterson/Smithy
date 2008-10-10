@@ -65,7 +65,7 @@ let lines_flags_descriptor = [0x4000, SOLID; 0x2000, TRANSPARENT;
 class line = object
     val mutable endpoints = (0, 0)
     val mutable flags = [SOLID]
-    val mutable length = 0
+    val mutable length = 0.0
     val mutable highest_adjacent_floor = 0.0
     val mutable lowest_adjacent_ceiling = 0.0
     val mutable cw_poly_side_index = -1
@@ -101,7 +101,7 @@ let lins_reader fh =
     let endpoint2 = input_word fh in
     line#set_endpoints (endpoint1, endpoint2);
     line#set_flags (to_lines_flag (input_word fh));
-    line#set_length (input_signed_word fh);
+    line#set_length (float (input_signed_word fh) /. 1024.);
     line#set_highest_adjacent_floor (float (input_signed_word fh) /. 1024.);
     line#set_lowest_adjacent_ceiling (float (input_signed_word fh) /. 1024.);
     line#set_cw_poly_side_index (input_signed_word fh);

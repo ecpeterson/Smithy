@@ -392,7 +392,7 @@ object (self)
             begin match lines with
             |l::[] ->
                 (* XXX: lines in map files don't have lengths *)
-                let length = (float !MapFormat.lines.(l)#length) in
+                let length = !MapFormat.lines.(l)#length in
                 self#set_status ((index_str "Line" l) ^ "   " ^
                                 "Line length: " ^
                                 (string_of_float length) ^ " WU");

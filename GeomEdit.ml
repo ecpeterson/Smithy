@@ -67,8 +67,7 @@ let connect_line start_point x y choose_distance =
         else
         let (p0x, p0y) = !MapFormat.points.(start_point)#vertex in
         let (p1x, p1y) = !MapFormat.points.(target_point)#vertex in
-        let length = int_of_float (((p0x -. p1x)**2.0 +.
-                                    (p0y -. p1y)**2.0)**0.5) in
+        let length = ((p0x -. p1x)**2.0 +. (p0y -. p1y)**2.0)**0.5 in
         let line = new MapTypes.line in
         line#set_endpoints (start_point, target_point);
         line#set_length length;
