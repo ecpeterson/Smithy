@@ -99,6 +99,7 @@ object (self)
     val mutable toolbar     = Obj.magic ()
     val mutable status      = Obj.magic ()
     val mutable size        = (width, height)
+    val mutable position    = (-1, -1)
 
     (* actual data *)
 
@@ -113,6 +114,8 @@ object (self)
         status#push x
     method width = fst size
     method height = snd size
+    method x = fst position
+    method y = snd position
 
     (* constructor *)
     initializer
@@ -121,7 +124,10 @@ object (self)
         ignore (window#event#connect#configure ~callback:(fun geom ->
             let new_width = GdkEvent.Configure.width geom in
             let new_height = GdkEvent.Configure.height geom in
+            let new_x = GdkEvent.Configure.x geom in
+            let new_y = GdkEvent.Configure.y geom in
             size <- (new_width, new_height);
+            position <- (new_x, new_y);
             false
         ));
         let menu_actions = self#initialize_menu_bar window in
@@ -141,7 +147,9 @@ object (self)
         let menu_bar = ui#get_widget "/MenuBar" in
         vbox#pack menu_bar;
         vbox#reorder_child menu_bar 0;
-        toolbar <- new Toolbar.toolbar window "Smithy Toolbox" true ();
+        toolbar <- new Toolbar.toolbarHandler ~main_window:self
+                                              ~title:"Smithy Toolbox"
+                                              ~show:true ();
         ()
 
     (* private methods *)
@@ -201,7 +209,8 @@ object (self)
                 r "SoundsAmbient"   11 ~label:"_Ambient Sounds";
                 r "SoundsRandom"    12 ~label:"_Random Sounds";
             ] ~callback:(fun state ->
-                self#toolbar#change_editor_state state;
+                self#toolbar#change_editor_state (of_enum mode_descriptor
+                                                          state);
                 orthodrawer#draw ());
 
             a "Pave"        ~label:"_Pave Level"

@@ -1,57 +1,39 @@
 open CamlExt
 open DrawModeSettings
 
-class toolbar ~main_window ~title ~show () =
+class toolbar ~main_window ~title () =
 object (self)
-    (* widgets *)
-    val mutable draw_toolbar =  Obj.magic ()
-    val mutable entry_toolbar = Obj.magic ()
-    val mutable entry_label =   Obj.magic ()
-    val mutable numeric_entry = Obj.magic ()
-    val mutable mediabox =      Obj.magic ()
-    val mutable newbutton =     Obj.magic ()
-    val mutable editbutton =    Obj.magic ()
-    val mutable ptype_cb =      Obj.magic ()
-    val mutable buttons =       Obj.magic ()
+    val mutable window = Obj.magic ()
+    val mutable vbox   = Obj.magic ()
 
-    (* actual data *)
+    method window = window
 
-    (* accessors *)
-    method toolbar =
-        match !mode with
-        |Draw_Mode -> draw_toolbar
-        |_         -> entry_toolbar
-    method int_entry =
-        try int_of_string numeric_entry#text
-        with _ -> 0
-    method float_entry =
-        try float_of_string numeric_entry#text
-        with _ -> 0.0
-    method set_int v = numeric_entry#set_text (string_of_int v)
-    method set_float v = numeric_entry#set_text (string_of_float v)
-    method cb_index = ptype_cb#active
-    method set_cb_index v = ptype_cb#set_active v
-    method button_of_tool tool = List.assoc tool buttons
-    method newbutton = newbutton
-    method editbutton = editbutton
-
-    (* constructor *)
     initializer
-        self#draw_toolbar_init;
-        self#entry_toolbar_init;
-        if show then
-            self#toolbar#show
+        window <- GWindow.window ~title ~show:false ~type_hint:`MENU
+                                 ~resizable:false ();
+        window#set_transient_for main_window#window#as_window;
+        window#set_position `CENTER_ON_PARENT;
+        window#event#connect#delete ~callback:(fun _ -> true);
+        vbox <- GPack.vbox ~border_width:2 ~packing:window#add ();
         ()
+end
 
-    (* private methods *)
-    method draw_toolbar_init =
-        draw_toolbar <- GWindow.window ~title ~show:false ~type_hint:`MENU
-                                       ~resizable:false ();
-        draw_toolbar#set_transient_for main_window#as_window;
-        ignore (draw_toolbar#event#connect#delete ~callback:(fun _ -> true));
+class errorToolbar ~main_window ~title () =
+object (self) inherit toolbar ~main_window ~title ()
+    initializer
+        GMisc.label ~text:"Unimplemented" ~packing:vbox#add ();
+        ()
+end
+
+class drawToolbar ~main_window ~title () =
+object (self) inherit toolbar ~main_window ~title ()
+    val mutable buttons = Obj.magic ()
+
+    method button_of_tool tool = List.assoc tool buttons
+
+    initializer
         let buttonline, buttonarrow, buttonfill, buttonpoly,
             buttonzoom, buttonpan, buttonobj, buttontext =
-            let vbox  = GPack.vbox ~packing:draw_toolbar#add () in
             let hbox1 = GPack.hbox ~packing:vbox#pack () in
             let hbox2 = GPack.hbox ~packing:vbox#pack () in
             let hbox3 = GPack.hbox ~packing:vbox#pack () in
@@ -82,71 +64,196 @@ object (self)
             |> ignore) buttons;
         ()
 
-    method entry_toolbar_init =
-        entry_toolbar <- GWindow.window ~title ~show:false ~border_width:2
-                                        ~resizable:false ();
-        entry_toolbar#set_transient_for main_window#as_window;
-        ignore (entry_toolbar#event#connect#delete ~callback:(fun _ -> true));
-        let vbox = GPack.vbox ~spacing:2 ~packing:entry_toolbar#add () in
-        let hbox = GPack.hbox ~spacing:2 ~packing:vbox#add () in
-        entry_label <- GMisc.label ~packing:hbox#add ();
-        numeric_entry <- GEdit.entry ~packing:hbox#add ();
-        mediabox <- GPack.hbox ~packing:vbox#add ();
-        editbutton <- GButton.button ~packing:mediabox#add ();
-        newbutton <- GButton.button ~packing:mediabox#add ();
-        let cb, _ = GEdit.combo_box_text ~packing:vbox#add
-                                         ~strings:ItemStrings.polygon_types
-                                         () in
-        cb#set_active 0;
-        ptype_cb <- cb;
-        ()
-
-    (* other public methods *)
-    method change_editor_state state =
-        (* when we change between renderer modes, the GTK toolkits have to be
-         * modified and hidden/shown appropriately *)
-        let set_mode box entry_window buttons button_text1 button_text2
-                     label_text menu entry =
-            if box then draw_toolbar#show ()
-                else draw_toolbar#misc#hide ();
-            if entry_window then entry_toolbar#show ()
-                else entry_toolbar#misc#hide ();
-            if buttons then mediabox#misc#show ()
-                else mediabox#misc#hide ();
-            if menu then ptype_cb#misc#show () else ptype_cb#misc#hide ();
-            if entry then numeric_entry#misc#show ()
-                else numeric_entry#misc#hide ();
-            entry_label#set_text label_text;
-            newbutton#set_label button_text1;
-            editbutton#set_label button_text2;
-            () in
-        mode := of_enum mode_descriptor state;
-        numeric_entry#set_text "";
-        ptype_cb#set_active 0;
-        match !mode with
-        |Polygon_Types ->
-            set_mode false true false "" "" "" true false
-        |Draw_Mode ->
-            set_mode true false false "" "" "" false false
-        |Elevation_Floor
-        |Elevation_Ceiling ->
-            set_mode false true false "" "" "Height" false true
-        |Lights_Liquid
-        |Lights_Floor
-        |Lights_Ceiling ->
-            set_mode false true true "New Light..." "Edit Light..." "Light"
-                     false true
-        |Liquids ->
-            set_mode false true true "New Media..." "Edit Media..." "Media"
-                     false true
-        |Sounds_Random
-        |Sounds_Ambient ->
-            set_mode false true true "New Sound..." "Edit Sound..." "Sound"
-                     false true
-        |_ -> ()
-
     method clicked tool =
         List.iter (fun x -> (snd x)#set_active false) buttons;
         active_tool := tool;
         false
+end
+
+class entryToolbar ~main_window ~title ~label ~strings () =
+object (self) inherit toolbar ~main_window ~title ()
+    val mutable entry = Obj.magic ()
+
+    method float_entry =
+        try float_of_string entry#entry#text
+        with _ -> 0.0
+    method set_float f =
+        entry#entry#set_text (string_of_float f)
+
+    initializer
+        let hbox = GPack.hbox ~border_width:2 ~packing:vbox#add () in
+        GMisc.label ~text:label ~packing:hbox#add ();
+        entry <- fst (GEdit.combo_box_entry_text ~packing:hbox#add ~strings ());
+        ()
+end
+
+class selectionToolbar ~main_window ~title ~label ~strings () =
+object (self) inherit toolbar ~main_window ~title ()
+    val mutable cb = Obj.magic ()
+
+    method cb_index = cb#active
+    method set_cb_index i = cb#set_active i
+
+    initializer
+        let hbox = GPack.hbox ~border_width:2 ~packing:vbox#add () in
+        GMisc.label ~text:label ~packing:hbox#add ();
+        cb <- fst (GEdit.combo_box_text ~packing:hbox#add ~strings ());
+        cb#set_active 0;
+        ()
+end
+
+class creationToolbar ~main_window ~title ~label ~strings () =
+object (self) inherit entryToolbar ~main_window ~title ~label ~strings ()
+    val mutable newbutton  = Obj.magic ()
+    val mutable editbutton = Obj.magic ()
+
+    method newbutton = newbutton
+    method editbutton = editbutton
+    method int_entry =
+        try int_of_string entry#entry#text
+        with _ -> 0
+    method set_int i =
+        entry#entry#set_text (string_of_int i)
+
+    initializer
+        let hbox = GPack.hbox ~border_width:2 ~packing:vbox#add () in
+        newbutton  <- GButton.button ~label:"New"  ~packing:hbox#add ();
+        editbutton <- GButton.button ~label:"Edit" ~packing:hbox#add ();
+        editbutton#connect#clicked ~callback:(fun _ -> print_endline
+        "internal"; ());
+        ()
+end
+
+class toolbarHandler ~main_window ~title ~show () =
+object (self)
+    val mutable entry_toolbar     = Obj.magic ()
+    val mutable selection_toolbar = Obj.magic ()
+    val mutable creation_toolbar  = Obj.magic ()
+    val mutable draw_toolbar      = Obj.magic ()
+    val mutable error_toolbar     = Obj.magic ()
+    val mutable position          = (-1, -1)
+    val mutable need_init_pos     = true
+    val mutable reposition        = false
+    val mutable new_callback      = (fun _ -> ())
+    val mutable edit_callback     = (fun _ -> ())
+
+    method window =
+        match !mode with
+        |Elevation_Floor
+        |Elevation_Ceiling ->
+            entry_toolbar#window
+        |Polygon_Types ->
+            selection_toolbar#window
+        |Lights_Floor
+        |Lights_Ceiling
+        |Lights_Liquid
+        |Liquids
+        |Sounds_Ambient
+        |Sounds_Random ->
+            creation_toolbar#window
+        |Draw_Mode ->
+            draw_toolbar#window
+        |_ ->
+            error_toolbar#window
+    method entry_toolbar     = entry_toolbar
+    method selection_toolbar = selection_toolbar
+    method creation_toolbar  = creation_toolbar
+    method draw_toolbar      = draw_toolbar
+    method error_toolbar     = error_toolbar
+
+    method float_entry    = entry_toolbar#float_entry
+    method set_float      = entry_toolbar#set_float
+    method cb_index       = selection_toolbar#cb_index
+    method set_cb_index   = selection_toolbar#set_cb_index
+    method newbutton      = creation_toolbar#newbutton
+    method editbutton     = creation_toolbar#editbutton
+    method int_entry      = creation_toolbar#int_entry
+    method set_int        = creation_toolbar#set_int
+    method button_of_tool = draw_toolbar#button_of_tool
+    method clicked        = draw_toolbar#clicked
+
+    method connect_new f  = new_callback <- f
+    method connect_edit f = edit_callback <- f
+
+    initializer
+        entry_toolbar     <- new entryToolbar     ~main_window ~title ~label:""
+                                                  ~strings:[] ();
+        selection_toolbar <- new selectionToolbar ~main_window ~title ~label:""
+                                                  ~strings:[] ();
+        creation_toolbar  <- new creationToolbar  ~main_window ~title ~label:""
+                                                  ~strings:[] ();
+        draw_toolbar      <- new drawToolbar      ~main_window ~title ();
+        error_toolbar     <- new errorToolbar     ~main_window ~title ();
+        if show then self#show ();
+        ()
+
+    method change_editor_state new_mode =
+        self#window#misc#hide ();
+        begin match new_mode with
+        |Elevation_Floor ->
+            entry_toolbar <- new entryToolbar
+                ~main_window ~title ~label:"Floor Elevation"
+                ~strings:[] ()
+        |Elevation_Ceiling ->
+            entry_toolbar <- new entryToolbar
+                ~main_window ~title ~label:"Ceiling Elevation"
+                ~strings:[] ()
+        |Polygon_Types ->
+            selection_toolbar <- new selectionToolbar
+                ~main_window ~title ~label:"Polygon Type"
+                ~strings:ItemStrings.polygon_types ()
+        |Lights_Floor ->
+            creation_toolbar <- new creationToolbar
+                ~main_window ~title ~label:"Floor Light"
+                ~strings:[] ()
+        |Lights_Ceiling ->
+            creation_toolbar <- new creationToolbar
+                ~main_window ~title ~label:"Ceiling Light"
+                ~strings:[] ()
+        |Lights_Liquid ->
+            creation_toolbar <- new creationToolbar
+                ~main_window ~title ~label:"Liquid Light"
+                ~strings:[] ()
+        |Liquids ->
+            creation_toolbar <- new creationToolbar
+                ~main_window ~title ~label:"Liquid"
+                ~strings:[] ()
+        |Sounds_Ambient ->
+            creation_toolbar <- new creationToolbar
+                ~main_window ~title ~label:"Ambient Sound"
+                ~strings:[] ()
+        |Sounds_Random ->
+            creation_toolbar <- new creationToolbar
+                ~main_window ~title ~label:"Random Sound"
+                ~strings:[] ()
+        |Draw_Mode ->
+            draw_toolbar <- new drawToolbar ~main_window ~title ()
+        |_ ->
+            error_toolbar <- new errorToolbar ~main_window ~title () end;
+        mode := new_mode;
+        self#show ();
+        ()
+
+    method show _ =
+        self#window#event#connect#configure ~callback:(fun geom ->
+            let new_x = GdkEvent.Configure.x geom in
+            let new_y = GdkEvent.Configure.y geom in
+            let width = GdkEvent.Configure.width geom in
+            if need_init_pos then begin
+                self#window#move ~x:(new_x + main_window#width / 2 + width / 2)
+                                 ~y:new_y;
+                need_init_pos <- false end;
+            if reposition then begin
+                let x, y = position in
+                self#window#move ~x:(x - (new_x - x)) ~y:(y - (new_y - y));
+                reposition <- false end;
+            position <- (new_x, new_y);
+            false);
+        self#newbutton#connect#clicked  ~callback:(fun _ -> new_callback ());
+        self#editbutton#connect#clicked ~callback:(fun _ -> edit_callback ());
+        if not need_init_pos then begin
+            self#window#move ~x:(fst position) ~y:(snd position);
+            reposition <- true end;
+        self#window#show ();
+        ()
 end

@@ -240,9 +240,7 @@ let init_draw_mode window =
                                        window#toolbar);
     window#orthodrawer#connect_mousedrag (DrawModeEvent.tool_in_event
                                        window#toolbar);
-    window#toolbar#newbutton#connect#clicked
-        ~callback:(fun _ -> DrawModeEvent.make_new_item window#toolbar
-                                window#orthodrawer; ());
-    window#toolbar#editbutton#connect#clicked
-        ~callback:(fun _ -> DrawModeEvent.edit_current_item window#toolbar
-                                window#orthodrawer; ());
+    window#toolbar#connect_new (fun _ ->
+        DrawModeEvent.make_new_item window#toolbar window#orthodrawer; ());
+    window#toolbar#connect_edit (fun _ ->
+        DrawModeEvent.edit_current_item window#toolbar window#orthodrawer; ());
