@@ -256,7 +256,7 @@ object (self)
     (* yes, all this is necessary, since gtk has no concept of how big the
      * window manager decorations are *)
     method show _ =
-        self#window#event#connect#configure ~callback:(fun geom ->
+        let configure_cb geom =
             let new_x = GdkEvent.Configure.x geom in
             let new_y = GdkEvent.Configure.y geom in
             let width = GdkEvent.Configure.width geom in
@@ -269,7 +269,15 @@ object (self)
                 self#window#move ~x:(x - (new_x - x)) ~y:(y - (new_y - y));
                 reposition <- false end;
             position <- (new_x, new_y);
-            false);
+            false in
+        (* windows apparently sends an extraneous configure event on window
+         * creation with meaningless values *)
+        if Sys.os_type = "Unix" then
+            self#window#event#connect#configure ~callback:configure_cb
+        else
+            self#window#event#connect#configure ~callback:(fun _ ->
+                self#window#event#connect#configure ~callback:configure_cb;
+                false);
         main_window#orthodrawer#set_cursor `ARROW;
         if self#window = creation_toolbar#window then begin
             creation_toolbar#newbutton#connect#clicked ~callback:(fun _ ->
