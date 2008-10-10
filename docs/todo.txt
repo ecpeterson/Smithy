@@ -4,6 +4,7 @@ editing:
 + add placement chunk dialog / functionality
 + add 'triggered by' functionality to the monster placement dialog
 + bug: lines read in from map files don't have their length set
++ bug: clicking with the fill tool anywhere to the left of a polygon within the y limits of its vertices will fill the polygon
 interface:
 + "save before exiting" dialog
 + bug: map height dialog doesn't actually work properly, and should be non-modal
