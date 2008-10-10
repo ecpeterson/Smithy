@@ -1,9 +1,14 @@
 (*** Preferences.ml contains routines that load and save the cross-execution
  * state, like colors or file dialog paths. ***)
 
+let version = ref 1
+
 let load_prefs _ =
     try
         let fh = open_in_bin Resources.preferences_file in
+        let file_version = Marshal.from_channel fh in
+        if file_version != !version then
+            raise (Failure "Old preferences version, loading defaults");
         DrawModeSettings.grid_factor := Marshal.from_channel fh;
         DrawModeSettings.display_grid := Marshal.from_channel fh;
         DrawModeSettings.constrain_to_grid := Marshal.from_channel fh;
@@ -27,13 +32,18 @@ let load_prefs _ =
         let height = (Marshal.from_channel fh) in
         close_in fh;
         scale, width, height
-    with _ ->
+    with
+    |Failure str ->
+        print_endline str;
+        32., 500, 300
+    |_ ->
         print_endline "Failed to load preferences!";
         32., 500, 300
 
 let save_prefs scale width height =
     try
         let fh = open_out_bin Resources.preferences_file in
+        Marshal.to_channel fh !version [];
         Marshal.to_channel fh !DrawModeSettings.grid_factor [];
         Marshal.to_channel fh !DrawModeSettings.display_grid [];
         Marshal.to_channel fh !DrawModeSettings.constrain_to_grid [];
