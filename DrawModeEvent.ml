@@ -23,7 +23,8 @@ let highlight_distance orthodrawer =
 let tool_begin_event toolbar orthodrawer x y button
                      (state: Gdk.Tags.modifier list) =
     (* unwrap values actually useful to us *)
-    let tool = !active_tool in
+    let mode = if orthodrawer#space then Draw_Mode else !mode in
+    let tool = if orthodrawer#space then PanTool else !active_tool in
     (* get nearby objects, since tools frequently need them *)
     let (point_d, point_i) = MapFormat.get_closest_point x y in
     let (line_d, line_i) = MapFormat.get_closest_line x y in
@@ -32,7 +33,7 @@ let tool_begin_event toolbar orthodrawer x y button
     let (anno_d, anno_i) = MapFormat.get_closest_annotation x y in
     (* biiiiig switch statement that selects what exactly we want to be doing
      * with this mouse click *)
-    begin match (!mode, button, toolbar#int_entry,
+    begin match (mode, button, toolbar#int_entry,
                  toolbar#float_entry, poly) with
     (* a bunch of these get and set media/light/height/whatever attributes *)
     |Lights_Liquid, 1, v, _, Some p ->
@@ -223,8 +224,9 @@ let tool_begin_event toolbar orthodrawer x y button
 (* this gets called when we're dragging a tool around *)
 let tool_in_event toolbar orthodrawer x0 y0 old_x old_y x y =
     (* extract values actually useful to us *)
-    let tool = !active_tool in
-    begin match !mode with
+    let mode = if orthodrawer#space then Draw_Mode else !mode in
+    let tool = if orthodrawer#space then PanTool else !active_tool in
+    begin match mode with
     |Draw_Mode ->
         (* if we're panning, then pan *)
         if tool = PanTool then
