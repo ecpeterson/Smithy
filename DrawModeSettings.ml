@@ -6,6 +6,17 @@ type tool = ArrowTool | LineTool |
             PolyTool  | FillTool |
             PanTool   | ZoomTool |
             TextTool  | ObjTool
+(* TODO: a lot of these are bad choices, we should make our own custom ones *)
+let tool_cursors = [
+    (ArrowTool, `ARROW);
+    (LineTool,  `TCROSS);
+    (PolyTool,  `TCROSS);
+    (FillTool,  `SPRAYCAN);
+    (PanTool,   `HAND1);
+    (ZoomTool,  `PLUS);
+    (TextTool,  `XTERM);
+    (ObjTool,   `TCROSS);
+]
 
 let active_tool = ref ArrowTool
 let grid_factor = ref 0.5

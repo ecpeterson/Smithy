@@ -67,6 +67,7 @@ object (self) inherit toolbar ~main_window ~title ()
     method clicked tool =
         List.iter (fun x -> (snd x)#set_active false) buttons;
         active_tool := tool;
+        main_window#orthodrawer#set_cursor (List.assoc tool tool_cursors);
         false
 end
 
@@ -269,6 +270,7 @@ object (self)
                 reposition <- false end;
             position <- (new_x, new_y);
             false);
+        main_window#orthodrawer#set_cursor `ARROW;
         if self#window = creation_toolbar#window then begin
             creation_toolbar#newbutton#connect#clicked ~callback:(fun _ ->
                 new_callback ());

@@ -52,6 +52,8 @@ object (self)
     method origin = hadj#value, vadj#value
     method scale = scale
     method widget = table#coerce
+    method set_cursor cursor =
+        Gdk.Window.set_cursor area#misc#window (Gdk.Cursor.create cursor)
 
     (* constructor *)
     initializer

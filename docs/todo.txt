@@ -27,7 +27,6 @@ interface:
 + write single level undo
 + write multiple level undo
 + holding down space should temporarily enable hand mode
-+ cursors for different tools
 + allow shift-click on a highlighted item to unhighlight it
 + arrow keys should move points/lines/polygons around
 + display highlighted objects somehow
