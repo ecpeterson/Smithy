@@ -416,7 +416,7 @@ let get_enclosing_poly x0 y0 =
 let recalculate_lengths point =
     let line_length = Array.length !lines in
     let length (x0, y0) (x1, y1) =
-        int_of_float (((x0 -. x1)**2.0 +. (y0 -. y1)**2.0)**0.5) in
+        ((x0 -. x1)**2.0 +. (y0 -. y1)**2.0)**0.5 in
     let rec line_loop n =
         if n = line_length then () else
         let line = !lines.(n) in
