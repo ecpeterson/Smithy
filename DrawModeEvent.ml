@@ -176,7 +176,7 @@ let tool_begin_event toolbar orthodrawer x y button
                 GeomEdit.start_line x y (highlight_distance orthodrawer) end
         (* and the fill tool fills line loops with polygons *)
         else if tool = FillTool then begin
-            GeomEdit.fill_poly (int_of_float x) (int_of_float y);
+            GeomEdit.fill_poly x y;
             orthodrawer#draw () end
         else if tool = ObjTool then begin
             begin match poly with

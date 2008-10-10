@@ -122,8 +122,8 @@ let select_line_loop x y =
             let (p0, p1) = line#endpoints in
             let (p0x, p0y) = !MapFormat.points.(p0)#vertex in
             let (p1x, p1y) = !MapFormat.points.(p1)#vertex in
-            let u = (float y -. p0y) /. (p1y -. p0y) in
-            let x_intersect = int_of_float (p0x +. (u *. (p1x -. p0x))) in
+            let u = (y -. p0y) /. (p1y -. p0y) in
+            let x_intersect = p0x +. (u *. (p1x -. p0x)) in
             (* u \in [0, 1] ? *)
             if u >= 0.0 && u <= 1.0 && x_intersect > x then true
             else false in
@@ -140,7 +140,7 @@ let select_line_loop x y =
             let (p0, p1) = line#endpoints in
             let (p0x, p0y) = !MapFormat.points.(p0)#vertex in
             let (p1x, p1y) = !MapFormat.points.(p1)#vertex in
-            (float y -. p0y) *. (p1x -. p0x) /. (p1y -. p0y) +. p0x in
+            (y -. p0y) *. (p1x -. p0x) /. (p1y -. p0y) +. p0x in
         (* the actual sorting function *)
         let sort_helper l1 l2 =
             let l1 = get_intersection_point !MapFormat.lines.(l1) in
@@ -240,8 +240,8 @@ let select_line_loop x y =
 
 let fill_poly x y =
     (* first make sure we're not trying to fill an existing poly *)
-    match MapFormat.get_enclosing_poly (float x) (float y) with Some a -> ()
-                                                              | None   ->
+    match MapFormat.get_enclosing_poly x y with Some a -> ()
+                                              | None   ->
     (* next try to get the line loop *)
     match select_line_loop x y with None -> () | Some line_loop ->
     (* now make sure all the lines have a free side *)
