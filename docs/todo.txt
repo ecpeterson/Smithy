@@ -5,10 +5,13 @@ editing:
 + add 'triggered by' functionality to the monster placement dialog
 + bug: lines read in from map files don't have their length set
 + bug: clicking with the fill tool anywhere to the left of a polygon within the y limits of its vertices will fill the polygon
++ bug: sometimes deleting points doesn't work?
 interface:
 + "save before exiting" dialog
 + bug: map height dialog doesn't actually work properly, and should be non-modal
 + bug: goto dialog needs error handling
+code:
++ everything is quite slow/laggy under windows (something like 6-10x slower than linux)... why?
 
 less important
 =========
@@ -30,6 +33,8 @@ interface:
 + allow shift-click on a highlighted item to unhighlight it
 + arrow keys should move points/lines/polygons around
 + display highlighted objects somehow
++ drawing a new line should highlight the endpoint when done
++ player arrows are distorted now (probably related to the float stuff)
 code:
 + comment those ridiculous algorithms
 + finish the enumerative / bitmask type conversion in MapTypes.ml
