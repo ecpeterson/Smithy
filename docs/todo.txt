@@ -10,6 +10,7 @@ interface:
 + "save before exiting" dialog
 + bug: map height dialog doesn't actually work properly, and should be non-modal
 + bug: goto dialog needs error handling
++ dragging points ignores 'constrain to grid'
 code:
 + everything is quite slow/laggy under windows (something like 6-10x slower than linux)... why?
 
