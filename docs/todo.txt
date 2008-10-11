@@ -34,7 +34,6 @@ interface:
 + arrow keys should move points/lines/polygons around
 + display highlighted objects somehow
 + drawing a new line should highlight the endpoint when done
-+ player arrows are distorted now (probably related to the float stuff)
 code:
 + comment those ridiculous algorithms
 + finish the enumerative / bitmask type conversion in MapTypes.ml

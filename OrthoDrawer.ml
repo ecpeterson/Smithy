@@ -269,13 +269,13 @@ object (self)
         let (x, y) = self#to_screen (x, y) in
         let x, y = int_of_float x, int_of_float y in
         let r = 8.0 in
-        let p1x = x + int_of_float (r *. cos (twopi *. facing)) in
-        let p1y = y + int_of_float (r *. sin (twopi *. facing)) in
+        let p1x = x + int_of_float (r *. cos facing) in
+        let p1y = y + int_of_float (r *. sin facing) in
         let r = 10.0 in
-        let p2x = x + int_of_float (r *. cos(facing +. 205./. twopi)) in
-        let p2y = y + int_of_float (r *. sin(facing +. 205./. twopi)) in
-        let p3x = x + int_of_float (r *. cos(facing -. 205./. twopi)) in
-        let p3y = y + int_of_float (r *. sin(facing -. 205./. twopi)) in
+        let p2x = x + int_of_float (r *. cos (facing +. twopi *. 0.4)) in
+        let p2y = y + int_of_float (r *. sin (facing +. twopi *. 0.4)) in
+        let p3x = x + int_of_float (r *. cos (facing -. twopi *. 0.4)) in
+        let p3y = y + int_of_float (r *. sin (facing -. twopi *. 0.4)) in
         let poly = [(p1x, p1y); (p2x, p2y); (p3x, p3y)] in
         drawable#polygon ~filled:true poly;
         drawable#set_foreground `BLACK;
