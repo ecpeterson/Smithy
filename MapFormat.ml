@@ -677,18 +677,18 @@ let to_strings arr accessor stringizer =
         (nub (List.sort compare (List.map accessor (Array.to_list arr))))
 
 let floor_heights _ =
-    to_strings !polygons (fun p -> p#floor_height)              string_of_float
+    to_strings !polygons (fun p -> p#floor_height)            string_of_float
 let ceiling_heights _ =
-    to_strings !polygons (fun p -> p#ceiling_height)            string_of_float
+    to_strings !polygons (fun p -> p#ceiling_height)          string_of_float
 let floor_lights _ =
-    to_strings !polygons (fun p -> p#floor_lightsource)         string_of_int
+    to_strings !lights   (fun l -> find_in_array !lights l)   string_of_int
 let ceiling_lights _ =
-    to_strings !polygons (fun p -> p#ceiling_lightsource)       string_of_int
+    to_strings !lights   (fun l -> find_in_array !lights l)   string_of_int
 let liquid_lights _ =
-    to_strings !polygons (fun p -> p#media_lightsource)         string_of_int
+    to_strings !lights   (fun l -> find_in_array !lights l)   string_of_int
 let liquids _ =
-    to_strings !polygons (fun p -> p#media_index)               string_of_int
+    to_strings !media    (fun m -> find_in_array !media m)    string_of_int
 let ambient_sounds _ =
-    to_strings !polygons (fun p -> p#ambient_sound_image_index) string_of_int
+    to_strings !ambients (fun a -> find_in_array !ambients a) string_of_int
 let random_sounds _ =
-    to_strings !polygons (fun p -> p#random_sound_image_index)  string_of_int
+    to_strings !randoms  (fun r -> find_in_array !randoms r)  string_of_int

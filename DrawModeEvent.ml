@@ -421,5 +421,7 @@ let make_new_item toolbar orthodrawer =
         Some (fun draw -> MapDialogs.make_ambient draw)
     |_ -> None end in
     match creator with
-    |Some f -> toolbar#set_int (f orthodrawer#draw)
+    |Some f ->
+        toolbar#set_int (f orthodrawer#draw);
+        toolbar#update_list
     |None -> ()
