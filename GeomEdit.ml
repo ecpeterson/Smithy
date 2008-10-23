@@ -36,7 +36,7 @@ let start_line x y choose_distance =
         if cw_poly = -1 && ccw_poly = -1 then begin
             (* do line splitting, pretty straightforward *)
             let (p0, p1) = line#endpoints in
-            MapFormat.delete_line nearest_line;
+            MapFormat.delete_line_no_bs nearest_line;
             let point = new MapTypes.point in
             let (px, py) = point_filter (x, y) in
             point#set_vertex (px, py);
