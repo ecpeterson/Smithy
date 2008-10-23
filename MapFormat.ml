@@ -555,8 +555,29 @@ let delete_point_no_bs n =
         destructive_map (fun x -> if x > n then x - 1 else x)
             x#endpoint_indices) !polygons
 
+(* deletes a line and DOES NOT PERFORM POINT CLEANUP *)
+let delete_line_no_bs n =
+    let line = !lines.(n) in
+    (* if our line is attached to polygons, delete them *)
+    let poly0 = line#cw_poly_owner in
+    let poly1 = line#ccw_poly_owner in
+    let (poly0, poly1) = (max poly0 poly1, min poly0 poly1) in
+    if poly0 <> -1 then delete_poly poly0;
+    if poly1 <> -1 then delete_poly poly1;
+    (* actually delete the line *)
+    lines := delete_from_array_and_resize !lines n;
+    (* loop through the other polys, fix their line indices *)
+    Array.iter (fun x ->
+            let lines = x#line_indices in
+            destructive_map (fun x -> if x > n then x - 1 else x) lines)
+        !polygons;
+    (* loop through sides, fix their line owner indices *)
+    Array.iter (fun x ->
+            let li = x#line_index in
+            x#set_line_index (if li > n then li - 1 else li)) !sides
+
 (* deletes a line and performs cleanup *)
-let rec delete_line n =
+let delete_line n =
     let line = !lines.(n) in
     (* if our line is attached to polygons, delete them *)
     let poly0 = line#cw_poly_owner in
