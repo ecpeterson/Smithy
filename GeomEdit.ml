@@ -92,7 +92,7 @@ let connect_line start_point x y choose_distance =
         if (line#cw_poly_owner = -1 && line#ccw_poly_owner = -1) then begin
             (* nope, so here we split the line *)
             let (p0, p1) = line#endpoints in
-            MapFormat.delete_line nearest_line;
+            MapFormat.delete_line_no_bs nearest_line;
             let point = new MapTypes.point in
             let (px, py) = point_filter (x, y) in
             point#set_vertex (px, py);
