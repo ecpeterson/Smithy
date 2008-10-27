@@ -350,11 +350,11 @@ let get_closest_line x0 y0 =
  * guaranteed-to-be-generated line loop.  most of the mess comes from
  * ordering the line's vertices, which aren't guaranteed to be in any
  * particular order *)
-let get_poly_ring (poly : polygon) =
+let get_point_ring_from_line_ring line_index_array count =
     let endpoints = Array.map
-        (fun x -> !lines.(x)#endpoints) poly#line_indices in
+        (fun x -> !lines.(x)#endpoints) line_index_array in
     let rec loop n acc =
-        if n = poly#vertex_count then acc else
+        if n = count then acc else
         let (e0, e1) = endpoints.(n) in
         if n = 0 then begin
             let (e2, e3) = endpoints.(1) in
@@ -367,9 +367,11 @@ let get_poly_ring (poly : polygon) =
         else
             loop (n+1) (e0 :: acc) in
     loop 0 []
+let get_poly_ring poly =
+    get_point_ring_from_line_ring poly#line_indices poly#vertex_count
 
-(* gets a polygon that encloses the point (x0, y0) *)
-let get_enclosing_poly x0 y0 =
+(* tests if a point loop encloses the point (x0, y0) *)
+let point_loop_encloses_point (x0, y0) points =
     (* what a useful constant *)
     let pi = asin 1.0 *. 2.0 in
     (* computes the angle between the line from the origin to (x0, y0) and
@@ -386,29 +388,29 @@ let get_enclosing_poly x0 y0 =
             dtheta +. 2.0 *. pi
         else
             dtheta in
-    (* the idea here is that if we triangulate a polygon by taking a bunch
-     * of triangles that all share a common point ( (x0, y0) ), if that
+    (* the idea here is that we triangulate a polygon by taking a bunch
+     * of triangles that all share a common point ( (x0, y0) ), and if that
      * common point is inside the polygon then these triangles sweep out a
      * signed angle of 2pi and a signed angle of 0 otherwise *)
-    let rec sum_angles points (x0, y0) i acc =
+    let rec sum_angles (x0, y0) i acc =
         if i >= List.length points then acc else
         let next = (if i = (List.length points) - 1 then 0 else i + 1) in
         let (p0x, p0y) = List.nth points i in
         let (p1x, p1y) = List.nth points next in
         let p0 = (p0x -. x0, p0y -. y0) in
         let p1 = (p1x -. x0, p1y -. y0) in
-        sum_angles points (x0, y0) (i+1) (angle p0 p1 +. acc) in
+        sum_angles (x0, y0) (i+1) (angle p0 p1 +. acc) in
+    not (abs_float (sum_angles (x0, y0) 0 0.0) < pi)
+(* gets a polygon that encloses the point (x0, y0) *)
+let get_enclosing_poly x0 y0 =
     (* iterate through the map's polygons until we find one that works *)
     let rec g_e_p_aux x0 y0 i =
         if i = Array.length !polygons then None else
         let poly = !polygons.(i) in
         let poly_ring = get_poly_ring poly in
         let poly_points = List.map (fun x -> !points.(x)#vertex) poly_ring in
-        let sum = sum_angles poly_points (x0, y0) 0 0.0 in
-        if abs_float sum < pi then
-            g_e_p_aux x0 y0 (i+1)
-        else
-            Some i in
+        if point_loop_encloses_point (x0, y0) poly_points then Some i
+            else g_e_p_aux x0 y0 (i+1) in
     g_e_p_aux x0 y0 0
 
 (* when we move a point, we'll want to recalcuate the lengths of lines

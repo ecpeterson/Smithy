@@ -233,7 +233,16 @@ let select_line_loop x y =
         (* attempt to build the line loop *)
         try begin match build_loop ep0 ep0 ep1 0 starter with
             |None -> array_iter starters (* try the next candidate *)
-            |Some result -> Some (starter :: result) end (* success! *)
+            |Some result ->
+                (* XXX: THIS IS A LINE INDEX LOOP *)
+                let loop = starter :: result in
+                let point_loop = MapFormat.get_point_ring_from_line_ring
+                    (Array.of_list loop) (List.length loop) in
+                let vertex_loop = List.map (fun x ->
+                    !MapFormat.points.(x)#vertex) point_loop in
+                if MapFormat.point_loop_encloses_point (x, y) vertex_loop
+                    then Some (starter :: result)
+                    else array_iter starters end
         with |_ -> array_iter starters in
     (* dominoes! *)
     array_iter (build_list ())
