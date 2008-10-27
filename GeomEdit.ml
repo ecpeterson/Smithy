@@ -57,14 +57,14 @@ let start_line x y choose_distance =
 let connect_line start_point x y choose_distance =
     (* utility to actually add the line *)
     let do_line target_point =
-        if start_point = target_point then
-            match !new_point with
+        if start_point = target_point then () else begin
+(*            match !new_point with (* Why was this here?  What nonsense! *)
             |Some pi ->
                 MapFormat.delete_point pi;
                 new_point := None;
                 ()
             |None -> ()
-        else
+        else begin *)
         let (p0x, p0y) = !MapFormat.points.(start_point)#vertex in
         let (p1x, p1y) = !MapFormat.points.(target_point)#vertex in
         let length = ((p0x -. p1x)**2.0 +. (p0y -. p1y)**2.0)**0.5 in
@@ -72,7 +72,7 @@ let connect_line start_point x y choose_distance =
         line#set_endpoints (start_point, target_point);
         line#set_length length;
         MapFormat.add_line line;
-        () in
+        () end in
     (* utility to add a new point and connect the line up to it *)
     let do_new_point () =
         let point = new MapTypes.point in
