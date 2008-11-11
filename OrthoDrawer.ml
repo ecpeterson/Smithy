@@ -179,14 +179,17 @@ object (self)
         mousedrag_callback self x0 y0 oldx oldy x y;
         false
     method private mousedown_callback mouse_descriptor =
-        let x = GdkEvent.Button.x mouse_descriptor in
-        let y = GdkEvent.Button.y mouse_descriptor in
-        let button = GdkEvent.Button.button mouse_descriptor in
-        let state = Gdk.Convert.modifier (GdkEvent.Button.state mouse_descriptor) in
-        let x, y = self#to_map (x, y) in
-        click0 <- x, y;
-        click1 <- x, y;
-        mousedown_callback self x y button state;
+        begin match GdkEvent.get_type mouse_descriptor with
+        |`BUTTON_PRESS ->
+            let x = GdkEvent.Button.x mouse_descriptor in
+            let y = GdkEvent.Button.y mouse_descriptor in
+            let button = GdkEvent.Button.button mouse_descriptor in
+            let state = Gdk.Convert.modifier (GdkEvent.Button.state mouse_descriptor) in
+            let x, y = self#to_map (x, y) in
+            click0 <- x, y;
+            click1 <- x, y;
+            mousedown_callback self x y button state
+        |_ -> () end;
         false
     method private mouseup_callback mouse_descriptor =
         let x = GdkEvent.Button.x mouse_descriptor in
