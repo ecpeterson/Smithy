@@ -1,0 +1,36 @@
+Installation instructions
+-------------------------
+1)  Download and install the GTK+ Runtime Environment from
+    http://gladewin32.sourceforge.net/
+2)  Double click on "smithy.exe"
+
+==============================================================================
+
+Build instructions
+------------------
+1)  Download and install the MinGW port of OCaml from
+    http://caml.inria.fr/download.en.html
+2)  Download and install Cygwin from http://www.cygwin.com/, and install the
+    binutils, gcc-core, gcc-mingw-core, make, mingw-runtime, and w32-api
+    packages along with whatever else is selected by default
+3)  Download OCamlMakefile from http://www.ocaml.info/home/ocaml_sources.html
+    and save it somewhere
+4)  Download LablGTK2 from
+    http://wwwfun.kurims.kyoto-u.ac.jp/soft/lsl/lablgtk.html
+5)  Download and install the GTK+ Development Environment from
+    http://gladewin32.sourceforge.net/ - it should detect your Cygwin
+    installation and set things up to use it
+6)  Copy bin/lablgtk.bat, lib/stublibs/dlllablgtk2.dll, and lib/lablgtk2/ from
+    the LablGTK2 distribution to the corresponding places in the OCaml
+    installation from step 1
+7)  Open up a Cygwin terminal, go to the lib/lablgtk2/ directory you just
+    copied, and run "ocaml build.ml"
+8)  Go to the examples/ directory in the LablGTK2 distribution and run
+    "lablgtk2.bat testgtk.ml" - this should open up a GTK window with lots of
+    tests for the available widgets. If this doesn't work, you've messed
+    something up in the previous steps.
+9)  In the Smithy source tree, modify Make.config to point to where you
+    downloaded OCamlMakefile in step 3
+10) Running "make -f Make.win32" should now build the byte-code version, and
+    "make -f Make.win32 native-code" should now build the native code version
+    of Smithy
