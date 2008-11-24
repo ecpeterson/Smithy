@@ -2,20 +2,13 @@
  * manipulations of map data. ***)
 open CamlExt
 
-let point_filter (x, y) =
-    if !DrawModeSettings.constrain_to_grid then begin
-        let granularity = !DrawModeSettings.grid_factor in
-        float (round (x /. granularity)) *. granularity,
-            float (round (y /. granularity)) *. granularity
-    end else (x, y)
-
 let new_point = ref None
 (* this gets called on the mouse down event when drawing a line *)
 let start_line x y choose_distance =
     let do_new_point () =
         (* spawn a new point, select it *)
         let point = new MapTypes.point in
-        let (px, py) = point_filter (x, y) in
+        let (px, py) = DrawModeSettings.point_filter (x, y) in
         point#set_vertex (px, py);
         let pi = MapFormat.add_point point in
         new_point := Some pi;
@@ -38,7 +31,7 @@ let start_line x y choose_distance =
             let (p0, p1) = line#endpoints in
             MapFormat.delete_line_no_bs nearest_line;
             let point = new MapTypes.point in
-            let (px, py) = point_filter (x, y) in
+            let (px, py) = DrawModeSettings.point_filter (x, y) in
             point#set_vertex (px, py);
             let pi = MapFormat.add_point point in
             let line1 = new MapTypes.line in
@@ -76,7 +69,7 @@ let connect_line start_point x y choose_distance =
     (* utility to add a new point and connect the line up to it *)
     let do_new_point () =
         let point = new MapTypes.point in
-        let (px, py) = point_filter (x, y) in
+        let (px, py) = DrawModeSettings.point_filter (x, y) in
         point#set_vertex (px, py);
         do_line (MapFormat.add_point point) in
     (* get the closest point/line to our click *)
@@ -94,7 +87,7 @@ let connect_line start_point x y choose_distance =
             let (p0, p1) = line#endpoints in
             MapFormat.delete_line_no_bs nearest_line;
             let point = new MapTypes.point in
-            let (px, py) = point_filter (x, y) in
+            let (px, py) = DrawModeSettings.point_filter (x, y) in
             point#set_vertex (px, py);
             let pi = MapFormat.add_point point in
             let line1 = new MapTypes.line in

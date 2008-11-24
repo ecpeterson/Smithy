@@ -243,7 +243,7 @@ let read_from_file fname =
 
 (* write out to an unmerged map file *)
 let write_to_file filename =
-    let fh = open_out filename in
+    let fh = open_out_bin filename in
     output_word fh 2; (* output the wad version, forge uses 2 *)
     output_word fh 1; (* output the data version, forge uses 1 *)
     output_string_n fh "TODO filename" 64; (* string containing the short filename *)
