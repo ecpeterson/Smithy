@@ -58,3 +58,10 @@ let mode_descriptor = 0, [Draw_Mode;      Visual_Mode;      Polygon_Types;
                           Lights_Ceiling; Lights_Liquid;    Sounds_Ambient;
                           Sounds_Random]
 let mode = ref Draw_Mode
+
+let point_filter (x, y) =
+    if !constrain_to_grid then begin
+        let granularity = !grid_factor in
+        float (CamlExt.round (x /. granularity)) *. granularity,
+            float (CamlExt.round (y /. granularity)) *. granularity
+    end else (x, y)
