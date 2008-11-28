@@ -58,12 +58,10 @@ let connect_line start_point x y choose_distance =
                 ()
             |None -> ()
         else begin *)
-        let (p0x, p0y) = !MapFormat.points.(start_point)#vertex in
-        let (p1x, p1y) = !MapFormat.points.(target_point)#vertex in
-        let length = ((p0x -. p1x)**2.0 +. (p0y -. p1y)**2.0)**0.5 in
         let line = new MapTypes.line in
         line#set_endpoints (start_point, target_point);
-        line#set_length length;
+        line#set_length (distance !MapFormat.points.(start_point)#vertex
+                                  !MapFormat.points.(target_point)#vertex);
         MapFormat.add_line line;
         () end in
     (* utility to add a new point and connect the line up to it *)
