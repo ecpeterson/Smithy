@@ -143,29 +143,47 @@ let tool_begin_event toolbar orthodrawer x y button
             (* the arrow tool selects things on mouse down, and multiple things
              * when shift is being held *)
             |true, Point n when point_d < highlight_distance orthodrawer ->
-                    highlight := Point (nub (point_i :: n))
+                if List.mem point_i n then
+                    (* if this point is already in the selection list, remove *)
+                    highlight := Point (List.filter (fun x -> x != point_i) n)
+                else
+                    (* otherwise, add it fresh *)
+                    highlight := Point (point_i :: n)
             |_ when point_d < highlight_distance orthodrawer ->
-                    highlight := Point [point_i]
+                highlight := Point [point_i]
             |true, Object n when obj_d < highlight_distance orthodrawer ->
+                if List.mem obj_i n then
+                    highlight := Object (List.filter (fun x -> x != obj_i) n)
+                else
                     highlight := Object (nub (obj_i :: n))
             |_ when obj_d < highlight_distance orthodrawer ->
-                    highlight := Object [obj_i]
+                highlight := Object [obj_i]
             |true, Annotation n when anno_d < highlight_distance orthodrawer ->
+                if List.mem anno_i n then
+                    highlight := Annotation
+                                        (List.filter (fun x -> x != anno_i) n)
+                else
                     highlight := Annotation (nub (anno_i :: n))
             |_ when anno_d < highlight_distance orthodrawer ->
-                    highlight := Annotation [anno_i]
+                highlight := Annotation [anno_i]
             |true, Line n when line_d < highlight_distance orthodrawer ->
+                if List.mem line_i n then
+                    highlight := Line (List.filter (fun x -> x != line_i) n)
+                else
                     highlight := Line (nub (line_i :: n))
             |_ when line_d < highlight_distance orthodrawer ->
-                    highlight := Line [line_i]
+                highlight := Line [line_i]
             |true, Poly m when poly <> None ->
-                    let n = of_opt poly in
-                    highlight := Poly (nub (n :: m))
+                let n = of_opt poly in
+                if List.mem n m then
+                    highlight := Poly (List.filter (fun x -> x != n) m)
+                else
+                    highlight := Poly (n :: m)
             |_ when poly <> None ->
-                    let n = of_opt poly in
-                    highlight := Poly [n]
+                let n = of_opt poly in
+                highlight := Poly [n]
             |_ ->
-                    highlight := No_Highlight
+                highlight := No_Highlight
             end;
             orthodrawer#draw () end
         (* the line tool draws lines *)

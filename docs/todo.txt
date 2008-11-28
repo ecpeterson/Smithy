@@ -2,17 +2,34 @@ important
 =========
 editing:
 + add placement chunk dialog / functionality
-+ add 'triggered by' functionality to the monster placement dialog
 + bug: lines read in from map files don't have their length set
-+ bug: clicking with the fill tool anywhere to the left of a polygon within the y limits of its vertices will fill the polygon
+    * NOTE: Forge doesn't write line lengths to unmerged map files.  In
+            addition, this isn't something we can do at load time because
+                a) what if we read our LINS chunk before our PNTS chunk?
+                b) the points array is stored in the MapFormat module, which is
+                   inaccessible to the MapTypes module, which is where the magic
+                   actually happens.  In order to compute line lengths we need
+                   access (obviously) to point coordinates, not just point
+                   indices, which is what is stored in the map data itself.
+            I posit that we don't actually need this feature, and the statusbar
+            can compute it when it needs it, which is probably how we're
+            handling things now anyway.  -ecp
 + bug: sometimes deleting points doesn't work?
 interface:
-+ "save before exiting" dialog
-+ bug: map height dialog doesn't actually work properly, and should be non-modal
-+ bug: goto dialog needs error handling
++ bug: map height dialog doesn't actually work properly
+    * NOTE: fixed the modalness of this dialog, problems now include
+        1) can open multiple instances of the dialog
+        2) we draw lines and points regardless of their attached polygon
+           heights, which is going to be disappointingly messy to fix :(
++ bug: goto dialog needs to be made non-modal (was: error handling)
+    * NOTE: fixed out of bounds errors and wrapped the whole thing in a try
+            block because, i agree, seeing int_of_string exceptions is annoying.
+            it would be nice if this dialog were also nonmodal.
 + dragging points ignores 'constrain to grid'
 code:
 + everything is quite slow/laggy under windows (something like 6-10x slower than linux)... why?
+    * Actually, the object inspection dialog box is really really slow under
+      Linux as well.
 
 less important
 =========
@@ -24,14 +41,12 @@ editing:
 + add a terminal editor
 + read from merged maps
 + merge maps
-+ read in optimized chunks
-+ write out optimized chunks
++ read in optimized chunks ( <- partially implemented! )
++ write out optimized chunks ( <- do we really need this? )
 + don't leave objects outside of a polygon when moving the vertices of the polygon
-+ recenter level is unimplemented
 interface:
 + write single level undo
 + write multiple level undo
-+ allow shift-click on a highlighted item to unhighlight it
 + arrow keys should move points/lines/polygons around
 + display highlighted objects somehow
 + drawing a new line should highlight the endpoint when done

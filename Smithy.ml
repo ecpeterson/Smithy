@@ -18,11 +18,21 @@ let _ =
     let at_exit _ =
         if !okay_to_quit then begin
             okay_to_quit := false;
+            let dlg = GWindow.message_dialog
+                ~message:"Would you like to save before quitting?"
+                ~message_type:`WARNING ~buttons:GWindow.Buttons.yes_no
+                ~modal:true ~title:Resources.warning () in
+            begin match dlg#run () with
+                |`YES -> FileDialogs.save_map_dialog main_window#set_title ()
+                |_ -> ()
+            end;
+            dlg#destroy();
             Preferences.save_prefs main_window#orthodrawer#scale
                                    main_window#width main_window#height;
             GMain.Main.quit ()
         end in
-    ignore (main_window#window#event#connect#delete ~callback:(fun _ -> false));
+    ignore (main_window#window#event#connect#delete ~callback:(fun _ ->
+        at_exit (); true));
     ignore (main_window#window#connect#destroy ~callback:at_exit);
     main_window#orthodrawer#set_scale scale;
     let args = Sys.argv in

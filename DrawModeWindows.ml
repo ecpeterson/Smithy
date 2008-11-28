@@ -256,7 +256,9 @@ object (self)
             a "SetMonsterParams"  ~label:"Set _Monster Parameters..."
                                 ~callback:(fun _ ->
                                     MapDialogs.monster_parameters_dialog ());
-            a "RecenterLevel"     ~label:"_Recenter Level";
+            a "RecenterLevel"     ~label:"_Recenter Level"
+                                ~callback:(fun _ ->
+                                    orthodrawer#center_on (0.0, 0.0));
 
             a "MergePoints"      ~label:"_Merge Selected Points"
                                 ~callback:(fun _ ->

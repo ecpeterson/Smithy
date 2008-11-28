@@ -98,7 +98,9 @@ let to_enum (start, descriptor) x =
     search descriptor start
 
 let of_enum (start, descriptor) x =
-    List.nth descriptor (x + start)
+    try List.nth descriptor (x + start)
+    with _ -> raise (Failure ("of_enum failed on decoding " ^
+                                                            (string_of_int x)))
 
 (* not all structs are byte-aligned, more utility *)
 let rec output_padding fh n =

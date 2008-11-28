@@ -260,6 +260,14 @@ let obj_dialog obj redraw =
     let sound_hangs = ref !monster_hangs in
     let sound_floats = ref !monster_floats in
     let sound_light_vol = ref (obj#facing <= 0.0) in
+    let activation_idx = ref
+        (match CamlExt.of_bitflag object_flags_descriptor (0xf000 land
+            (CamlExt.to_bitflag object_flags_descriptor obj#flags)) with
+            |[Activate_On_Player] -> 0
+            |[Activate_On_Nearest_Hostile] -> 1
+            |[Activate_On_Goal] -> 2
+            |[Activate_Randomly] -> 3
+            |_ -> 0) in
     let descriptor = [
         `N([("Monster", [
                 `H [
@@ -267,7 +275,7 @@ let obj_dialog obj redraw =
                         `L "Activated By"; ];
                     `V [`M (ItemStrings.monster_strings, monster_kind);
                         (* TODO: ??? *)
-                        `M ([], ref 0)] ];
+                        `M (ItemStrings.activation_strings, activation_idx)] ];
                 `S monster_facing;
                 `L "Facing";
                 `H [`L "Height Offset";
@@ -345,7 +353,9 @@ let obj_dialog obj redraw =
                         if flag then mask lor desc else mask)
                     0 MapTypes.object_flags_descriptor
                     [!monster_teleports_in; !monster_hangs; !monster_blind;
-                    !monster_deaf; false; false] in
+                     !monster_deaf; false; false; !activation_idx = 0;
+                     !activation_idx = 1; !activation_idx = 2;
+                     !activation_idx = 3] in
                 obj#set_flags
                     (of_bitflag MapTypes.object_flags_descriptor flags)
             |Scenery ->
@@ -358,23 +368,24 @@ let obj_dialog obj redraw =
                         |MapFormat.Jjaro -> !scenery_kind + 50);
                 update_height !scenery_height;
                 update_flags [false; !scenery_hangs; false; false; false;
-                              false]
+                    false; false; false; false; false]
             |Item ->
                 obj#set_index !item_kind;
                 update_height !item_height;
                 update_flags [!item_teleports_in; !item_hangs; false; false;
-                              false; !item_network_only]
+                          false; !item_network_only; false; false; false; false]
             |Player ->
                 obj#set_facing !player_facing;
                 update_height !player_height;
-                update_flags [false; !player_hangs; false; false; false; false]
+                update_flags [false; !player_hangs; false; false; false; false;
+                              false; false; false; false]
             |Goal ->
                 obj#set_index (int_of_string !goal_kind)
             |Sound_Source ->
                 obj#set_index !sound_kind;
                 update_height !sound_height;
                 update_flags [!sound_teleports_in; !sound_hangs; false; false;
-                            !sound_floats; false];
+                              !sound_floats; false; false; false; false; false];
                 obj#set_facing
                     (if !sound_light_vol then float_of_string !sound_facing
                      else float_of_string !sound_facing *. (-1.) +. 1.)
@@ -776,41 +787,66 @@ let goto recenter =
             `V [`M (["Point"; "Line"; "Polygon"], kind);
                 `E id ] ] ] in
     let apply _ =
-        let id = int_of_string !id in
-        let center = begin match !kind with
-        |0 ->
-            let p = !MapFormat.points.(id) in
-            DrawModeSettings.highlight := Point [id];
-            Some p#vertex
-        |1 ->
-            let l = !MapFormat.lines.(id) in
-            DrawModeSettings.highlight := Line [id];
-            let p0, p1 = l#endpoints in
-            let p0x, p0y = !MapFormat.points.(p0)#vertex in
-            let p1x, p1y = !MapFormat.points.(p1)#vertex in
-            Some ((p0x +. p1x) /. 2., (p0y +. p1y) /. 2.)
-        |2 ->
-            let p = !MapFormat.polygons.(id) in
-            DrawModeSettings.highlight := Poly [id];
-            Some (GeomEdit.point_center
-                (Array.sub p#endpoint_indices 0 p#vertex_count))
-        |_ -> raise (Failure "Invalid Goto kind!") end in
-        match center with
-        |Some (px, py) -> recenter (px, py)
-        |None -> () in
+        try
+            let id = int_of_string !id in
+            let center = begin match !kind with
+            |0 ->
+                if id >= Array.length !MapFormat.points || id < 0 then
+                    raise (Failure "Goto point out of bounds!") else (
+                let p = !MapFormat.points.(id) in
+                DrawModeSettings.highlight := Point [id];
+                Some p#vertex )
+            |1 ->
+                if id >= Array.length !MapFormat.lines || id < 0 then
+                    raise (Failure "Goto line out of bounds!") else (
+                let l = !MapFormat.lines.(id) in
+                DrawModeSettings.highlight := Line [id];
+                let p0, p1 = l#endpoints in
+                let p0x, p0y = !MapFormat.points.(p0)#vertex in
+                let p1x, p1y = !MapFormat.points.(p1)#vertex in
+                Some ((p0x +. p1x) /. 2., (p0y +. p1y) /. 2.) )
+            |2 ->
+                if id >= Array.length !MapFormat.polygons || id < 0 then
+                    raise (Failure "Goto polygon out of bounds!") else (
+                let p = !MapFormat.polygons.(id) in
+                DrawModeSettings.highlight := Poly [id];
+                Some (GeomEdit.point_center
+                    (Array.sub p#endpoint_indices 0 p#vertex_count)) )
+            |_ -> raise (Failure "Invalid Goto kind!") end in
+            match center with
+            |Some (px, py) -> recenter (px, py)
+            |None -> ()
+        with |_ -> () in
     GenerateDialog.generate_dialog descriptor apply "Goto"
 
 let map_height_dlg redraw =
-    let descriptor =
-        [ `H [`V [`I ((-9.0, 9.0, 0.01, 300, `VERTICAL),
-                      DrawModeSettings.floor_cutoff);
-                  `L "Floor" ];
-              `V [`I ((-9.0, 9.0, 0.01, 300, `VERTICAL),
-                      DrawModeSettings.ceiling_cutoff);
-                  `L "Ceiling" ] ] ] in
-    let apply _ =
-        redraw () in
-    GenerateDialog.generate_dialog descriptor apply "Height Window"
+    let w = GWindow.window ~title:"Height Window" ~show:true
+                           ~allow_shrink:false () in
+    let hbox = GPack.hbox ~packing:w#add ~spacing:2 () in
+    let vbox1 = GPack.vbox ~packing:hbox#add ~spacing:2 () in
+    let adjf = GData.adjustment ~value:(!DrawModeSettings.floor_cutoff)
+                                ~lower:(-9.0) ~upper:(9.0 +. 0.01)
+                                ~step_incr:0.01 ~page_size:0.01
+                                ~page_incr:(18.0) () in
+    let alignf = GBin.alignment ~height:300 ~packing:vbox1#add () in
+    GRange.scale `VERTICAL ~adjustment:adjf ~value_pos:`BOTTOM ~digits:2
+                 ~packing:alignf#add ~inverted:true ();
+    GMisc.label ~text:"Floor" ~xpad:2 ~packing:vbox1#add ~justify:`FILL ();
+    adjf#connect#value_changed ~callback:(fun _ ->
+        DrawModeSettings.floor_cutoff := adjf#value;
+        redraw (); ());
+    let vbox2 = GPack.vbox ~packing:hbox#add ~spacing:2 () in
+    let adjc = GData.adjustment ~value:!DrawModeSettings.ceiling_cutoff
+                                ~lower:(-9.0) ~upper:(9.0 +. 0.01)
+                                ~step_incr:0.01 ~page_size:0.01
+                                ~page_incr:(18.0) () in
+    let alignc = GBin.alignment ~height:300 ~packing:vbox2#add () in
+    GRange.scale `VERTICAL ~adjustment:adjc ~value_pos:`BOTTOM ~digits:2
+                 ~packing:alignc#add ~inverted:true ();
+    GMisc.label ~text:"Ceiling" ~xpad:2 ~packing:vbox2#add ~justify:`FILL ();
+    adjf#connect#value_changed ~callback:(fun _ ->
+        DrawModeSettings.ceiling_cutoff := adjc#value;
+        redraw (); ())
 
 let color_prefs_dialog redraw =
     let thickness = ref (string_of_int
