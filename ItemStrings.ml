@@ -90,3 +90,5 @@ let polygon_types =  ["Normal"; "Item Impassable"; "Monster & Item Impassable";
                       "Item Trigger"; "Must be Explored"; "Automatic Exit";
                       "Minor Ouch"; "Major Ouch"; "Glue"; "Glue Trigger";
                       "Superglue"]
+
+let activation_strings = ["Player"; "Nearest Hostile"; "Goal"; "Randomly"]

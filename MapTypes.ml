@@ -663,7 +663,13 @@ let lite_reader fh =
         let intensity = float (input_dword fh) /. 65536. in
         let delta_intensity = float (input_dword fh) /. 65536. in
         (kind, period, delta_period, intensity, delta_intensity) in
-    light#set_kind (of_enum light_kind_descriptor (input_word fh));
+    (* XXX: this is an impermanent hack to make save game map reads work,
+     * someday you will have to figure out what the fuck *)
+    light#set_kind (match input_signed_word fh with
+        |x when 0 <= x &&
+                x < List.length ((fun (_, x) -> x) light_kind_descriptor) ->
+              of_enum light_kind_descriptor x
+        |_ -> Normal_Light);
     light#set_flags (of_bitflag light_flag_descriptor (input_word fh));
     light#set_phase (float (input_word fh) /. 30.0);
     light#set_primary_active (input_ls fh);
@@ -701,9 +707,15 @@ type object_kind = Monster | Scenery | Item | Player | Goal | Sound_Source
 let object_kind_descriptor = 0, [Monster; Scenery; Item; Player; Goal;
                                  Sound_Source]
 type object_flags = Invisible_Or_Platform | Platform_Sound | Hangs_From_Ceiling|
-                    Blind | Deaf | Floats | Network_Only
+                    Blind | Deaf | Floats | Network_Only | Activate_On_Player |
+                    Activate_On_Nearest_Hostile | Activate_On_Goal |
+                    Activate_Randomly
 let object_flags_descriptor = [1, Invisible_Or_Platform; 2, Hangs_From_Ceiling;
-                               4, Blind; 8, Deaf; 16, Floats; 32, Network_Only]
+                               4, Blind; 8, Deaf; 16, Floats; 32, Network_Only;
+                               4096, Activate_On_Player;
+                               8192, Activate_On_Nearest_Hostile;
+                               16384, Activate_On_Goal;
+                               32768, Activate_Randomly]
 class obj = object
     val mutable kind = Player
     val mutable index = 0
@@ -830,7 +842,7 @@ let medi_writer fh media =
 let empty_media = new media
 
 class placement = object
-    val mutable flags = 0
+    val mutable flags = false
     val mutable initial_count = 0
     val mutable minimum_count = 0
     val mutable maximum_count = 0
@@ -853,7 +865,7 @@ class placement = object
 end
 let plac_reader fh =
     let plac = new placement in
-    plac#set_flags (input_word fh);
+    plac#set_flags (input_word fh = 1);
     plac#set_initial_count (input_word fh);
     plac#set_minimum_count (input_word fh);
     plac#set_maximum_count (input_word fh);
@@ -862,7 +874,7 @@ let plac_reader fh =
     plac
 
 let plac_writer fh plac =
-    output_word fh plac#flags;
+    output_word fh (if plac#flags then 1 else 0);
     output_word fh plac#initial_count;
     output_word fh plac#minimum_count;
     output_word fh plac#maximum_count;

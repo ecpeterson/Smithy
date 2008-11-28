@@ -198,6 +198,7 @@ let rec read_chunks fh =
     let length = input_dword fh in
     let _offset = input_dword fh in
     (* match against chunk type *)
+    print_endline ("Reading chunk " ^ chunk_name);
     begin match chunk_name with
         |"PNTS" -> read_points fh length
         |"LINS" -> read_lines fh length
@@ -233,7 +234,11 @@ let read_from_file fname =
     let version = input_word fh in
     if version > 4 then raise (Failure "Bad WAD version!") else
     let data_version = input_word fh in
-    if data_version > 1 then raise (Failure "Bad data version!") else
+    begin match data_version with
+        |1 -> print_endline "Loading normal map."
+        |2 -> print_endline "Loading save game."
+        |_ -> raise (Failure "Bad data version!")
+    end;
     (* forward to the first chunk *)
     seek_in fh offset_of_first_chunk;
     read_chunks fh;
