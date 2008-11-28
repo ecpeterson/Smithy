@@ -5,11 +5,11 @@ open CamlExt
 let new_point = ref None
 (* this gets called on the mouse down event when drawing a line *)
 let start_line x y choose_distance =
+    let (x, y) = DrawModeSettings.point_filter (x, y) in
     let do_new_point () =
         (* spawn a new point, select it *)
         let point = new MapTypes.point in
-        let (px, py) = DrawModeSettings.point_filter (x, y) in
-        point#set_vertex (px, py);
+        point#set_vertex (x, y);
         let pi = MapFormat.add_point point in
         new_point := Some pi;
         pi in
@@ -31,8 +31,7 @@ let start_line x y choose_distance =
             let (p0, p1) = line#endpoints in
             MapFormat.delete_line_no_bs nearest_line;
             let point = new MapTypes.point in
-            let (px, py) = DrawModeSettings.point_filter (x, y) in
-            point#set_vertex (px, py);
+            point#set_vertex (x, y);
             let pi = MapFormat.add_point point in
             let line1 = new MapTypes.line in
             line1#set_endpoints (p0, pi);
@@ -48,6 +47,7 @@ let start_line x y choose_distance =
 
 (* called on mouse up when drawing the line *)
 let connect_line start_point x y choose_distance =
+    let (x, y) = DrawModeSettings.point_filter (x, y) in
     (* utility to actually add the line *)
     let do_line target_point =
         if start_point = target_point then () else begin
@@ -69,8 +69,7 @@ let connect_line start_point x y choose_distance =
     (* utility to add a new point and connect the line up to it *)
     let do_new_point () =
         let point = new MapTypes.point in
-        let (px, py) = DrawModeSettings.point_filter (x, y) in
-        point#set_vertex (px, py);
+        point#set_vertex (x, y);
         do_line (MapFormat.add_point point) in
     (* get the closest point/line to our click *)
     let (point_distance, nearest_point) = MapFormat.get_closest_point x y in
@@ -87,8 +86,7 @@ let connect_line start_point x y choose_distance =
             let (p0, p1) = line#endpoints in
             MapFormat.delete_line_no_bs nearest_line;
             let point = new MapTypes.point in
-            let (px, py) = DrawModeSettings.point_filter (x, y) in
-            point#set_vertex (px, py);
+            point#set_vertex (x, y);
             let pi = MapFormat.add_point point in
             let line1 = new MapTypes.line in
             line1#set_endpoints (p0, pi);
