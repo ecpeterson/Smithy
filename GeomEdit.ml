@@ -5,7 +5,6 @@ open CamlExt
 let new_point = ref None
 (* this gets called on the mouse down event when drawing a line *)
 let start_line x y choose_distance =
-    let (x, y) = DrawModeSettings.point_filter (x, y) in
     let do_new_point () =
         (* spawn a new point, select it *)
         let point = new MapTypes.point in
@@ -47,7 +46,6 @@ let start_line x y choose_distance =
 
 (* called on mouse up when drawing the line *)
 let connect_line start_point x y choose_distance =
-    let (x, y) = DrawModeSettings.point_filter (x, y) in
     (* utility to actually add the line *)
     let do_line target_point =
         if start_point = target_point then () else begin
