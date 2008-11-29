@@ -189,6 +189,7 @@ let tool_begin_event toolbar orthodrawer x y button
         (* the line tool draws lines *)
         else if tool = LineTool then begin
             draw_intermediate := true;
+            let (x, y) = point_filter (x, y) in
             intermediate_line x y;
             start_point :=
                 GeomEdit.start_line x y (highlight_distance orthodrawer) end
@@ -399,6 +400,7 @@ let tool_end_event toolbar orthodrawer x0 y0 x y (button: int) _ =
             |_ -> ()
         else if tool = LineTool then begin
             (* if we were drawing a line, finalize it *)
+            let (x, y) = point_filter (x, y) in
             draw_intermediate := false;
             ignore (GeomEdit.connect_line !start_point x y
                                           (highlight_distance orthodrawer));
