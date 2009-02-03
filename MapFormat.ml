@@ -241,6 +241,7 @@ let read_from_file fname =
     end;
     (* forward to the first chunk *)
     seek_in fh offset_of_first_chunk;
+    reset_structures ();
     read_chunks fh;
     (* close the file *)
     close_in fh;

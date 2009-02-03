@@ -869,7 +869,7 @@ let plac_reader fh =
     plac#set_initial_count (input_word fh);
     plac#set_minimum_count (input_word fh);
     plac#set_maximum_count (input_word fh);
-    plac#set_random_count (input_word fh);
+    plac#set_random_count (input_signed_word fh);
     plac#set_random_chance (float (input_word fh) /. 1024.);
     plac
 
@@ -878,7 +878,7 @@ let plac_writer fh plac =
     output_word fh plac#initial_count;
     output_word fh plac#minimum_count;
     output_word fh plac#maximum_count;
-    output_word fh plac#random_count;
+    output_signed_word fh plac#random_count;
     output_word fh (int_of_float (plac#random_chance *. 1024.))
 let empty_placement = new placement
 
