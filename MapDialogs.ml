@@ -184,15 +184,19 @@ let poly_dialog poly redraw =
     let old_kind = poly#kind in
     let kind = ref (to_enum MapTypes.poly_kind_descriptor old_kind) in
     let media_index = ref (string_of_int poly#media_index) in
+    let permutation = ref (string_of_int poly#permutation) in
     let descriptor = [
         `H [
             `V [`L "Type";
-                `L "Liquid"; ];
+                `L "Liquid";
+                `L "Permutation"];
             `V [`M (ItemStrings.polygon_types, kind);
-                `E media_index ] ] ] in
+                `E media_index;
+                `E permutation] ] ] in
     let apply _ =
         let kind = of_enum MapTypes.poly_kind_descriptor !kind in
         let media_index = int_of_string !media_index in
+        let permutation = int_of_string !permutation in
         begin match old_kind, kind with
             (* do we just want to open the platform dialog again? *)
             |(Platform, Platform) ->
@@ -213,6 +217,7 @@ let poly_dialog poly redraw =
             (* do we need to take no special action? *)
             |_ -> ()
         end;
+        poly#set_permutation permutation;
         poly#set_kind kind;
         poly#set_media_index media_index;
         redraw () in
@@ -901,27 +906,28 @@ let color_prefs_dialog redraw =
         redraw () in
     GenerateDialog.generate_dialog descriptor apply "Color Preferences"
 
-let plac_chunk_dialog what strings_list =
+let plac_chunk_dialog what strings_list plac_list =
     let columns = new GTree.column_list in
     let obj_type    = columns#add Gobject.Data.string in
     let init_count  = columns#add Gobject.Data.int in
     let min_count   = columns#add Gobject.Data.int in
     let max_count   = columns#add Gobject.Data.int in
     let total_avail = columns#add Gobject.Data.int in
-    let appearance  = columns#add Gobject.Data.int in
+    let appearance  = columns#add Gobject.Data.float in
     let inf_avail   = columns#add Gobject.Data.boolean in
     let random_loc  = columns#add Gobject.Data.boolean in
     let ls = GTree.list_store columns in
-    List.iter (fun str -> let row = ls#append () in
+    List.iter2 (fun str plac -> let row = ls#append () in
                           ls#set ~row ~column:obj_type    str;
-                          ls#set ~row ~column:init_count  0;
-                          ls#set ~row ~column:min_count   0;
-                          ls#set ~row ~column:max_count   0;
-                          ls#set ~row ~column:total_avail 0;
-                          ls#set ~row ~column:appearance  0;
-                          ls#set ~row ~column:inf_avail   false;
-                          ls#set ~row ~column:random_loc  false)
-              strings_list;
+                          ls#set ~row ~column:init_count  plac#initial_count;
+                          ls#set ~row ~column:min_count   plac#minimum_count;
+                          ls#set ~row ~column:max_count   plac#maximum_count;
+                          ls#set ~row ~column:total_avail plac#random_count;
+                          ls#set ~row ~column:appearance  plac#random_chance;
+                          ls#set ~row ~column:inf_avail   (plac#random_count
+                          = -1);
+                          ls#set ~row ~column:random_loc  plac#flags)
+              strings_list plac_list;
     let dlg = GWindow.dialog ~title:(what^" Parameters") ~border_width:2
                              ~resizable:false () in
     let scroll = GBin.scrolled_window ~packing:dlg#vbox#add
@@ -975,6 +981,10 @@ let plac_chunk_dialog what strings_list =
 
 let item_parameters_dialog _ =
     plac_chunk_dialog "Item" ItemStrings.item_strings
+        (Array.to_list (Array.sub !MapFormat.placements 0
+                                    (List.length ItemStrings.item_strings)))
 
 let monster_parameters_dialog _ =
     plac_chunk_dialog "Monster" ItemStrings.monster_strings
+        (Array.to_list (Array.sub !MapFormat.placements 63
+                                    (List.length ItemStrings.monster_strings)))

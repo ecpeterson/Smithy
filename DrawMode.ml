@@ -179,6 +179,7 @@ let draw_highlight orthodrawer =
     |No_Highlight |_ -> ()
 
 let draw_platforms orthodrawer =
+    orthodrawer#set_color (0.0, 0.0, 0.0);
     Array.iter (fun plat ->
         let poly = !MapFormat.polygons.(plat#polygon_index) in
         Array.sub poly#endpoint_indices 0 poly#vertex_count |>
