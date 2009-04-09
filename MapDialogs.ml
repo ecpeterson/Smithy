@@ -924,8 +924,7 @@ let plac_chunk_dialog what strings_list plac_list =
                           ls#set ~row ~column:max_count   plac#maximum_count;
                           ls#set ~row ~column:total_avail plac#random_count;
                           ls#set ~row ~column:appearance  plac#random_chance;
-                          ls#set ~row ~column:inf_avail   (plac#random_count
-                          = -1);
+                          ls#set ~row ~column:inf_avail   (plac#random_count = -1);
                           ls#set ~row ~column:random_loc  plac#flags)
               strings_list plac_list;
     let dlg = GWindow.dialog ~title:(what^" Parameters") ~border_width:2
@@ -934,38 +933,42 @@ let plac_chunk_dialog what strings_list plac_list =
                                       ~height:200 ~hpolicy:`NEVER () in
     let view = GTree.view ~model:ls ~packing:scroll#add
                           ~rules_hint:true () in
+
     let col = GTree.view_column ~title:(what^" Name")
         ~renderer:(GTree.cell_renderer_text [],
                                             ["text", obj_type]) () in
     view#append_column col;
-    let col = GTree.view_column ~title:"Initial Count"
-        ~renderer:(GTree.cell_renderer_text [`EDITABLE true],
-                                            ["text", init_count]) () in
-    view#append_column col;
-    let col = GTree.view_column ~title:"Minimum"
-        ~renderer:(GTree.cell_renderer_text [`EDITABLE true],
-                                            ["text", min_count]) () in
-    view#append_column col;
-    let col = GTree.view_column ~title:"Maximum"
-        ~renderer:(GTree.cell_renderer_text [`EDITABLE true],
-                                            ["text", max_count]) () in
-    view#append_column col;
-    let col = GTree.view_column ~title:"Total Available"
-        ~renderer:(GTree.cell_renderer_text [`EDITABLE true],
-                                            ["text", total_avail]) () in
-    view#append_column col;
-    let col = GTree.view_column ~title:"Appearance (%)"
-        ~renderer:(GTree.cell_renderer_text [`EDITABLE true],
-                                            ["text", appearance]) () in
-    view#append_column col;
-    let col = GTree.view_column ~title:"Infinite Available"
-        ~renderer:(GTree.cell_renderer_toggle [`ACTIVATABLE true],
-                                            ["active", inf_avail]) () in
-    view#append_column col;
-    let col = GTree.view_column ~title:"Random Location"
-        ~renderer:(GTree.cell_renderer_toggle [`ACTIVATABLE true],
-                                            ["active", random_loc]) () in
-    view#append_column col;
+
+    let install_int_column ~title ~column =
+        let renderer = GTree.cell_renderer_text [`EDITABLE true] in
+        let vcol = GTree.view_column ~title
+            ~renderer:(renderer, ["text", column]) () in
+        renderer#connect#edited (fun loc str ->
+            ls#set ~row:(ls#get_iter loc) ~column (int_of_string str));
+        view#append_column vcol in
+    let install_float_column ~title ~column =
+        let renderer = GTree.cell_renderer_text [`EDITABLE true] in
+        let vcol = GTree.view_column ~title
+            ~renderer:(renderer, ["text", column]) () in
+        renderer#connect#edited (fun loc str ->
+            ls#set ~row:(ls#get_iter loc) ~column (float_of_string str));
+        view#append_column vcol in
+    let install_bool_column ~title ~column =
+        let renderer = GTree.cell_renderer_toggle [`ACTIVATABLE true] in
+        let vcol = GTree.view_column ~title
+            ~renderer:(renderer, ["active", column]) () in
+        renderer#connect#toggled (fun loc ->
+            let old_value = ls#get ~row:(ls#get_iter loc) ~column in
+            ls#set ~row:(ls#get_iter loc) ~column (not old_value));
+        view#append_column vcol in
+    install_int_column ~title:"Initial Count" ~column:init_count;
+    install_int_column ~title:"Minimum" ~column:min_count;
+    install_int_column ~title:"Maximum" ~column:max_count;
+    install_int_column ~title:"Total Available" ~column:total_avail;
+    install_float_column ~title:"Appearance" ~column:appearance;
+    install_bool_column ~title:"Infinite Available" ~column:inf_avail;
+    install_bool_column ~title:"Random Location" ~column:random_loc;
+
     dlg#add_button_stock `APPLY `APPLY;
     dlg#add_button_stock `CANCEL `CANCEL;
     dlg#add_button_stock `OK `OK;
