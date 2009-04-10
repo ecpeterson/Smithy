@@ -939,21 +939,18 @@ let plac_chunk_dialog what strings_list plac_list =
                                             ["text", obj_type]) () in
     view#append_column col;
 
-    let install_int_column ~title ~column =
+    let install_gen_column title column convertor =
         let renderer = GTree.cell_renderer_text [`EDITABLE true] in
         let vcol = GTree.view_column ~title
             ~renderer:(renderer, ["text", column]) () in
         renderer#connect#edited (fun loc str ->
-            ls#set ~row:(ls#get_iter loc) ~column (int_of_string str));
+            ls#set ~row:(ls#get_iter loc) ~column (convertor str));
         view#append_column vcol in
-    let install_float_column ~title ~column =
-        let renderer = GTree.cell_renderer_text [`EDITABLE true] in
-        let vcol = GTree.view_column ~title
-            ~renderer:(renderer, ["text", column]) () in
-        renderer#connect#edited (fun loc str ->
-            ls#set ~row:(ls#get_iter loc) ~column (float_of_string str));
-        view#append_column vcol in
-    let install_bool_column ~title ~column =
+    let install_int_column title column =
+        install_gen_column title column int_of_string in
+    let install_float_column title column =
+        install_gen_column title column float_of_string in
+    let install_bool_column title column =
         let renderer = GTree.cell_renderer_toggle [`ACTIVATABLE true] in
         let vcol = GTree.view_column ~title
             ~renderer:(renderer, ["active", column]) () in
@@ -961,19 +958,31 @@ let plac_chunk_dialog what strings_list plac_list =
             let old_value = ls#get ~row:(ls#get_iter loc) ~column in
             ls#set ~row:(ls#get_iter loc) ~column (not old_value));
         view#append_column vcol in
-    install_int_column ~title:"Initial Count" ~column:init_count;
-    install_int_column ~title:"Minimum" ~column:min_count;
-    install_int_column ~title:"Maximum" ~column:max_count;
-    install_int_column ~title:"Total Available" ~column:total_avail;
-    install_float_column ~title:"Appearance" ~column:appearance;
-    install_bool_column ~title:"Infinite Available" ~column:inf_avail;
-    install_bool_column ~title:"Random Location" ~column:random_loc;
+    install_int_column   "Initial Count"      init_count;
+    install_int_column   "Minimum"            min_count;
+    install_int_column   "Maximum"            max_count;
+    install_int_column   "Total Available"    total_avail;
+    install_float_column "Appearance"         appearance;
+    install_bool_column  "Infinite Available" inf_avail;
+    install_bool_column  "Random Location"    random_loc;
 
     dlg#add_button_stock `APPLY `APPLY;
     dlg#add_button_stock `CANCEL `CANCEL;
     dlg#add_button_stock `OK `OK;
     dlg#set_default_response `OK;
-    let apply _ = () in
+    let apply _ =
+        ls#foreach (fun path row ->
+            let row_index = (GTree.Path.get_indices path).(0) in
+            let plac = List.nth plac_list row_index in
+            plac#set_initial_count (ls#get ~row ~column:init_count);
+            plac#set_minimum_count (ls#get ~row ~column:min_count);
+            plac#set_maximum_count (ls#get ~row ~column:max_count);
+            plac#set_random_count (ls#get ~row ~column:total_avail);
+            plac#set_random_chance (ls#get ~row ~column:appearance);
+            if (ls#get ~row ~column:inf_avail) then
+                plac#set_random_count (-1);
+            plac#set_flags (ls#get ~row ~column:random_loc);
+            false) in
     let rec run _ =
         match dlg#run () with
         |`OK -> apply ()
