@@ -158,6 +158,7 @@ let draw_objects orthodrawer =
     Array.iter draw_obj !MapFormat.objs
 
 let draw_highlight orthodrawer =
+    if !mode = Draw_Mode then begin
     orthodrawer#set_color !Colors.highlight_color;
     match !highlight with
     |Point ns ->
@@ -177,6 +178,7 @@ let draw_highlight orthodrawer =
                     (MapFormat.get_poly_ring !MapFormat.polygons.(n)) in
             orthodrawer#polygon true vertex_array) ns
     |No_Highlight |_ -> ()
+    end else ()
 
 let draw_platforms orthodrawer =
     orthodrawer#set_color (0.0, 0.0, 0.0);
