@@ -849,7 +849,7 @@ let map_height_dlg redraw =
     GRange.scale `VERTICAL ~adjustment:adjc ~value_pos:`BOTTOM ~digits:2
                  ~packing:alignc#add ~inverted:true ();
     GMisc.label ~text:"Ceiling" ~xpad:2 ~packing:vbox2#add ~justify:`FILL ();
-    adjf#connect#value_changed ~callback:(fun _ ->
+    adjc#connect#value_changed ~callback:(fun _ ->
         DrawModeSettings.ceiling_cutoff := adjc#value;
         redraw (); ())
 
