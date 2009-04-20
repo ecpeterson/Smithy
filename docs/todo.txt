@@ -1,7 +1,6 @@
 important
 =========
 editing:
-+ add placement chunk dialog / functionality
 + bug: lines read in from map files don't have their length set
     * NOTE: Forge doesn't write line lengths to unmerged map files.  In
             addition, this isn't something we can do at load time because
