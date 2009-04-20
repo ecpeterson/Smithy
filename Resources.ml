@@ -26,7 +26,7 @@ let item_hash = Hashtbl.create 36
 let mk_item name file =
     Hashtbl.add item_hash name ("resources/" ^ file ^ ".png")
 let _ =
-    mk_item "Knife"                   "";
+    mk_item "Knife"                   "red-x";
     mk_item "Magnum"                  "pistol";
     mk_item "Magnum Clip"             "pistol-ammo";
     mk_item "Fusion Pistol"           "fusion";
@@ -40,7 +40,7 @@ let _ =
     mk_item "Invincibility Powerup"   "invinc";
     mk_item "Infravision Powerup"     "brown-chip";
     mk_item "Alien Weapon"            "alien-gun";
-    mk_item "Alien Weapon Ammunition" "";
+    mk_item "Alien Weapon Ammunition" "red-x";
     mk_item "Napalm Launcher"         "tozt";
     mk_item "Napalm Canister"         "tozt-ammo";
     mk_item "Extravision Powerup"     "red-chip";
