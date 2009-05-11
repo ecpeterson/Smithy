@@ -358,7 +358,8 @@ let get_closest_line x0 y0 =
  * particular order *)
 let get_point_ring_from_line_ring line_index_array count =
     let endpoints = Array.map
-        (fun x -> !lines.(x)#endpoints) line_index_array in
+        (fun x -> !lines.(x)#endpoints)
+        (Array.sub line_index_array 0 count) in
     let rec loop n acc =
         if n = count then acc else
         let (e0, e1) = endpoints.(n) in
